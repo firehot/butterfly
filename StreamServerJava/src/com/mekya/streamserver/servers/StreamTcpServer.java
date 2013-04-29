@@ -14,17 +14,26 @@ import com.mekya.streamserver.IStreamListener;
  * @author aomermerkaya
  *
  */
-public class StreamTcpServer extends Thread implements IStreamPostman{
+public class StreamTcpServer implements IVideoStreamPostman, IAudioStreamPostman{
 
-	private ArrayList<IStreamListener> streamListeners = new ArrayList<IStreamListener>();
+	private ArrayList<IStreamListener> videoStreamListeners = new ArrayList<IStreamListener>();
 
-	private ServerSocket serverSocket;
+	private ArrayList<IStreamListener> audioStreamListeners = new ArrayList<IStreamListener>();
+
+	private ServerSocket serverVideoSocket;
 
 	private int port;
+
+	private ServerSocket serverAudioSocket;
+
+	private VideoServerThread videoServerThread;
+
+	private AudioServerThread audioServerThread;
 	
 	public StreamTcpServer(int port) {
 		try {
-			serverSocket = new ServerSocket(port);
+			serverVideoSocket = new ServerSocket(port);
+			serverAudioSocket = new ServerSocket(port+1);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -34,58 +43,111 @@ public class StreamTcpServer extends Thread implements IStreamPostman{
 	 * @see com.mekya.streamserver.servers.IStreamPostman#register(com.mekya.streamserver.IStreamListener)
 	 */
 	@Override
-	public void register(IStreamListener streamListener) {
-		streamListeners.add(streamListener);
+	public void registerForVideo(IStreamListener streamListener) {
+		videoStreamListeners.add(streamListener);
 	}
 
+	public void start() {
+		videoServerThread = new VideoServerThread();
+		audioServerThread = new AudioServerThread();
+		
+		videoServerThread.start();
+		audioServerThread.start();
+
+	}
 
 
 	/* (non-Javadoc)
 	 * @see com.mekya.streamserver.servers.IStreamPostman#removeListener(com.mekya.streamserver.IStreamListener)
 	 */
 	@Override
-	public void removeListener(IStreamListener streamListener) {
-		streamListeners.remove(streamListener);
+	public void removeVideoListener(IStreamListener streamListener) {
+		videoStreamListeners.remove(streamListener);
 	}
 
-	private void feedStreamListeners(byte[] data, int len) {
-		int size = streamListeners.size();
+	private void feedVideoStreamListeners(byte[] data, int len) {
+		int size = videoStreamListeners.size();
 		for (int i = 0; i < size ; i++) {
-			streamListeners.get(i).dataReceived(data, len);
+			videoStreamListeners.get(i).dataReceived(data, len);
 		}
 	}
-
-
-
-	@Override
-	public void run() {
-		try {
-			Socket socket;
-			while (true) {
-				socket = serverSocket.accept();
-				new SessionHandler(socket).start();
-			}
-		}catch (SocketException e) {
-			//e.printStackTrace();
-		} 
-		catch (IOException e) {
-			e.printStackTrace();
-		}
-
-	}
+	
 
 	public void stopServer() {
 		try {
-			serverSocket.close();
-			this.join();
+			serverVideoSocket.close();
+			serverAudioSocket.close();
+			videoServerThread.join();
+			audioServerThread.join();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
+	
+	public class VideoServerThread extends Thread {
+		@Override
+		public void run() {
+			try {
+				Socket socket;
+				while (true) {
+					socket = serverVideoSocket.accept();
+					new SessionHandler(socket){
 
-	public class SessionHandler extends Thread {
+						@Override
+						public void feedStreamListeners(byte[] data, int length) {
+							feedVideoStreamListeners(data, length);
+							
+						}
+						
+					}.start();
+				}
+			}catch (SocketException e) {
+				//e.printStackTrace();
+			} 
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+
+		}
+	}
+	
+	public class AudioServerThread extends Thread {
+		@Override
+		public void run() {
+			try {
+				Socket socket;
+				while (true) {
+					socket = serverAudioSocket.accept();
+					new SessionHandler(socket) {
+
+						@Override
+						public void feedStreamListeners(byte[] data, int length) {
+							feedAudioStreamListeners(data, length);
+							
+						}
+						
+					}.start();
+				}
+			}catch (SocketException e) {
+				//e.printStackTrace();
+			} 
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+
+		}
+	}
+	
+	public void feedAudioStreamListeners(byte[] data, int length) {
+		int size = audioStreamListeners.size();
+		for (int i = 0; i < size ; i++) {
+			audioStreamListeners.get(i).dataReceived(data, length);
+		}
+	}
+
+	public abstract class SessionHandler extends Thread {
 
 		private final Socket socket;
 
@@ -113,7 +175,20 @@ public class StreamTcpServer extends Thread implements IStreamPostman{
 				e.printStackTrace();
 			}
 		}
+		
+		public abstract void feedStreamListeners(byte[] data, int length);
 
+	}
+
+	@Override
+	public void registerForAudio(IStreamListener streamListener) {
+		audioStreamListeners.add(streamListener);
+		
+	}
+
+	@Override
+	public void removeAudioListener(IStreamListener streamListener) {
+		audioStreamListeners.remove(streamListener);
 	}
 
 

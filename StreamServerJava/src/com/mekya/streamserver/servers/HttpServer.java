@@ -11,34 +11,49 @@ import com.mekya.streamserver.servers.NanoHTTPD.Response.Status;
 
 public class HttpServer extends NanoHTTPD {
 
-	private IStreamPostman streamer;
+	private IVideoStreamPostman videoStreamer;
+	private IAudioStreamPostman audioStreamer;
 	public HttpServer(int port) {
 		super(port);
 	}
 
 	@Override
-	public Response serve(IStreamListener streamListener,String uri, Method method,
+	public Response serve(IStreamListener streamListener, String uri, Method method,
 			Map<String, String> header, Map<String, String> parms,
 			Map<String, String> files) {
 		// TODO Auto-generated method stub
 
 		System.out.println(uri);
+		
 		Response res = null;
-		if (uri.equals("/live")) {
+		if (uri.equals("/liveVideo")) {
 			res = new NanoHTTPD.Response(Status.OK, NanoHTTPD.MIME_PLAINTEXT, true);
-			getStreamer().register(streamListener);
+			
+			getVideoStreamer().registerForVideo(streamListener);
+		}
+		else if (uri.equals("/liveAudio")) {
+			res = new NanoHTTPD.Response(Status.OK, NanoHTTPD.MIME_PLAINTEXT, true);
+			getAudioStreamer().registerForAudio(streamListener);
 		}
 		return res;
 	}
 
 
 
-	public void setStreamer(IStreamPostman messenger) {
-		this.streamer = messenger;
+	public void setVideoStreamer(IVideoStreamPostman messenger) {
+		this.videoStreamer = messenger;
 	}
 
-	public IStreamPostman getStreamer() {
-		return streamer;
+	public IVideoStreamPostman getVideoStreamer() {
+		return videoStreamer;
+	}
+	
+	public IAudioStreamPostman getAudioStreamer() {
+		return audioStreamer;
+	}
+
+	public void setAudioStreamer(IAudioStreamPostman audioMessenger) {
+		this.audioStreamer = audioMessenger;
 	}
 
 }

@@ -17,7 +17,8 @@ import org.junit.Test;
 
 import com.mekya.streamserver.IStreamListener;
 import com.mekya.streamserver.servers.HttpServer;
-import com.mekya.streamserver.servers.IStreamPostman;
+import com.mekya.streamserver.servers.IAudioStreamPostman;
+import com.mekya.streamserver.servers.IVideoStreamPostman;
 
 public class HttpServerTest {
 
@@ -28,6 +29,7 @@ public class HttpServerTest {
 
 	@Before 
 	public void before() {
+		registerCount = 0;
 		server = new HttpServer(PORT);
 		try {
 			server.start();
@@ -42,27 +44,64 @@ public class HttpServerTest {
 	}	
 
 	@Test
-	public void testSeasonRegister() {
+	public void testVideoSeasonCount() {
 
-		IStreamPostman postman = new IStreamPostman() {
+		IVideoStreamPostman postman = new IVideoStreamPostman() {
 			@Override
-			public void removeListener(IStreamListener streamListener) {
+			public void removeVideoListener(IStreamListener streamListener) {
 
 			}
 
 			@Override
-			public void register(IStreamListener streamListener) {
+			public void registerForVideo(IStreamListener streamListener) {
 				registerCount ++;
 			}
 		};
 
-		server.setStreamer(postman);
+		server.setVideoStreamer(postman);
 
 		Assert.assertEquals(registerCount, 0);
 
 		for (int i = 0; i < 10; i++) {
 			HttpClient client = new DefaultHttpClient();
-			HttpGet request = new HttpGet("http://127.0.0.1:"+PORT+"/live");
+			HttpGet request = new HttpGet("http://127.0.0.1:"+PORT+"/liveVideo");
+			HttpResponse response;
+			try {
+				response = client.execute(request);
+				Assert.assertEquals(registerCount, i+1);
+
+			} catch (IOException e) {
+				e.printStackTrace();
+			} 
+		}
+	}
+	
+	@Test
+	public void testAudioSeasonCount() {
+
+		IAudioStreamPostman postman = new IAudioStreamPostman() {
+
+			@Override
+			public void registerForAudio(IStreamListener streamListener) {
+				registerCount++;
+				
+			}
+
+			@Override
+			public void removeAudioListener(IStreamListener streamListener) {
+				// TODO Auto-generated method stub
+				
+			}
+	
+		};
+
+		server.setAudioStreamer(postman);
+
+		Assert.assertEquals(registerCount, 0);
+
+		for (int i = 0; i < 10; i++) {
+			HttpClient client = new DefaultHttpClient();
+			HttpGet request = new HttpGet("http://127.0.0.1:"+PORT+"/liveAudio");
 			HttpResponse response;
 			try {
 				response = client.execute(request);
@@ -76,23 +115,65 @@ public class HttpServerTest {
 
 
 	@Test
-	public void testSimpleDataDelivers() {
-		IStreamPostman postman = new IStreamPostman() {
+	public void testAudioDataDelivers() {
+		IAudioStreamPostman postman = new IAudioStreamPostman() {
+			
 			@Override
-			public void removeListener(IStreamListener streamListener) {
+			public void removeAudioListener(IStreamListener streamListener) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void registerForAudio(IStreamListener streamListener) {
+				listener = streamListener;
+				
+			}
+		};
+		
+		server.setAudioStreamer(postman);
+
+		HttpClient client = new DefaultHttpClient();
+		HttpGet request = new HttpGet("http://127.0.0.1:"+PORT+"/liveAudio");
+		HttpResponse response;
+		try {
+			response = client.execute(request);
+			InputStream inputStream = response.getEntity().getContent();
+			int read = 0;
+			byte[] data = new byte[1024];
+			
+			Assert.assertNotNull(listener);
+			String testStr = "Merhaba RT";
+			listener.dataReceived(testStr.getBytes(), testStr.length());
+			while ((read = inputStream.read(data)) > 0) {
+				Assert.assertEquals(testStr, new String(data, 0, read));
+				listener.dataReceived(null, 0);
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+
+		}
+	}
+	
+	@Test
+	public void testVideoDataDelivers() {
+		IVideoStreamPostman postman = new IVideoStreamPostman() {
+			@Override
+			public void removeVideoListener(IStreamListener streamListener) {
 
 			}
 
 			@Override
-			public void register(IStreamListener streamListener) {
+			public void registerForVideo(IStreamListener streamListener) {
 				listener = streamListener;
 			}
 		};
 
-		server.setStreamer(postman);
+		server.setVideoStreamer(postman);
 
 		HttpClient client = new DefaultHttpClient();
-		HttpGet request = new HttpGet("http://127.0.0.1:"+PORT+"/live");
+		HttpGet request = new HttpGet("http://127.0.0.1:"+PORT+"/liveVideo");
 		HttpResponse response;
 		try {
 			response = client.execute(request);

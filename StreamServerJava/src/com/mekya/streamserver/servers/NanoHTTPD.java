@@ -414,7 +414,6 @@ public abstract class NanoHTTPD {
                 }
                 
                 if (this.isStreamListener == false) {
-                
                 	outputStream.flush();
                 	outputStream.close();
                 }

@@ -14,7 +14,8 @@ public class Main {
 		StreamTcpServer messenger = new StreamTcpServer(53007);
 		
 		HttpServer server = new HttpServer(24007);
-		server.setStreamer(messenger);
+		server.setVideoStreamer(messenger);
+		server.setAudioStreamer(messenger);
 		
 		try {
 			messenger.start();
