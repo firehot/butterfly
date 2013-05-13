@@ -45,6 +45,7 @@ public class StreamTcpServer implements IVideoStreamPostman, IAudioStreamPostman
 	@Override
 	public void registerForVideo(IStreamListener streamListener) {
 		videoStreamListeners.add(streamListener);
+		System.out.println("StreamTcpServer.registerForVideo()");
 	}
 
 	public void start() {
@@ -68,6 +69,7 @@ public class StreamTcpServer implements IVideoStreamPostman, IAudioStreamPostman
 	private void feedVideoStreamListeners(byte[] data, int len) {
 		int size = videoStreamListeners.size();
 		for (int i = 0; i < size ; i++) {
+			
 			videoStreamListeners.get(i).dataReceived(data, len);
 		}
 	}

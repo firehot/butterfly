@@ -496,6 +496,7 @@ public abstract class NanoHTTPD {
         
         @Override
 		public int dataReceived(byte[] data, int length) {
+        	
 			 try {
 				if (length != 0) {
 					this.outputStream.write(data, 0, length);

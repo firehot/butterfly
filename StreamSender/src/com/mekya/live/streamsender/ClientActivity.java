@@ -12,9 +12,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.HttpURLConnection;
 import java.net.SocketException;
+import java.net.URL;
 
 import android.app.Activity;
 import android.content.Context;
@@ -79,7 +80,7 @@ public class ClientActivity extends Activity {
 
 				if (startButton.isChecked()) {
 					
-					videoView.setVideoPath("rtsp://"+serverAddressEditText.getText().toString()+":6454/live.ts");
+					videoView.setVideoPath("http://"+serverAddressEditText.getText().toString()+":24007/liveVideo");
 					videoView.setVideoQuality(MediaPlayer.VIDEOQUALITY_HIGH);
 					videoView.setBufferSize(1024*10);
 					
@@ -218,24 +219,32 @@ public class ClientActivity extends Activity {
 		new Thread(){
 			public void run() {
 				try {
-					String ffmpegPath = getFilesDir().getAbsolutePath() + "/ffmpeg"; 
-					String ffmpegCommand = ffmpegPath + " -analyzeduration 0 -f aac -strict -2 -acodec aac -b:a 120k -ac 1 -i - -f s16le -acodec pcm_s16le -ar 44100 -ac 1 -";
+					String ffmpegPath = "data/ffmpeg/bin/ffmpeg"; 
+					String ffmpegCommand = ffmpegPath + " -analyzeduration 0 -f aac -strict -2 -acodec aac -b:a 128k -ac 1 -i - -f s16le -acodec pcm_s16le -ar 44100 -ac 1 -";
 
 					final Process audioProcess = Runtime.getRuntime().exec(ffmpegCommand);
 
 					OutputStream ostream = audioProcess.getOutputStream();
 					readErrorStream(audioProcess.getErrorStream());
-					udpAudioSocket = new DatagramSocket(53008);
-					byte[] data = new byte[2048];
-					DatagramPacket datagramPacket = new DatagramPacket(data, data.length);
+					
+					
+					URL url = new URL("http://"+serverAddressEditText.getText().toString()+":24007/liveAudio");
+                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                    urlConnection.setReadTimeout(10000);
+                    urlConnection.setConnectTimeout(15000);
+                    urlConnection.setRequestMethod("GET");
+                    urlConnection.setDoInput(true);                 
+                    urlConnection.connect();
 
+                    InputStream in = urlConnection.getInputStream(); //getAssets().open("kralfmtop10.htm");
 					playAudio(audioProcess.getInputStream());
 
 
-
-					while (true) {
-						udpAudioSocket.receive(datagramPacket);
-						ostream.write(datagramPacket.getData(), 0, datagramPacket.getLength());
+					
+					int length;
+					byte[] buffer = new byte[2048];
+					while ((length = in.read(buffer, 0, buffer.length)) >= 0) {
+						ostream.write(buffer, 0, length);
 						ostream.flush();
 					}
 				} catch (SocketException e) {

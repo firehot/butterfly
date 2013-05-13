@@ -97,8 +97,8 @@ public class ServerActivity extends Activity implements IStreamer{
 
 			@Override
 			public void onClick(View arg0) {
-				startVideo("192.168.1.22", 53007);
-				startAudio("192.168.1.22", 53008);
+				startVideo("192.168.1.21", 53007);
+				startAudio("192.168.1.21", 53008);
 
 			}
 		});
@@ -348,7 +348,7 @@ public class ServerActivity extends Activity implements IStreamer{
 	public void startAudio(String address, int port) {
 
 		String ffmpegPath = "/data/ffmpeg/bin/ffmpeg"; //getFilesDir().getAbsolutePath() + "/ffmpeg";
-		String audioCommand = ffmpegPath + " -analyzeduration 0 -f s16le -ar 44100 -ac 1 -i -  -ac 1 -acodec libfdk_aac -f adts -vbr 3 tcp://"+address+":"+ port +"/ ";
+		String audioCommand = ffmpegPath + " -analyzeduration 0 -f s16le -ar 44100 -ac 1 -i -  -ac 1 -acodec libfdk_aac -f adts -b:a 128k tcp://"+address+":"+ port +"/ ";
 
 		try {
 			ffmpegaudioProcess = Runtime.getRuntime().exec(audioCommand);
