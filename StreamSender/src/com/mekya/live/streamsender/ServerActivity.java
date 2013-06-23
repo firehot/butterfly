@@ -57,8 +57,6 @@ public class ServerActivity extends Activity implements IStreamer{
 
 	private byte[] audioBuffer;
 
-	private RtspServer rtspServer;
-
 	protected OutputStream audioOutputStream;
 
 	private OutputStream videoOutputStream;
@@ -87,7 +85,6 @@ public class ServerActivity extends Activity implements IStreamer{
 
 		sendStreamButton = (Button) findViewById(R.id.button_capture);
 
-		rtspServer = new RtspServer(this);
 
 		printSomeInfo();
 
@@ -196,10 +193,6 @@ public class ServerActivity extends Activity implements IStreamer{
 	protected void onDestroy() {
 		super.onDestroy();
 		stopStreaming();
-
-		if (rtspServer != null) {
-			rtspServer.stop();
-		}
 	}
 
 
@@ -244,7 +237,6 @@ public class ServerActivity extends Activity implements IStreamer{
 	protected void onPause() {
 		releaseCamera(); // release the camera immediately on pause event 
 		stopStreaming();
-		rtspServer.stop();
 		super.onPause();
 	}
 
@@ -483,7 +475,6 @@ public class ServerActivity extends Activity implements IStreamer{
 			InputStream isr = ffmpegVideoProcess.getErrorStream();
 			videoOutputStream = ffmpegVideoProcess.getOutputStream();
 			readErrorStream(isr);
-
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
