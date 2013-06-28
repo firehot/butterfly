@@ -12,6 +12,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.HttpURLConnection;
 import java.net.SocketException;
@@ -35,6 +36,8 @@ import android.widget.EditText;
 import android.widget.ToggleButton;
 
 public class ClientActivity extends Activity {
+
+	private static final int DEFAULT_AUDIO_RECEIVER_PORT = 53008;
 
 	public static final String TAG = "TAG";
 
@@ -80,7 +83,9 @@ public class ClientActivity extends Activity {
 
 				if (startButton.isChecked()) {
 					
-					videoView.setVideoPath("http://"+serverAddressEditText.getText().toString()+":24007/liveVideo");
+					//videoView.setVideoPath("http://"+serverAddressEditText.getText().toString()+":24007/liveVideo");
+					videoView.setVideoPath("rtsp://"+serverAddressEditText.getText().toString()+":6454/live.ts");
+					
 					videoView.setVideoQuality(MediaPlayer.VIDEOQUALITY_HIGH);
 					videoView.setBufferSize(1024*10);
 					
@@ -227,7 +232,10 @@ public class ClientActivity extends Activity {
 					OutputStream ostream = audioProcess.getOutputStream();
 					readErrorStream(audioProcess.getErrorStream());
 					
+					DatagramSocket datagramSocket = new DatagramSocket(DEFAULT_AUDIO_RECEIVER_PORT);
 					
+					
+					/*
 					URL url = new URL("http://"+serverAddressEditText.getText().toString()+":24007/liveAudio");
                     HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                     urlConnection.setReadTimeout(10000);
@@ -237,16 +245,23 @@ public class ClientActivity extends Activity {
                     urlConnection.connect();
 
                     InputStream in = urlConnection.getInputStream(); //getAssets().open("kralfmtop10.htm");
+					*/
+					
 					playAudio(audioProcess.getInputStream());
 
 
 					
-					int length;
-					byte[] buffer = new byte[2048];
-					while ((length = in.read(buffer, 0, buffer.length)) >= 0) {
-						ostream.write(buffer, 0, length);
+					byte[] buffer = new byte[10*1024];
+					DatagramPacket datagramPacket = new DatagramPacket(buffer, buffer.length);
+					while (true) {
+						datagramSocket.receive(datagramPacket);
+						ostream.write(datagramPacket.getData(), 0, datagramPacket.getLength());
 						ostream.flush();
 					}
+//					while ((length = in.read(buffer, 0, buffer.length)) >= 0) {
+//						ostream.write(buffer, 0, length);
+//						ostream.flush();
+//					}
 				} catch (SocketException e) {
 					e.printStackTrace();
 				} catch (IOException e) {
