@@ -94,8 +94,8 @@ public class ServerActivity extends Activity implements IStreamer{
 
 			@Override
 			public void onClick(View arg0) {
-				startVideo("192.168.1.23", 43007);
-				startAudio("192.168.1.23", 43008);
+				startVideo("192.168.1.20", 43007);
+				startAudio("192.168.1.20", 43008);
 
 			}
 		});
@@ -339,8 +339,8 @@ public class ServerActivity extends Activity implements IStreamer{
 	@Override
 	public void startAudio(String address, int port) {
 
-		String ffmpegPath = "/data/ffmpeg/bin/ffmpeg"; //getFilesDir().getAbsolutePath() + "/ffmpeg";
-		String audioCommand = ffmpegPath + " -analyzeduration 0 -f s16le -ar 44100 -ac 1 -i -  -ac 1 -acodec libfdk_aac -f adts -b:a 128k udp://"+address+":"+ port +"/ ";
+		String ffmpegPath = getFilesDir().getAbsolutePath() + "/ffmpeg";  // "/data/ffmpeg/bin/ffmpeg"; 
+		String audioCommand = ffmpegPath + " -analyzeduration 0 -f s16le -ar 44100 -ac 1 -i -  -ac 1 -acodec libfdk_aac -f adts udp://"+address+":"+ port +"/ ";
 
 		try {
 			ffmpegaudioProcess = Runtime.getRuntime().exec(audioCommand);
@@ -380,51 +380,6 @@ public class ServerActivity extends Activity implements IStreamer{
 	}
 
 
-//	private void prepareInterface() {
-//		try {
-//			Process process = Runtime.getRuntime().exec("su");
-//			DataOutputStream oStream = new DataOutputStream(process.getOutputStream());
-//
-//			oStream.writeBytes("route add default gw 192.168.43.2 dev wlan1" + "\n");
-//			oStream.flush();
-//
-//			oStream.writeBytes("ifconfig wlan1 mtu 1370 up" + "\n");
-//			oStream.flush();
-//
-//			oStream.writeBytes("exit" + "\n");
-//			oStream.flush();
-//
-//			process.waitFor();
-//
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//		}
-//	}
-
-//	private void prepareInterface2() {
-//		try {
-//			Process process = Runtime.getRuntime().exec("su");
-//			DataOutputStream oStream = new DataOutputStream(process.getOutputStream());
-//
-//			oStream.writeBytes("route add default gw 53.0.0.1 dev wlan1" + "\n");
-//			oStream.flush();
-//
-//			oStream.writeBytes("ifconfig wlan1 mtu 1370 up" + "\n");
-//			oStream.flush();
-//
-//			oStream.writeBytes("exit" + "\n");
-//			oStream.flush();
-//
-//			process.waitFor();
-//
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//		}
-//	}
 
 	@Override
 	public void stopStreaming() {
@@ -467,8 +422,8 @@ public class ServerActivity extends Activity implements IStreamer{
 
 	@Override
 	public void startVideo(String address, int port) {
-		String ffmpegPath = getFilesDir().getAbsolutePath() + "/ffmpeg";
-		String videoCommand = "/data/ffmpeg/bin/ffmpeg -analyzeduration 0 -pix_fmt nv21 -s 480x360 -re  -vcodec rawvideo -f image2pipe -i - -s 320x240 -crf 23 -preset ultrafast -tune zerolatency -vcodec libx264 -f rtp rtp://"+address+":"+ port +"/  ";
+		String ffmpegPath = getFilesDir().getAbsolutePath() + "/ffmpeg";  // /data/ffmpeg/bin/ffmpeg
+		String videoCommand = ffmpegPath + " -analyzeduration 0 -pix_fmt nv21 -s 480x360 -re  -vcodec rawvideo -f image2pipe -i - -s 320x240 -crf 23 -preset ultrafast -tune zerolatency -vcodec libx264 -f rtp rtp://"+address+":"+ port +"/  ";
 
 		try {
 			ffmpegVideoProcess = Runtime.getRuntime().exec(videoCommand);
@@ -502,81 +457,5 @@ public class ServerActivity extends Activity implements IStreamer{
 	}
 
 
-	public void startStreaming(String address, int port){
-		String ffmpegPath = getFilesDir().getAbsolutePath() + "/ffmpeg";
-		String command = ffmpegPath + " -re -analyzeduration 0 -pix_fmt nv21 -s 480x360 -vcodec rawvideo -f image2pipe -i /data/ffmpeg/bin/mypipe  -analyzeduration 0 -f s16le -ar 44100 -ac 1 -i /data/ffmpeg/bin/audiopipe -ar 44100 -ac 1 -strict -2 -acodec libfdk_aac -b:a 24k -f mpegts -b 56k  -crf 30 -preset ultrafast -tune zerolatency -vcodec libx264 udp://"+address+":"+ port +"/  ";
 
-		//		String command = "/data/ffmpeg/bin/ffmpeg -re -analyzeduration 0 -pix_fmt nv21 -s 320x180 -vcodec rawvideo -f image2pipe -i /data/ffmpeg/bin/mypipe -re -analyzeduration 0 -f s16le -ar 44100 -ac 1 -i /data/ffmpeg/bin/audiopipe -fflags nobuffer -ar 44100 -ac 1 -strict -2 -acodec libfdk_aac -b:a 24k -async 1 -r 25 -b 56k -maxrate 56k -crf 30 -preset ultrafast -tune zerolatency -vcodec libx264 -y /mnt/sdcard/ouytyt.ts ";
-
-
-		try {
-			Process ffmpegProcess = Runtime.getRuntime().exec(command);
-
-			final InputStream isr = ffmpegProcess.getErrorStream();
-			//OutputStream oStream = ffmpegProcess.getOutputStream();
-
-			new Thread(){
-				public void run() {
-					byte[] buffer = new byte[1024];
-					int len;
-					try {
-						while ((len = isr.read(buffer)) != -1) {
-							System.out.println(new String(buffer, 0, len));
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-
-				};
-			}.start();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-
-		try {
-			final FileOutputStream oVideoStream = new FileOutputStream("/data/ffmpeg/bin/mypipe");
-
-			mCamera.setPreviewCallback(new PreviewCallback() {					
-				@Override
-				public void onPreviewFrame(final byte[] buffer, Camera arg1) {
-					System.out.println("Writing frame to pipe lenght" + buffer.length);
-					try {
-						//System.out.println("writing to video pipe");
-						oVideoStream.write(buffer);
-						oVideoStream.flush();
-						//System.out.println("wrote to video pipe");
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			});
-
-
-			final FileOutputStream oaudioStream = new FileOutputStream("/data/ffmpeg/bin/audiopipe");
-			prepareAudioRecord();
-			new Thread () {
-				public void run() {
-					try {
-						while (true) {
-							int len = audioRecord.read(audioBuffer, 0, audioBuffer.length);
-							//System.out.println("writing to audio pipe");
-							oaudioStream.write(audioBuffer, 0, len);	
-							oaudioStream.flush();
-							//System.out.println("wrote to audio pipe");
-						}
-					}
-					catch (IOException e) {
-						e.printStackTrace();
-					} 
-				};
-			}.start();
-
-		} catch (FileNotFoundException e1) {
-
-			e1.printStackTrace();
-		}
-
-
-
-	}
 }

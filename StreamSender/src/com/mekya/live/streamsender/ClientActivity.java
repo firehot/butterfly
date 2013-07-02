@@ -88,16 +88,8 @@ public class ClientActivity extends Activity {
 					
 					videoView.setVideoQuality(MediaPlayer.VIDEOQUALITY_HIGH);
 					videoView.setBufferSize(1024*10);
-					
-					
-					//surfaceView.setVideoPath("rtsp://192.168.1.192:6454/live.ts");
 
 					receiveAudio();
-
-					//surfaceView.setVideoPath("rtsp://v1.cache5.c.youtube.com/CjYLENn73wlaLQnhfxT-xQuPjRMYDSANFEIJbXYtZ29vZ2xlSARSBXdhdGNoYPiN9fWmz6VUQw=/0/0/0/video.3gp");
-					//surfaceView.setVideoPath("rtsp://192.168.43.11:6454/live.ts");
-					//surfaceView.setVideoPath("rtsp://53.0.0.11:6454/live.ts");
-
 
 					videoView.setOnBufferingUpdateListener(new OnBufferingUpdateListener() {
 						int i = 0;
@@ -224,28 +216,15 @@ public class ClientActivity extends Activity {
 		new Thread(){
 			public void run() {
 				try {
-					String ffmpegPath = "data/ffmpeg/bin/ffmpeg"; 
-					String ffmpegCommand = ffmpegPath + " -analyzeduration 0 -f aac -strict -2 -acodec aac -b:a 128k -ac 1 -i - -f s16le -acodec pcm_s16le -ar 44100 -ac 1 -";
+					String ffmpegPath = getFilesDir().getAbsolutePath() + "/ffmpeg"; //  "data/ffmpeg/bin/ffmpeg"; 
+					String ffmpegCommand = ffmpegPath + " -analyzeduration 0 -f aac -strict -2 -acodec aac -ac 1 -i - -f s16le -acodec pcm_s16le -ar 44100 -ac 1 -";
 
 					final Process audioProcess = Runtime.getRuntime().exec(ffmpegCommand);
 
 					OutputStream ostream = audioProcess.getOutputStream();
 					readErrorStream(audioProcess.getErrorStream());
 					
-					DatagramSocket datagramSocket = new DatagramSocket(DEFAULT_AUDIO_RECEIVER_PORT);
-					
-					
-					/*
-					URL url = new URL("http://"+serverAddressEditText.getText().toString()+":24007/liveAudio");
-                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                    urlConnection.setReadTimeout(10000);
-                    urlConnection.setConnectTimeout(15000);
-                    urlConnection.setRequestMethod("GET");
-                    urlConnection.setDoInput(true);                 
-                    urlConnection.connect();
-
-                    InputStream in = urlConnection.getInputStream(); //getAssets().open("kralfmtop10.htm");
-					*/
+					udpAudioSocket = new DatagramSocket(DEFAULT_AUDIO_RECEIVER_PORT);
 					
 					playAudio(audioProcess.getInputStream());
 
@@ -254,14 +233,11 @@ public class ClientActivity extends Activity {
 					byte[] buffer = new byte[10*1024];
 					DatagramPacket datagramPacket = new DatagramPacket(buffer, buffer.length);
 					while (true) {
-						datagramSocket.receive(datagramPacket);
+						udpAudioSocket.receive(datagramPacket);
 						ostream.write(datagramPacket.getData(), 0, datagramPacket.getLength());
 						ostream.flush();
 					}
-//					while ((length = in.read(buffer, 0, buffer.length)) >= 0) {
-//						ostream.write(buffer, 0, length);
-//						ostream.flush();
-//					}
+
 				} catch (SocketException e) {
 					e.printStackTrace();
 				} catch (IOException e) {
@@ -337,51 +313,6 @@ public class ClientActivity extends Activity {
 	}
 
 
-	private void prepareInterface() {
-		try {
-			Process process = Runtime.getRuntime().exec("su");
-			DataOutputStream oStream = new DataOutputStream(process.getOutputStream());
-
-			oStream.writeBytes("route add default gw 192.168.43.2 dev wlan1" + "\n");
-			oStream.flush();
-
-			oStream.writeBytes("ifconfig wlan1 mtu 1370 up" + "\n");
-			oStream.flush();
-
-			oStream.writeBytes("exit" + "\n");
-			oStream.flush();
-
-			process.waitFor();
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void prepareInterface2() {
-		try {
-			Process process = Runtime.getRuntime().exec("su");
-			DataOutputStream oStream = new DataOutputStream(process.getOutputStream());
-
-			oStream.writeBytes("route add default gw 53.0.0.1 dev wlan1" + "\n");
-			oStream.flush();
-
-			oStream.writeBytes("ifconfig wlan1 mtu 1370 up" + "\n");
-			oStream.flush();
-
-			oStream.writeBytes("exit" + "\n");
-			oStream.flush();
-
-			process.waitFor();
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
 
 	public void stopStreaming() {
 		if (udpAudioSocket != null) {
@@ -393,95 +324,5 @@ public class ClientActivity extends Activity {
 		}
 		videoView.stopPlayback();
 	}
-
-
-	//	
-	//	public void startStreaming(String address, int port, int portAudio){
-	//		String command = "/data/ffmpeg/bin/ffmpeg -analyzeduration 0 -pix_fmt nv21 -s 480x360 -vcodec rawvideo -f image2pipe -i /data/ffmpeg/bin/mypipe -analyzeduration 0 -b 90k -f s16le -ar 44100 -ac 1 -i /data/ffmpeg/bin/audiopipe -vn -ar 44100 -ac 1 -acodec libfdk_aac  -f rtp rtp://"+address+":"+ portAudio +"/ -an -b:v 120k -crf 30 -preset ultrafast -vcodec libx264 -f rtp rtp://"+address+":"+ port +"/  ";
-	//
-	//		try {
-	//			Process ffmpegProcess = Runtime.getRuntime().exec(command);
-	//
-	//			final InputStream isr = ffmpegProcess.getErrorStream();
-	//			//OutputStream oStream = ffmpegProcess.getOutputStream();
-	//
-	//			new Thread(){
-	//				public void run() {
-	//					byte[] buffer = new byte[1024];
-	//					int len;
-	//					try {
-	//						while ((len = isr.read(buffer)) != -1) {
-	//							System.out.println(new String(buffer, 0, len));
-	//						}
-	//					} catch (IOException e) {
-	//						e.printStackTrace();
-	//					}
-	//
-	//				};
-	//			}.start();
-	//		} catch (IOException e1) {
-	//			e1.printStackTrace();
-	//		}
-	//
-	//		try {
-	//			final FileOutputStream oVideoStream = new FileOutputStream("/data/ffmpeg/bin/mypipe");
-	//
-	//			mCamera.setPreviewCallback(new PreviewCallback() {
-	//
-	//				long start = 0;
-	//				int frameCount = 0;
-	//				@Override
-	//				public void onPreviewFrame(final byte[] buffer, Camera arg1) {
-	//					//System.out.println("Writing frame to pipe");
-	//					try {
-	//						frameCount++;
-	//						long now = System.currentTimeMillis();
-	//
-	//						if (start == 0) {
-	//							start = System.currentTimeMillis();
-	//						}
-	//						else if ((now - start) >= 1000) {
-	//							start = System.currentTimeMillis();
-	//							//System.out.println("Frame count in last 1 second is " + frameCount);
-	//							frameCount = 0;
-	//						}
-	//						else if (frameCount < 20) 
-	//						{
-	//							oVideoStream.write(buffer);
-	//							oVideoStream.flush();
-	//						}
-	//
-	//						//System.out.println("wrote to video pipe");
-	//					} catch (IOException e) {
-	//						e.printStackTrace();
-	//					}
-	//				}
-	//			});
-	//
-	//
-	//			final FileOutputStream oaudioStream = new FileOutputStream("/data/ffmpeg/bin/audiopipe");
-	//			prepareAudioRecord();
-	//			new Thread () {
-	//				public void run() {
-	//					try {
-	//						while (true) {
-	//							int len = audioRecord.read(audioBuffer, 0, audioBuffer.length);
-	//							//System.out.println("writing to audio pipe");
-	//							oaudioStream.write(audioBuffer, 0, len);	
-	//							oaudioStream.flush();
-	//							//System.out.println("wrote to audio pipe length " + len);
-	//						}
-	//					}
-	//					catch (IOException e) {
-	//						e.printStackTrace();
-	//					} 
-	//				};
-	//			}.start();
-	//
-	//		} catch (FileNotFoundException e1) {
-	//
-	//			e1.printStackTrace();
-	//		}
-	//	}
 
 }
