@@ -133,7 +133,12 @@ public class StreamUdpServer implements IStreamer {
 
 
 	@Override
-	public void stopStreaming() {
+	public void stopVideo(String address, int port) {
+	}
+	
+	@Override
+	public void stopAudio(String address, int port) {
+		
 	}
 	
 	public class Client {

@@ -21,9 +21,14 @@ public class RtspServer {
 	private int sessionId;
 	private Integer audio_port = 53008;
 	protected String clientAddr;
+	protected Socket RTSPsocket;
 
 	public RtspServer(IStreamer istreamer) {
 		listenHttp();
+		this.istreamer = istreamer;
+	}
+	
+	public void setIStreamer(IStreamer istreamer) {
 		this.istreamer = istreamer;
 	}
 
@@ -48,7 +53,7 @@ public class RtspServer {
 					listenSocket = new ServerSocket(6454);
 					boolean done = false;
 					while (!done) {
-						Socket RTSPsocket = listenSocket.accept();
+						RTSPsocket = listenSocket.accept();
 						processRequest(RTSPsocket);
 						if (done == true) {
 							break;
@@ -150,7 +155,8 @@ public class RtspServer {
 				+ "\r\n");
 		writer.flush();
 		
-		istreamer.stopStreaming();
+		istreamer.stopVideo(clientAddr, video_port);
+		istreamer.stopAudio(clientAddr, audio_port);
 		
 	}
 
@@ -254,8 +260,7 @@ public class RtspServer {
 							break;
 						}
 					}
-				
-
+					
 					socket.close();
 
 				} catch (IOException e) {
@@ -264,5 +269,11 @@ public class RtspServer {
 			};
 		}.start();
 	}
+
+	public int getConnectedClientCount() {
+		
+		return 0;
+	}
+
 
 }
