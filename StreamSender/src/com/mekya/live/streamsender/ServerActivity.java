@@ -85,17 +85,16 @@ public class ServerActivity extends Activity implements IStreamer{
 
 		sendStreamButton = (Button) findViewById(R.id.button_capture);
 
-
-		printSomeInfo();
-
 		openCameraPreview();
 
+		printSomeInfo();
+		
 		sendStreamButton.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View arg0) {
-				startVideo("192.168.1.20", 43007);
-				startAudio("192.168.1.20", 43008);
+				startVideo("192.168.1.22", 43007);
+				startAudio("192.168.1.22", 43008);
 
 			}
 		});
@@ -148,7 +147,7 @@ public class ServerActivity extends Activity implements IStreamer{
 
 		Camera.Parameters params = mCamera.getParameters();
 		params.setPreviewFormat(ImageFormat.NV21);
-		params.setPreviewSize(480, 360);
+		params.setPreviewSize(352, 288);
 		//params.setPreviewFpsRange(20000, 20000);
 		mCamera.setParameters(params);
 
@@ -423,7 +422,7 @@ public class ServerActivity extends Activity implements IStreamer{
 	@Override
 	public void startVideo(String address, int port) {
 		String ffmpegPath = getFilesDir().getAbsolutePath() + "/ffmpeg";  // /data/ffmpeg/bin/ffmpeg
-		String videoCommand = ffmpegPath + " -analyzeduration 0 -pix_fmt nv21 -s 480x360 -re  -vcodec rawvideo -f image2pipe -i - -s 320x240 -crf 23 -preset ultrafast -tune zerolatency -vcodec libx264 -f rtp rtp://"+address+":"+ port +"/  ";
+		String videoCommand = ffmpegPath + " -analyzeduration 0 -pix_fmt nv21 -s 352x288 -re  -vcodec rawvideo -f image2pipe -i - -s 352x288 -crf 23 -preset ultrafast -tune zerolatency -vcodec libx264 -f rtp rtp://"+address+":"+ port +"/  ";
 
 		try {
 			ffmpegVideoProcess = Runtime.getRuntime().exec(videoCommand);

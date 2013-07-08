@@ -25,6 +25,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.os.Bundle;
 import android.util.Log;
@@ -55,6 +56,8 @@ public class ClientActivity extends Activity {
 	private DatagramSocket udpAudioSocket;
 
 	protected AudioTrack audioTrack;
+
+	protected Process ffmpegAudioProcess;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -219,14 +222,15 @@ public class ClientActivity extends Activity {
 					String ffmpegPath = getFilesDir().getAbsolutePath() + "/ffmpeg"; //  "data/ffmpeg/bin/ffmpeg"; 
 					String ffmpegCommand = ffmpegPath + " -analyzeduration 0 -f aac -strict -2 -acodec aac -ac 1 -i - -f s16le -acodec pcm_s16le -ar 44100 -ac 1 -";
 
-					final Process audioProcess = Runtime.getRuntime().exec(ffmpegCommand);
-
-					OutputStream ostream = audioProcess.getOutputStream();
-					readErrorStream(audioProcess.getErrorStream());
+					ffmpegAudioProcess = Runtime.getRuntime().exec(ffmpegCommand);
+					
+					
+					OutputStream ostream = ffmpegAudioProcess.getOutputStream();
+					readErrorStream(ffmpegAudioProcess.getErrorStream());
 					
 					udpAudioSocket = new DatagramSocket(DEFAULT_AUDIO_RECEIVER_PORT);
 					
-					playAudio(audioProcess.getInputStream());
+					playAudio(ffmpegAudioProcess.getInputStream());
 
 
 					
@@ -322,6 +326,11 @@ public class ClientActivity extends Activity {
 		if (audioTrack != null) {
 			audioTrack.stop();
 		}
+		
+		if (ffmpegAudioProcess != null) {
+			ffmpegAudioProcess.destroy();
+		}
+		
 		videoView.stopPlayback();
 	}
 
