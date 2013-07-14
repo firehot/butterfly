@@ -1,6 +1,7 @@
 package test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -18,6 +19,7 @@ import org.junit.Test;
 import test.mock.RtspClient;
 
 import com.mekya.streamserver.IStreamer;
+import com.mekya.streamserver.servers.Client;
 import com.mekya.streamserver.servers.RtspServer;
 import com.mekya.streamserver.servers.StreamUdpServer;
 
@@ -38,26 +40,32 @@ public class RtspServerTest {
 		private int stopAudioStreamingCallCount;
 
 		@Override
-		public void startAudio(String address, int port) {
+		public void startAudio(Client client) {
 			startAudioCallCount ++;
 			
 		}
 
 		@Override
-		public void startVideo(String address, int port) {
+		public void startVideo(Client client) {
 			startVideoCallCount ++;
-			System.out.println("Port no streamer " + port);
-			videoPortNoList.add(port);
+			System.out.println("Port no streamer " + client.getVideo_port());
+			videoPortNoList.add(client.getVideo_port());
 		}
 
 		@Override
-		public void stopVideo(String address, int port) {
+		public void stopVideo(Client client) {
 			stopVideoStreamingCallCount ++;
 		}
 		
 		@Override
-		public void stopAudio(String address, int port) {
+		public void stopAudio(Client client) {
 			stopAudioStreamingCallCount++;
+		}
+
+		@Override
+		public void stop() {
+			
+			
 		}
 		
 		
@@ -114,13 +122,15 @@ public class RtspServerTest {
 		assertEquals(streamer.stopAudioStreamingCallCount, clientCount);
 		
 		assertEquals(0, rtspServer.getConnectedClientCount());
+	
 	}
 	
 	@Test
 	public void testStreamToStreamUDPServer() {
 		clientCount = 10;
 		
-		rtspServer.setIStreamer(new StreamUdpServer());
+		StreamUdpServer istreamer = new StreamUdpServer();
+		rtspServer.setIStreamer(istreamer);
 		List<RtspClient> rtspClientList = letClientsConnectToRtspServer();
 		
 		
@@ -136,6 +146,11 @@ public class RtspServerTest {
 			//sending data to stream udp server to deliver it to rtspclients
 			for (int i = 0; i < packetSendCount; i++) {
 				socket.send(packet);
+				Thread.sleep(1000);
+				for (int j = 0; j < 10; j++) {
+					//check that data is received to rtspClients
+					System.out.println("client : "+j+" "+rtspClientList.get(j).getTotalReceivedDataRTPLength());
+				}
 			}
 			
 			Thread.sleep(5000);
@@ -156,20 +171,30 @@ public class RtspServerTest {
 			Thread.sleep(100);			
 			//check that connected client count is updated
 			assertEquals(clientCount-1, rtspServer.getConnectedClientCount());
+			assertEquals(clientCount-1, istreamer.getVideoReceiverCount());
+			
 			
 			//send packet again to stream udp server
 			socket.send(packet);
 			
-			Thread.sleep(1000);		
-			//rtspClient0 is disconnected so its received data length should not be updated
-			//totalDatalength is not updated yet
-			assertTrue(rtspClient0.getTotalReceivedDataRTPLength() == totalDataLength);
-			
-			
+			for (int j = 1; j < 10; j++) {
+				//check that data is received to rtspClients
+				System.out.println("client : "+j+" "+rtspClientList.get(j).getTotalReceivedDataRTPLength());
+			}
+			int oldtotalDataLength = totalDataLength;
 			//update totalDatalength
 			totalDataLength += packet.getLength();
 			
-			for (int i = 0; i < rtspClientList.size(); i++) {
+			Thread.sleep(1000);		
+			//rtspClient0 is disconnected so its received data length should not be updated
+			//totalDatalength is not updated yet
+			assertTrue(rtspClient0.getTotalReceivedDataRTPLength() != totalDataLength);
+			assertTrue(rtspClient0.getTotalReceivedDataRTPLength() == oldtotalDataLength);
+			
+			
+
+			
+			for (int i = 1; i < rtspClientList.size(); i++) {
 				//check that data is received to rtspClients
 				assertEquals(totalDataLength, rtspClientList.get(i).getTotalReceivedDataRTPLength());
 			}
@@ -183,6 +208,7 @@ public class RtspServerTest {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+
 				
 		
 	}

@@ -29,35 +29,38 @@ public class StreamUdpServer implements IStreamer {
 		listenAudio();
 	}
 
-	public void listenVideo()
-	{
-		listenVideoThread = new Thread(){
+	public void listenVideo() {
+		listenVideoThread = new Thread() {
 
 			private int totalLength = 0;
 			private DatagramPacket datagramSenderPacket;
-			
+
 			public void run() {
 				try {
-					datagramVideoServerSocket = new DatagramSocket(DATAGRAM_VIDEO_PORT);
+					datagramVideoServerSocket = new DatagramSocket(
+							DATAGRAM_VIDEO_PORT);
 					DatagramSocket datagramVideoClientSocket = new DatagramSocket();
 
-					byte[] data = new byte[10*1024];
+					byte[] data = new byte[10 * 1024];
 					DatagramPacket datagramPacket;
 
 					while (true) {
 						datagramPacket = new DatagramPacket(data, data.length);
-						datagramVideoServerSocket.receive(datagramPacket);					
+						datagramVideoServerSocket.receive(datagramPacket);
 						totalLength += datagramPacket.getLength();
-						
+
 						for (int i = 0; i < videoReceivers.size(); i++) {
-							InetAddress inetAddress = InetAddress.getByName(videoReceivers.get(i).address);
-							datagramSenderPacket = new DatagramPacket(datagramPacket.getData(), datagramPacket.getLength(), inetAddress, videoReceivers.get(i).port);
+							InetAddress inetAddress = InetAddress
+									.getByName(videoReceivers.get(i).getAddr());
+							datagramSenderPacket = new DatagramPacket(
+									datagramPacket.getData(),
+									datagramPacket.getLength(), inetAddress,
+									videoReceivers.get(i).getVideo_port());
 							System.out
 							.println("StreamUdpServer.listenVideo().new Thread() {...}.run()");
-							datagramVideoClientSocket.send(datagramSenderPacket);
+							datagramVideoClientSocket
+							.send(datagramSenderPacket);
 						}
-						
-					
 
 					}
 				} catch (SocketException e) {
@@ -70,33 +73,39 @@ public class StreamUdpServer implements IStreamer {
 		listenVideoThread.start();
 
 	}
-	
-	public void listenAudio() {
-		listenAudioThread = new Thread(){
 
+	public void listenAudio() {
+		listenAudioThread = new Thread() {
 
 			private int totalLength = 0;
+
 			public void run() {
 				try {
-					datagramAudioServerSocket = new DatagramSocket(DATAGRAM_AUDIO_PORT);
+					datagramAudioServerSocket = new DatagramSocket(
+							DATAGRAM_AUDIO_PORT);
 					DatagramSocket datagramAudioClientSocket = new DatagramSocket();
 
-					byte[] data = new byte[10*1024];
+					byte[] data = new byte[10 * 1024];
 					DatagramPacket datagramPacket;
 					DatagramPacket datagramSenderPacket;
 
 					while (true) {
 						datagramPacket = new DatagramPacket(data, data.length);
-						datagramAudioServerSocket.receive(datagramPacket);					
+						datagramAudioServerSocket.receive(datagramPacket);
 						totalLength += datagramPacket.getLength();
-						
+
 						System.out
-								.println("StreamUdpServer.listenAudio().new Thread() {...}.run()");
-						
+						.println("StreamUdpServer.listenAudio().new Thread() {...}.run()");
+
 						for (int i = 0; i < audioReceivers.size(); i++) {
-							InetAddress inetAddress = InetAddress.getByName(audioReceivers.get(i).address);
-							datagramSenderPacket = new DatagramPacket(datagramPacket.getData(), datagramPacket.getLength(), inetAddress, audioReceivers.get(i).port);
-							datagramAudioClientSocket.send(datagramSenderPacket);
+							InetAddress inetAddress = InetAddress
+									.getByName(audioReceivers.get(i).getAddr());
+							datagramSenderPacket = new DatagramPacket(
+									datagramPacket.getData(),
+									datagramPacket.getLength(), inetAddress,
+									audioReceivers.get(i).getAudio_port());
+							datagramAudioClientSocket
+							.send(datagramSenderPacket);
 						}
 					}
 				} catch (SocketException e) {
@@ -109,47 +118,56 @@ public class StreamUdpServer implements IStreamer {
 		listenAudioThread.start();
 	}
 
+	@Override
 	public void stop() {
 		try {
 			datagramVideoServerSocket.close();
+			datagramAudioServerSocket.close();
 			listenVideoThread.join();
+			listenAudioThread.join();
+
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				listenAudioThread.join(10000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
+	@Override
+	public void startAudio(Client client) {
+		audioReceivers.add(client);
+
+	}
 
 	@Override
-	public void startAudio(String address, int port) {
-		audioReceivers.add(new Client(address, port));
-		
+	public void startVideo(Client client) {
+		videoReceivers.add(client);
+	}
+
+	@Override
+	public void stopVideo(Client client) {
+		videoReceivers.remove(client);
 	}
 
 
-	@Override
-	public void startVideo(String address, int port) {
-		videoReceivers.add(new Client(address, port));
-	}
 
 
 	@Override
-	public void stopVideo(String address, int port) {
+	public void stopAudio(Client client) {
+		audioReceivers.remove(client);
 	}
-	
-	@Override
-	public void stopAudio(String address, int port) {
-		
-	}
-	
-	public class Client {
-		public String address;
-		public int port;
-		
-		public Client(String address, int port) {
-			this.address = address;
-			this.port = port;
-		}
- 	}
 
+
+	public int getVideoReceiverCount() {
+		return videoReceivers.size();
+	}
+
+	public int getAudioReceiverCount() {
+		return audioReceivers.size();
+	}
 
 }

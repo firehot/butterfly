@@ -1,10 +1,13 @@
 package com.mekya.streamserver;
 
+import com.mekya.streamserver.servers.Client;
+
 public interface IStreamer {
 
-	public void startAudio(String address, int port);
-	public void startVideo(String address, int port);
+	public void startAudio(Client client);
+	public void startVideo(Client client);
 	
-	public void stopVideo(String address, int port);
-	public void stopAudio(String address, int port);
+	public void stopVideo(Client client);
+	public void stopAudio(Client client);
+	public void stop();
 }

@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 
 import com.mekya.streamserver.IStreamer;
 
@@ -17,15 +18,17 @@ public class RtspServer {
 	protected ServerSocket listenSocket;
 	private Thread serverThread;
 	private IStreamer istreamer;
-	private Integer video_port;
+//	private Integer video_port;
 	private int sessionId;
-	private Integer audio_port = 53008;
-	protected String clientAddr;
-	protected Socket RTSPsocket;
+//	private Integer audio_port = 53008;
+//	protected String clientAddr;
+//	protected Socket RTSPsocket;
+	private int clientCount;
 
 	public RtspServer(IStreamer istreamer) {
-		listenHttp();
+		listenPort();
 		this.istreamer = istreamer;
+		this.clientCount=0;
 	}
 	
 	public void setIStreamer(IStreamer istreamer) {
@@ -35,7 +38,9 @@ public class RtspServer {
 	public void stop(){
 		try {
 			listenSocket.close();
-			serverThread.join();			
+			serverThread.join();
+			istreamer.stop();
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
@@ -44,7 +49,7 @@ public class RtspServer {
 	}
 
 
-	private void listenHttp()
+	private void listenPort()
 	{
 		serverThread = new Thread(){
 			@Override
@@ -53,7 +58,8 @@ public class RtspServer {
 					listenSocket = new ServerSocket(6454);
 					boolean done = false;
 					while (!done) {
-						RTSPsocket = listenSocket.accept();
+						Socket RTSPsocket = listenSocket.accept();
+						clientCount++;
 						processRequest(RTSPsocket);
 						if (done == true) {
 							break;
@@ -125,7 +131,7 @@ public class RtspServer {
 	}
 
 
-	private void replyRequest(BufferedWriter writer, RtspRequest rtspReq){
+	private void replyRequest(BufferedWriter writer, RtspRequest rtspReq, Client client){
 		try {
 			if (rtspReq.command.equals("OPTIONS")) {
 				replyOptions(writer, rtspReq);
@@ -134,13 +140,14 @@ public class RtspServer {
 				replyDescribe(writer, rtspReq);
 			}
 			else if (rtspReq.command.equals("SETUP")) {
-				replySetup(writer, rtspReq);
+				replySetup(writer, rtspReq, client);
 			}
 			else if (rtspReq.command.equals("PLAY")) {
-				replyPlay(writer, rtspReq);
+				replyPlay(writer, rtspReq, client);
 			}
 			else if (rtspReq.command.equals("TEARDOWN")) {
-				replyTearDown(writer, rtspReq);
+				clientCount--;
+				replyTearDown(writer, rtspReq, client);
 			}
 		}
 		catch(IOException e) {
@@ -149,18 +156,18 @@ public class RtspServer {
 
 	}
 
-	private void replyTearDown(BufferedWriter writer, RtspRequest rtspReq) throws IOException {
+	private void replyTearDown(BufferedWriter writer, RtspRequest rtspReq, Client client) throws IOException {
 		writer.write("RTSP/1.0 200 OK" + "\r\n"
 				+ "CSeq: " + rtspReq.creq + "\r\n"
 				+ "\r\n");
 		writer.flush();
 		
-		istreamer.stopVideo(clientAddr, video_port);
-		istreamer.stopAudio(clientAddr, audio_port);
+		istreamer.stopVideo(client);
+		istreamer.stopAudio(client);
 		
 	}
 
-	private void replyPlay(BufferedWriter writer, RtspRequest rtspReq) throws IOException 
+	private void replyPlay(BufferedWriter writer, RtspRequest rtspReq, Client client) throws IOException 
 	{
 		writer.write("RTSP/1.0 200 OK" + "\r\n"
 				+ "CSeq: " + rtspReq.creq + "\r\n"
@@ -169,18 +176,18 @@ public class RtspServer {
 		writer.flush();
 		
 		//istreamer.startStreaming(clientAddr, video_port, audio_port);
-		istreamer.startVideo(clientAddr, video_port);
-		istreamer.startAudio(clientAddr, audio_port);
+		istreamer.startVideo(client);
+		istreamer.startAudio(client);
 	}
 
-	private void replySetup(BufferedWriter writer, RtspRequest rtspReq) throws IOException {
+	private void replySetup(BufferedWriter writer, RtspRequest rtspReq, Client client) throws IOException {
 		
 		if (rtspReq.trackId == 0) {
-			video_port = rtspReq.client_port;
+			client.setVideo_port(rtspReq.client_port);
 			sessionId = (int)(Math.random() * 10000000);
 		}
 		else if (rtspReq.trackId == 1){
-			audio_port = rtspReq.client_port;
+			client.setAudio_port(rtspReq.client_port);
 		}
 		writer.write("RTSP/1.0 200 OK" + "\r\n"
 				+ "Cseq: "+ rtspReq.creq + "\r\n"
@@ -241,13 +248,11 @@ public class RtspServer {
 	}
 
 	private void processRequest(final Socket socket){
-		new Thread(){
+		new Thread() {
 			public void run() {
 				try {
-
+					Client client = new Client(socket.getInetAddress().getHostAddress());
 					InputStream istream = socket.getInputStream();
-					clientAddr = socket.getInetAddress().getHostAddress();
-
 
 					BufferedReader reader = new BufferedReader(new InputStreamReader(istream));
 					BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
@@ -255,12 +260,12 @@ public class RtspServer {
 					while (true) {
 						RtspRequest rtspReq; 
 						rtspReq = parseRequest(reader);
-						replyRequest(writer, rtspReq);
+						
+						replyRequest(writer, rtspReq, client);
 						if (rtspReq.command.equals("TEARDOWN")) {
 							break;
 						}
 					}
-					
 					socket.close();
 
 				} catch (IOException e) {
@@ -272,7 +277,7 @@ public class RtspServer {
 
 	public int getConnectedClientCount() {
 		
-		return 0;
+		return clientCount;
 	}
 
 

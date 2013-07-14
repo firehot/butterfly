@@ -27,6 +27,10 @@ public class RtspClient {
 	protected int totalReceivedDataRTPLength;
 	protected DatagramPacket datagramRTCPPacket;
 	protected int totalReceivedDataRTCPLength;
+	private Thread thread1;
+	private Thread thread2;
+	private DatagramSocket rtpSocket;
+	private DatagramSocket rtcpSocket;
 
 	public RtspClient(String addr, int port, String file) {
 		this.addr = addr;
@@ -75,11 +79,11 @@ public class RtspClient {
 
 	protected void openUdpPorts() {
 		try {
-			final DatagramSocket rtpSocket = new DatagramSocket(rtpPort);
-			DatagramSocket rtcpSocket = new DatagramSocket(rtcpPort);
+			rtpSocket = new DatagramSocket(rtpPort);
+			rtcpSocket = new DatagramSocket(rtcpPort);
 
 			//receiving rtp packets.
-			new Thread() {
+			thread1 = new Thread() {
 				public void run() {
 					byte[] data = new byte[10240];
 					datagramRTPPacket = new DatagramPacket(data, data.length);
@@ -87,26 +91,28 @@ public class RtspClient {
 						while (true) {
 							rtpSocket.receive(datagramRTPPacket);
 							totalReceivedDataRTPLength += datagramRTPPacket.getLength();
-							
+
 						}
 					}
 					catch (Exception e) {
 						e.printStackTrace();
 					}
 				};
-			}.start();
+			};
+			thread1.start();
+
 
 
 			//receiving rtcp packets.
-			new Thread() {
+			thread2 = new Thread() {
 				public void run() {
 					byte[] data = new byte[10240];
 					datagramRTCPPacket = new DatagramPacket(data, data.length);
 					try {
 						while (true) {
-							rtpSocket.receive(datagramRTCPPacket);
+							rtcpSocket.receive(datagramRTCPPacket);
 							totalReceivedDataRTCPLength += datagramRTCPPacket.getLength();
-							
+
 						}
 					}
 					catch (Exception e) {
@@ -114,7 +120,8 @@ public class RtspClient {
 					}
 
 				};
-			}.start();
+			};
+			thread2.start();
 
 		} catch (SocketException e) {
 			e.printStackTrace();
@@ -130,6 +137,20 @@ public class RtspClient {
 
 		writer.write(tearDownCommand);
 		writer.flush();
+		try {
+			if (rtpSocket != null) {
+				rtpSocket.close();
+			}
+			if (rtcpSocket != null) {
+				rtcpSocket.close();
+			}
+			thread1.join();
+			thread2.join();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 
 	}
 
@@ -166,11 +187,11 @@ public class RtspClient {
 		writer.write(describeCommand);
 		writer.flush();
 	}
-	
+
 	public DatagramPacket getDatagramRTPPacket() {
 		return datagramRTPPacket;
 	}
-	
+
 	public int getTotalReceivedDataRTPLength() {
 		return totalReceivedDataRTPLength;
 	}
@@ -194,15 +215,15 @@ public class RtspClient {
 
 	}
 
-	
+
 	public DatagramPacket getDatagramRTCPPacket() {
 		return datagramRTCPPacket;
 	}
-	
+
 	public int getTotalReceivedDataRTCPLength() {
 		return totalReceivedDataRTCPLength;
 	}
-	
+
 	public int getRtpPort() {
 		return rtpPort;
 	}
