@@ -67,6 +67,8 @@ public class ServerActivity extends Activity implements IStreamer{
 
 	Handler handler = new Handler();
 
+	private CameraPreview mPreview;
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -85,10 +87,6 @@ public class ServerActivity extends Activity implements IStreamer{
 
 		sendStreamButton = (Button) findViewById(R.id.button_capture);
 
-		openCameraPreview();
-
-		printSomeInfo();
-		
 		sendStreamButton.setOnClickListener(new OnClickListener() {
 
 			@Override
@@ -151,7 +149,7 @@ public class ServerActivity extends Activity implements IStreamer{
 		//params.setPreviewFpsRange(20000, 20000);
 		mCamera.setParameters(params);
 
-		CameraPreview mPreview = new CameraPreview(this, mCamera);
+		mPreview = new CameraPreview(this, mCamera);
 
 		cameraFrame.addView(mPreview);
 	}
@@ -187,13 +185,6 @@ public class ServerActivity extends Activity implements IStreamer{
 		Log.i(TAG, " previews size "+ t.width +"x" + t.height);
 
 	}
-
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		stopStreaming();
-	}
-
 
 
 	@Override
@@ -244,6 +235,7 @@ public class ServerActivity extends Activity implements IStreamer{
 		if (mCamera != null){
 			mCamera.setPreviewCallback(null);
 			mCamera.stopPreview();
+			mPreview.getHolder().removeCallback(mPreview);
 			mCamera.release();        // release the camera for other applications
 			mCamera = null;
 		}
@@ -374,7 +366,11 @@ public class ServerActivity extends Activity implements IStreamer{
 
 	@Override
 	protected void onResume() {
-//		prepareInterface2();
+
+		openCameraPreview();
+
+		printSomeInfo();
+		
 		super.onResume();
 	}
 
@@ -403,15 +399,6 @@ public class ServerActivity extends Activity implements IStreamer{
 			if (ffmpegVideoProcess != null) {
 				ffmpegVideoProcess.destroy();
 			}
-			handler.post(new Runnable() {
-
-				@Override
-				public void run() {
-					if (sendStreamButton != null) {
-						sendStreamButton.setVisibility(View.INVISIBLE);
-					}
-				}
-			});
 
 		} catch (IOException e) {
 			e.printStackTrace();
