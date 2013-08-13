@@ -1,8 +1,19 @@
-Android NDK Version r5c
-FFmpeg version 1.1
+Custom ffmpeg build for vitamio player.
+librtmp library is added.
+Android ndk r8b
 
-ffmpeg raw video buffer size should be updated according to size of raw data. This is the difference between original
-ffmpeg and the ffmpeg we used. This update frees us to not convert raw video to jpeg and jpeg to encoded video. 
-We can directly convert raw data to encoded video with this buffer size update.
+How to build
+1. Build librtmp. Go to rtmp-2.3/librtmp directory.
+$ANDROID_NDK/build/tools/make-standalone-toolchain.sh --platform=android-14 --install-dir=/tmp/android_ndk/
 
-updated file is libavformat/img2dec.c line 359. Buffer size is updated according to 352x288
+export PATH=$TOOLCHAIN/bin:$PATH
+
+make  CROSS_COMPILE=arm-linux-androideabi- INC=-I/home/mekya/Desktop/android-ndk/platforms/android-14/arch-arm/usr/include XDEF=-DNO_SSL CRYPTO=
+
+make install
+
+#Be careful about the installation directory. It is the "prefix" in Makefile
+
+2. Run FFmpeg-Android.sh script. But before that make sure ANDROID_NDK is exported. librtmp libraries are
+installed the directories in FFmpeg-Android.sh script. If not arrange librtmp installatin directory, edit
+Cflags and ldflags accordingly.
