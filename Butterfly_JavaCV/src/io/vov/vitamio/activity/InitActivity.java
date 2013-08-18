@@ -30,7 +30,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.view.WindowManager;
 
-import com.example.javacv2.R;
+import com.butterfly.R;
 
 public class InitActivity extends Activity {
 	public static final String FROM_ME = "fromVitamioInitActivity";

@@ -1,64 +1,4 @@
-/*
- * Copyright (C) 2012,2013 Qianliang Zhang, Shawn Van Every, Samuel Audet
- *
- * IMPORTANT - Make sure the AndroidManifest.xml file looks like this:
- *
- * <?xml version="1.0" encoding="utf-8"?>
- * <manifest xmlns:android="http://schemas.android.com/apk/res/android"
- *     package="com.googlecode.javacv.recordactivity"
- *     android:versionCode="1"
- *     android:versionName="1.0" >
- *     <uses-sdk android:minSdkVersion="4" />
- *     <uses-permission android:name="android.permission.CAMERA" />
- *     <uses-permission android:name="android.permission.INTERNET"/>
- *     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
- *     <uses-permission android:name="android.permission.WAKE_LOCK"/>
- *     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
- *     <uses-feature android:name="android.hardware.camera" />
- *     <application android:label="@string/app_name">
- *         <activity
- *             android:name="RecordActivity"
- *             android:label="@string/app_name"
- *             android:screenOrientation="landscape">
- *             <intent-filter>
- *                 <action android:name="android.intent.action.MAIN" />
- *                 <category android:name="android.intent.category.LAUNCHER" />
- *             </intent-filter>
- *         </activity>
- *     </application>
- * </manifest>
- *
- * And the res/layout/main.xml file like this:
- *
- * <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
- *     xmlns:tools="http://schemas.android.com/tools"
- *     android:id="@+id/record_layout"
- *     android:layout_width="match_parent"
- *     android:layout_height="match_parent" >
- * 
- *     <TextView
- *         android:id="@+id/textView1"
- *         android:layout_width="wrap_content"
- *         android:layout_height="wrap_content"
- *         android:layout_centerHorizontal="true"
- *         android:layout_centerVertical="true"
- *         android:padding="8dp"
- *         android:text="@string/app_name"
- *         tools:context=".RecordActivity" />
- *
- *     <Button
- *         android:id="@+id/recorder_control"
- *         android:layout_width="wrap_content"
- *         android:layout_height="wrap_content"
- *         android:layout_above="@+id/textView1"
- *         android:layout_alignRight="@+id/textView1"
- *         android:layout_marginRight="70dp"
- *         android:text="Button" />
- *
- * </LinearLayout>
- */
-
-package com.example.javacv2;
+package com.butterfly.activity;
 
 import static com.googlecode.javacv.cpp.opencv_core.IPL_DEPTH_8U;
 
@@ -89,6 +29,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
+import com.butterfly.R;
 import com.googlecode.javacv.FFmpegFrameRecorder;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
