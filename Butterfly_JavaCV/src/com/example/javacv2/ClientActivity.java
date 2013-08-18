@@ -4,6 +4,7 @@ import io.vov.vitamio.MediaPlayer;
 import io.vov.vitamio.MediaPlayer.OnBufferingUpdateListener;
 import io.vov.vitamio.MediaPlayer.OnErrorListener;
 import io.vov.vitamio.MediaPlayer.OnInfoListener;
+import io.vov.vitamio.widget.VideoView;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -16,13 +17,13 @@ import java.net.SocketException;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,7 +32,6 @@ import android.view.View.OnClickListener;
 import android.widget.EditText;
 import android.widget.ToggleButton;
 
-import com.example.vitamio.VideoView;
 
 public class ClientActivity extends Activity {
 
@@ -84,7 +84,7 @@ public class ClientActivity extends Activity {
 				if (startButton.isChecked()) {
 					
 					//videoView.setVideoPath("http://"+serverAddressEditText.getText().toString()+":24007/liveVideo");
-					videoView.setVideoPath("rtsp://"+serverAddressEditText.getText().toString()+":6454/live.ts");
+					videoView.setVideoPath(Environment.getExternalStorageDirectory()+"/Video/small.mp4");
 					
 					videoView.setVideoQuality(MediaPlayer.VIDEOQUALITY_HIGH);
 					videoView.setBufferSize(1024*10);
