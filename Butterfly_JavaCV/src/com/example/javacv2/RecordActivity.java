@@ -1,4 +1,4 @@
-package com.butterfly.activity;
+package com.example.javacv2;
 
 import static com.googlecode.javacv.cpp.opencv_core.IPL_DEPTH_8U;
 
@@ -29,11 +29,12 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
-import com.butterfly.R;
+import com.example.javacv2.R;
 import com.googlecode.javacv.FFmpegFrameRecorder;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
 public class RecordActivity extends Activity implements OnClickListener {
+	
 
     private final static String CLASS_LABEL = "RecordActivity";
     private final static String LOG_TAG = CLASS_LABEL;

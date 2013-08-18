@@ -1,4 +1,4 @@
-package com.butterfly.activity;
+package com.example.javacv2;
 
 import io.vov.vitamio.MediaPlayer;
 import io.vov.vitamio.MediaPlayer.OnBufferingUpdateListener;
@@ -15,7 +15,7 @@ import android.view.View.OnClickListener;
 import android.widget.EditText;
 import android.widget.ToggleButton;
 
-import com.butterfly.R;
+import com.example.javacv2.R;
 
 
 public class ClientActivity extends Activity {

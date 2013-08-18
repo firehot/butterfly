@@ -38,7 +38,7 @@ import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 
-import com.butterfly.R;
+import com.example.javacv2.R;
 
 /**
  * A view containing controls for a MediaPlayer. Typically contains the buttons
