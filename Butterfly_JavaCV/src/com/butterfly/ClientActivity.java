@@ -1,4 +1,4 @@
-package com.example.javacv2;
+package com.butterfly;
 
 import io.vov.vitamio.MediaPlayer;
 import io.vov.vitamio.MediaPlayer.OnBufferingUpdateListener;
@@ -7,6 +7,7 @@ import io.vov.vitamio.MediaPlayer.OnInfoListener;
 import io.vov.vitamio.widget.VideoView;
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,8 +15,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.EditText;
 import android.widget.ToggleButton;
-
-import com.example.javacv2.R;
+import com.butterfly.R;
 
 
 public class ClientActivity extends Activity {
@@ -56,8 +56,8 @@ public class ClientActivity extends Activity {
 				if (startButton.isChecked()) {
 					
 					//videoView.setVideoPath("http://"+serverAddressEditText.getText().toString()+":24007/liveVideo");
-					videoView.setVideoPath("rtsp://"+serverAddressEditText.getText().toString()+":6454/live.ts");
-					//videoView.setVideoPath(Environment.getExternalStorageDirectory()+"/Video/small.mp4");
+					//videoView.setVideoPath("rtsp://"+serverAddressEditText.getText().toString()+":6454/live.ts");
+					videoView.setVideoPath(Environment.getExternalStorageDirectory()+"/Video/small.mp4");
 					
 					videoView.setVideoQuality(MediaPlayer.VIDEOQUALITY_HIGH);
 					videoView.setBufferSize(1024*10);
@@ -158,8 +158,8 @@ public class ClientActivity extends Activity {
 
 
 	public void stopStreaming() {
-		
-		videoView.stopPlayback();
+		if(videoView != null)
+			videoView.stopPlayback();
 	}
 
 }

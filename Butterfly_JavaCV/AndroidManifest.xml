@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.javacv2"
+    package="com.butterfly"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -22,7 +22,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.example.javacv2.RecordActivity"
+            android:name="com.butterfly.RecordActivity"
             android:configChanges="orientation"
             android:label="@string/app_name"
             android:screenOrientation="landscape" >
@@ -39,11 +39,10 @@
             android:theme="@android:style/Theme.NoTitleBar"
             android:windowSoftInputMode="stateAlwaysHidden" />
         <activity
-            android:name="com.example.javacv2.ClientActivity"
-            android:configChanges="orientation"
-            android:label="@string/app_name"
-            android:screenOrientation="landscape" >
-        </activity>
+            android:name="com.butterfly.ClientActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|keyboard|keyboardHidden|navigation"
+            android:theme="@android:style/Theme.NoTitleBar"
+             android:screenOrientation="landscape" />
     </application>
 
 </manifest>

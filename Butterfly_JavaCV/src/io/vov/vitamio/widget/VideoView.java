@@ -48,7 +48,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 
-import com.example.javacv2.R;
+import com.butterfly.R;
 
 /**
  * Displays a video file. The VideoView class can load images from various

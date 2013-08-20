@@ -1,4 +1,4 @@
-package com.example.javacv2;
+package com.butterfly;
 
 import static com.googlecode.javacv.cpp.opencv_core.IPL_DEPTH_8U;
 
@@ -29,7 +29,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
-import com.example.javacv2.R;
+import com.butterfly.R;
 import com.googlecode.javacv.FFmpegFrameRecorder;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
@@ -41,7 +41,7 @@ public class RecordActivity extends Activity implements OnClickListener {
 
     private PowerManager.WakeLock mWakeLock;
 
-    private String ffmpeg_link = "rtmp://192.168.1.23/live/";
+    private String ffmpeg_link = "rtmp://192.168.1.146/live/test";
   //  private String ffmpeg_link = "/mnt/sdcard/stream.flv";
 
     long startTime = 0;
@@ -190,8 +190,6 @@ public class RecordActivity extends Activity implements OnClickListener {
             Log.i(LOG_TAG, "create yuvIplimage");
         }
 
-      
-        ffmpeg_link += (int) (Math.random()*100000) + System.currentTimeMillis();
         Log.i(LOG_TAG, "ffmpeg_url: " + ffmpeg_link);
         recorder = new FFmpegFrameRecorder(ffmpeg_link, imageWidth, imageHeight, 1);
         recorder.setFormat("flv");
