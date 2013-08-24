@@ -39,7 +39,7 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 
     private PowerManager.WakeLock mWakeLock;
 
-    private String ffmpeg_link = "rtmp://172.18.70.168/live/test";
+    private String ffmpeg_link = "rtmp://192.168.43.60/live/test";
   //  private String ffmpeg_link = "/mnt/sdcard/stream.flv";
 
     long startTime = 0;
@@ -122,8 +122,6 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
     protected void onDestroy() {
         super.onDestroy();
 
-        if(cameraView != null)
-    		cameraView.onRecordStateChanged(false);
         recording = false;
 
         if (cameraView != null) {
@@ -223,8 +221,7 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
         	
             recorder.start();
             startTime = System.currentTimeMillis();
-            if(cameraView != null)
-        		cameraView.onRecordStateChanged(true);
+
             recording = true;
         //    audioThread.start();
 
@@ -238,8 +235,7 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
         runAudioThread = false;
 
         if (recorder != null && recording) {
-        	if(cameraView != null)
-        		cameraView.onRecordStateChanged(false);
+
             recording = false;
             Log.v(LOG_TAG,"Finishing recording, calling stop and release on recorder");
             try {
@@ -346,6 +342,7 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 
 	@Override
 	public void onPreviewChanged(byte[] data) {
+		
 		if (yuvIplimage != null && recording) {
             yuvIplimage.getByteBuffer().put(data);
 

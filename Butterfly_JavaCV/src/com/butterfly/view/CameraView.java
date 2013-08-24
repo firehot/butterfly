@@ -10,14 +10,13 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import com.butterfly.listener.OnPreviewListener;
-import com.butterfly.listener.OnRecordStateListener;
 import com.googlecode.javacv.FFmpegFrameRecorder;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
 //---------------------------------------------
 // camera thread, gets and encodes video data
 //---------------------------------------------
-public class CameraView extends SurfaceView implements SurfaceHolder.Callback, PreviewCallback,OnRecordStateListener {
+public class CameraView extends SurfaceView implements SurfaceHolder.Callback, PreviewCallback {
 
     private SurfaceHolder mHolder;
     private Camera mCamera;
@@ -26,7 +25,6 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback, P
     private int imageHeight;
     private int frameRate;
     long startTime;
-    boolean recording;
     OnPreviewListener previewListener;
 
     public CameraView(Context context, Camera camera,int imageWidth,int imageHeight,
@@ -41,7 +39,6 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback, P
         this.imageHeight = imageHeight;
         this.imageWidth = imageWidth;
         this.startTime = startTime;
-        this.recording = recording;
         this.previewListener = (OnPreviewListener)context;
     }
 
@@ -95,9 +92,4 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback, P
         this.previewListener.onPreviewChanged(data);
     }
 
-	@Override
-	public void onRecordStateChanged(boolean state) {
-		this.recording = state;
-		
-	}
 }
