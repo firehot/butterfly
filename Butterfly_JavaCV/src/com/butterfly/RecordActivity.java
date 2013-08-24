@@ -2,7 +2,6 @@ package com.butterfly;
 
 import static com.googlecode.javacv.cpp.opencv_core.IPL_DEPTH_8U;
 
-import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ShortBuffer;
 
@@ -10,7 +9,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.hardware.Camera;
-import android.hardware.Camera.PreviewCallback;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -20,16 +18,16 @@ import android.util.Log;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
-import com.butterfly.R;
+import com.butterfly.listener.OnRecordStateListener;
+import com.butterfly.view.CameraView;
 import com.googlecode.javacv.FFmpegFrameRecorder;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
@@ -48,8 +46,6 @@ public class RecordActivity extends Activity implements OnClickListener {
     boolean recording = false;
 
     private volatile FFmpegFrameRecorder recorder;
-
-    private boolean isPreviewOn = false;
 
     private int sampleAudioRateInHz = 44100;
     private int imageWidth = 320;
@@ -83,6 +79,11 @@ public class RecordActivity extends Activity implements OnClickListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        //Hide title
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         setContentView(R.layout.main);
@@ -121,6 +122,8 @@ public class RecordActivity extends Activity implements OnClickListener {
     protected void onDestroy() {
         super.onDestroy();
 
+        if(cameraView != null)
+    		cameraView.onRecordStateChanged(false);
         recording = false;
 
         if (cameraView != null) {
@@ -173,7 +176,7 @@ public class RecordActivity extends Activity implements OnClickListener {
 
         cameraDevice = Camera.open(0);
         Log.i(LOG_TAG, "cameara open");
-        cameraView = new CameraView(this, cameraDevice);
+        cameraView = new CameraView(this, cameraDevice,imageWidth,imageHeight,frameRate,yuvIplimage,recorder,startTime,recording);
         topLayout.addView(cameraView, layoutParam);
         Log.i(LOG_TAG, "cameara preview start: OK");
     }
@@ -213,6 +216,8 @@ public class RecordActivity extends Activity implements OnClickListener {
         	
             recorder.start();
             startTime = System.currentTimeMillis();
+            if(cameraView != null)
+        		cameraView.onRecordStateChanged(true);
             recording = true;
         //    audioThread.start();
 
@@ -226,6 +231,8 @@ public class RecordActivity extends Activity implements OnClickListener {
         runAudioThread = false;
 
         if (recorder != null && recording) {
+        	if(cameraView != null)
+        		cameraView.onRecordStateChanged(false);
             recording = false;
             Log.v(LOG_TAG,"Finishing recording, calling stop and release on recorder");
             try {
@@ -313,91 +320,7 @@ public class RecordActivity extends Activity implements OnClickListener {
         }
     }
 
-    //---------------------------------------------
-    // camera thread, gets and encodes video data
-    //---------------------------------------------
-    class CameraView extends SurfaceView implements SurfaceHolder.Callback, PreviewCallback {
 
-        private SurfaceHolder mHolder;
-        private Camera mCamera;
-
-        public CameraView(Context context, Camera camera) {
-            super(context);
-            Log.w("camera","camera view");
-            mCamera = camera;
-            mHolder = getHolder();
-            mHolder.addCallback(CameraView.this);
-            mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-            mCamera.setPreviewCallback(CameraView.this);
-        }
-
-        @Override
-        public void surfaceCreated(SurfaceHolder holder) {
-            try {
-                stopPreview();
-                mCamera.setPreviewDisplay(holder);
-            } catch (IOException exception) {
-                mCamera.release();
-                mCamera = null;
-            }
-        }
-
-        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-            Log.v(LOG_TAG,"Setting imageWidth: " + imageWidth + " imageHeight: " + imageHeight + " frameRate: " + frameRate);
-            Camera.Parameters camParams = mCamera.getParameters();
-            camParams.setPreviewSize(imageWidth, imageHeight);
-    
-            Log.v(LOG_TAG,"Preview Framerate: " + camParams.getPreviewFrameRate());
-    
-            camParams.setPreviewFrameRate(frameRate);
-            mCamera.setParameters(camParams);
-            startPreview();
-        }
-
-        @Override
-        public void surfaceDestroyed(SurfaceHolder holder) {
-            try {
-                mHolder.addCallback(null);
-                mCamera.setPreviewCallback(null);
-            } catch (RuntimeException e) {
-                // The camera has probably just been released, ignore.
-            }
-        }
-
-        public void startPreview() {
-            if (!isPreviewOn && mCamera != null) {
-                isPreviewOn = true;
-                mCamera.startPreview();
-            }
-        }
-
-        public void stopPreview() {
-            if (isPreviewOn && mCamera != null) {
-                isPreviewOn = false;
-                mCamera.stopPreview();
-            }
-        }
-
-        @Override
-        public void onPreviewFrame(byte[] data, Camera camera) {
-            /* get video data */
-            if (yuvIplimage != null && recording) {
-                yuvIplimage.getByteBuffer().put(data);
-
-                Log.v(LOG_TAG,"Writing Frame");
-                try {
-                    long t = 1000 * (System.currentTimeMillis() - startTime);
-                    if (t > recorder.getTimestamp()) {
-                        recorder.setTimestamp(t);
-                    }
-                    recorder.record(yuvIplimage);
-                } catch (FFmpegFrameRecorder.Exception e) {
-                    Log.v(LOG_TAG,e.getMessage());
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
 
     @Override
     public void onClick(View v) {
@@ -412,4 +335,5 @@ public class RecordActivity extends Activity implements OnClickListener {
             btnRecorderControl.setText("Start");
         }
     }
+
 }
