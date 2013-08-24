@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import com.butterfly.listener.OnPreviewListener;
 import com.butterfly.listener.OnRecordStateListener;
 import com.googlecode.javacv.FFmpegFrameRecorder;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
@@ -24,10 +25,9 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback, P
     private int imageWidth;
     private int imageHeight;
     private int frameRate;
-    private IplImage yuvIplimage = null;
-    private volatile FFmpegFrameRecorder recorder;
     long startTime;
     boolean recording;
+    OnPreviewListener previewListener;
 
     public CameraView(Context context, Camera camera,int imageWidth,int imageHeight,
     int frameRate,IplImage yuvIplimage,FFmpegFrameRecorder recorder,long startTime,boolean recording) {
@@ -40,10 +40,9 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback, P
         mCamera.setPreviewCallback(CameraView.this);
         this.imageHeight = imageHeight;
         this.imageWidth = imageWidth;
-        this.yuvIplimage = yuvIplimage;
-        this.recorder = recorder;
         this.startTime = startTime;
         this.recording = recording;
+        this.previewListener = (OnPreviewListener)context;
     }
 
     @Override
@@ -93,22 +92,7 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback, P
 
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
-        /* get video data */
-        if (yuvIplimage != null && recording) {
-            yuvIplimage.getByteBuffer().put(data);
-
-
-            try {
-                long t = 1000 * (System.currentTimeMillis() - startTime);
-                if (t > recorder.getTimestamp()) {
-                    recorder.setTimestamp(t);
-                }
-                recorder.record(yuvIplimage);
-            } catch (FFmpegFrameRecorder.Exception e) {
-
-                e.printStackTrace();
-            }
-        }
+        this.previewListener.onPreviewChanged(data);
     }
 
 	@Override

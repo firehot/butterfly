@@ -26,12 +26,12 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
-import com.butterfly.listener.OnRecordStateListener;
+import com.butterfly.listener.OnPreviewListener;
 import com.butterfly.view.CameraView;
 import com.googlecode.javacv.FFmpegFrameRecorder;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
-public class RecordActivity extends Activity implements OnClickListener {
+public class RecordActivity extends Activity implements OnClickListener,OnPreviewListener {
 	
 
     private final static String CLASS_LABEL = "RecordActivity";
@@ -39,7 +39,7 @@ public class RecordActivity extends Activity implements OnClickListener {
 
     private PowerManager.WakeLock mWakeLock;
 
-    private String ffmpeg_link = "rtmp://192.168.1.146/live/";
+    private String ffmpeg_link = "rtmp://172.18.70.168/live/test";
   //  private String ffmpeg_link = "/mnt/sdcard/stream.flv";
 
     long startTime = 0;
@@ -193,15 +193,11 @@ public class RecordActivity extends Activity implements OnClickListener {
             Log.i(LOG_TAG, "create yuvIplimage");
         }
 
-        ffmpeg_link += (int) (Math.random()*100000) + System.currentTimeMillis();
+//        ffmpeg_link += (int) (Math.random()*100000) + System.currentTimeMillis();
         Log.i(LOG_TAG, "ffmpeg_url: " + ffmpeg_link);
         
         
-        recorder = new FFmpegFrameRecorder(ffmpeg_link, imageWidth, imageHeight, 1);
-        recorder.setFormat("flv");
-        recorder.setSampleRate(sampleAudioRateInHz);
-        // Set in the surface changed method
-        recorder.setFrameRate(frameRate);
+        createRecorder();
 
         Log.i(LOG_TAG, "recorder initialize success");
 
@@ -210,9 +206,20 @@ public class RecordActivity extends Activity implements OnClickListener {
         audioThread.start();
     }
 
+
+	private void createRecorder() {
+		recorder = new FFmpegFrameRecorder(ffmpeg_link, imageWidth, imageHeight, 1);
+        recorder.setFormat("flv");
+        recorder.setSampleRate(sampleAudioRateInHz);
+        // Set in the surface changed method
+        recorder.setFrameRate(frameRate);
+	}
+
     public void startRecording() {
 
         try {
+        	if(recorder == null)
+        		createRecorder();
         	
             recorder.start();
             startTime = System.currentTimeMillis();
@@ -335,5 +342,26 @@ public class RecordActivity extends Activity implements OnClickListener {
             btnRecorderControl.setText("Start");
         }
     }
+
+
+	@Override
+	public void onPreviewChanged(byte[] data) {
+		if (yuvIplimage != null && recording) {
+            yuvIplimage.getByteBuffer().put(data);
+
+
+            try {
+                long t = 1000 * (System.currentTimeMillis() - startTime);
+                if (t > recorder.getTimestamp()) {
+                    recorder.setTimestamp(t);
+                }
+                recorder.record(yuvIplimage);
+            } catch (FFmpegFrameRecorder.Exception e) {
+
+                e.printStackTrace();
+            }
+        }
+		
+	}
 
 }
