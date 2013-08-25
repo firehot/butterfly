@@ -23,7 +23,6 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback, P
     private boolean isPreviewOn = false;
     private int imageWidth;
     private int imageHeight;
-    private int frameRate;
     long startTime;
     OnPreviewListener previewListener;
 
@@ -54,11 +53,9 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback, P
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+    	stopPreview();
         Camera.Parameters camParams = mCamera.getParameters();
         camParams.setPreviewSize(imageWidth, imageHeight);
-
-
-        camParams.setPreviewFrameRate(frameRate);
         mCamera.setParameters(camParams);
         startPreview();
     }

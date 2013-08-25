@@ -39,7 +39,7 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 
     private PowerManager.WakeLock mWakeLock;
 
-    private String ffmpeg_link = "rtmp://192.168.43.60/live/test";
+    private String ffmpeg_link; 
   //  private String ffmpeg_link = "/mnt/sdcard/stream.flv";
 
     long startTime = 0;
@@ -79,6 +79,8 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        ffmpeg_link = getString(R.string.rtmp_url);
         
         //Hide title
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -191,7 +193,7 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
             Log.i(LOG_TAG, "create yuvIplimage");
         }
 
-//        ffmpeg_link += (int) (Math.random()*100000) + System.currentTimeMillis();
+        ffmpeg_link += (int) (Math.random()*100000) + System.currentTimeMillis();
         Log.i(LOG_TAG, "ffmpeg_url: " + ffmpeg_link);
         
         
