@@ -19,15 +19,18 @@ package org.red5.core;
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import org.red5.server.adapter.ApplicationAdapter;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
 import org.red5.server.api.scope.IScope;
+import org.red5.server.api.stream.IBroadcastStream;
 
 /**
  * Sample application that uses the client manager.
@@ -35,7 +38,24 @@ import org.red5.server.api.scope.IScope;
  * @author The Red5 Project (red5@osflash.org)
  */
 public class Application extends MultiThreadedApplicationAdapter {
+	
+	
 
+	Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
+	
+	public class Stream implements Serializable {
+		public String streamName;
+		public String streamUrl;
+		public Long registerTime;
+		public Stream(String streamName, String streamUrl, Long registerTime) {
+			super();
+			this.streamName = streamName;
+			this.streamUrl = streamUrl;
+			this.registerTime = registerTime;
+		}
+		
+	}
+	
 	/** {@inheritDoc} */
     @Override
 	public boolean connect(IConnection conn, IScope scope, Object[] params) {
@@ -48,8 +68,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 		super.disconnect(conn, scope);
 	}
     
-	public List<String> getLiveStreams() {
-		List<String> streams = new	ArrayList<String>();
+	public HashMap<String, String> getLiveStreams() {
+		HashMap<String, String> streams = new HashMap<String, String>();
 		IScope target = null;
 
 		target = Red5.getConnectionLocal().getScope();
@@ -57,10 +77,45 @@ public class Application extends MultiThreadedApplicationAdapter {
 		Set<String> streamNames =
 				getBroadcastStreamNames(target);
 		for (String name : streamNames) {
-			System.out.println("StreamNames -----*****----- " + name);
-			streams.add(name);
+			if (registeredStreams.containsKey(name)) {
+				Stream stream = registeredStreams.get(name);
+				streams.put(stream.streamUrl, stream.streamName);
+			}
 		}
 		return streams;
 	}
+	
+	
+	public boolean registerLiveStream(String streamName, String url) {
+		boolean result = false;
+		if (registeredStreams.containsKey(url) == false) {
+			registeredStreams.put(url, new Stream(streamName,  url, System.currentTimeMillis()));
+			result = true;
+		}
+		return result;
+	}
+	
+	
+	
+	@Override
+	public void streamBroadcastClose(IBroadcastStream stream) {
+		String streamUrl = stream.getPublishedName();
+		//getPublishedName means streamurl to us
+		removeStream(streamUrl);
+		super.streamBroadcastClose(stream);
+	}
+
+	public boolean removeStream(String streamUrl) {
+		boolean result = false;
+		if (registeredStreams.containsKey(streamUrl)) {
+			Object object = registeredStreams.remove(streamUrl);
+			if (object != null) {
+				result = true;
+			}
+		}
+		return result;
+	}
+	
+	
 
 }
