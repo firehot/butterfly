@@ -42,7 +42,7 @@ public class ClientActivity extends Activity {
 		String rtmpUrl = getString(R.string.rtmp_url);
 		
 		Intent intent = getIntent();
-		String streamName = intent.getStringExtra(StreamList.STREAM_NAME);
+		String streamName = intent.getStringExtra(StreamList.STREAM_PUBLISHED_NAME);
 
 		setContentView(R.layout.activity_client);
 		

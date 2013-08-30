@@ -1,7 +1,9 @@
 package com.butterfly;
 
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import android.app.ListActivity;
 import android.content.Intent;
@@ -23,44 +25,54 @@ import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
 public class StreamList extends ListActivity {
 
-	
-	public static final String STREAM_NAME = "stream-name";
 
-
+	public static final String STREAM_PUBLISHED_NAME = "stream-name";
 	String httpGatewayURL;
-			
-			
-	private ArrayAdapter<String> adapter;
+	private ArrayAdapter<Stream> adapter;
 
+	public class Stream {
+		public String name;
+		public String url;
+		public Stream(String name, String url) {
+			super();
+			this.name = name;
+			this.url = url;
+		}
+
+		@Override
+		public String toString() {
+			return name;
+		}
+
+	}
 
 	private OnItemClickListener itemClickListener = new OnItemClickListener() {
 
 		@Override
-		public void onItemClick(AdapterView<?> arg0, View view, int position,
-				long id) {
-			Toast.makeText(getApplicationContext(), adapter.getItem(position), Toast.LENGTH_SHORT).show();
-		
+		public void onItemClick(AdapterView<?> arg0, View view, int position, long id) {
+			Toast.makeText(getApplicationContext(), adapter.getItem(position).name, Toast.LENGTH_SHORT).show();
+
 			Intent intent = new Intent(getApplicationContext(), ClientActivity.class);
-			intent.putExtra(STREAM_NAME, adapter.getItem(position));
+			intent.putExtra(STREAM_PUBLISHED_NAME, adapter.getItem(position).url);
 			startActivity(intent);
-			
+
 		}
 	};
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		httpGatewayURL = getString(R.string.http_gateway_url);
-		
-		adapter = new ArrayAdapter<String>(StreamList.this, android.R.layout.simple_list_item_1);
+
+		adapter = new ArrayAdapter<Stream>(StreamList.this, android.R.layout.simple_list_item_1);
 		setListAdapter(adapter);
-		
+
 		getListView().setOnItemClickListener(itemClickListener );
-		
-		
+
+
 	}
-	
+
 	@Override
 	protected void onResume() {
 		new GetStreamListTask().execute(httpGatewayURL);
@@ -72,10 +84,10 @@ public class StreamList extends ListActivity {
 		getMenuInflater().inflate(R.menu.activity_client, menu);
 		return true;
 	}
-	
-	
-	
-	
+
+
+
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
@@ -91,28 +103,28 @@ public class StreamList extends ListActivity {
 		}
 		return super.onOptionsItemSelected(item);
 	}
-	
-	
-	public class GetStreamListTask extends AsyncTask<String, Void, List<String>> {
 
-		
+
+	public class GetStreamListTask extends AsyncTask<String, Void, HashMap<String, String>> {
+
+
 		@Override
 		protected void onPreExecute() {
 			setProgressBarIndeterminateVisibility(true);
 			super.onPreExecute();
 		}
-		
+
 		@Override
-		protected List<String> doInBackground(String... params) {
-			List<String> result = null;
+		protected HashMap<String, String> doInBackground(String... params) {
+			HashMap<String, String> streams = null;
 			AMFConnection amfConnection = new AMFConnection();			
-	    	amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
-	    	try {
-	    		System.out.println(params[0]);
-	    		amfConnection.connect(params[0]);
-	    		result = (List<String>) amfConnection.call("getLiveStreams");
-				System.out.println("result count -> " + result.size());
-				
+			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
+			try {
+				System.out.println(params[0]);
+				amfConnection.connect(params[0]);
+				streams = (HashMap<String, String>) amfConnection.call("getLiveStreams");
+				System.out.println("result count -> " + streams.size());
+
 			} catch (ClientStatusException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -120,25 +132,33 @@ public class StreamList extends ListActivity {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-	    	amfConnection.close();
-			
-			
-			return result;
+			amfConnection.close();
+
+
+			return streams;
 		}
-		
+
 		@Override
-		protected void onPostExecute(List<String> result) {
+		protected void onPostExecute(HashMap<String, String> streams) {
 			adapter.clear();
-			for (Iterator<String> iterator = result.iterator(); iterator.hasNext();) {
-				adapter.add(iterator.next());
+
+			if (streams.size() > 0) {
+
+				Set<Entry<String, String>> entrySet = streams.entrySet();
+
+				for (Iterator iterator = entrySet.iterator(); iterator
+						.hasNext();) {
+					Entry<String, String> entry = (Entry<String, String>) iterator
+							.next();
+					adapter.add(new Stream(entry.getValue(), entry.getKey()));
+				}
+
+				adapter.notifyDataSetChanged();
 			}
-			adapter.notifyDataSetChanged();
 			setProgressBarIndeterminateVisibility(false);
-			super.onPostExecute(result);
+			super.onPostExecute(streams);
 		}
-		
-		
-		
-	}
+
+	}	
 
 }
