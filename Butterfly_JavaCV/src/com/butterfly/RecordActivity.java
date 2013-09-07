@@ -15,16 +15,12 @@ import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.util.Log;
-import android.view.Display;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 
 import com.butterfly.listener.OnPreviewListener;
 import com.butterfly.view.CameraView;
@@ -64,16 +60,6 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 
     private IplImage yuvIplimage = null;
 
-    /* layout setting */
-    private final int bg_screen_bx = 232;
-    private final int bg_screen_by = 128;
-    private final int bg_screen_width = 700;
-    private final int bg_screen_height = 500;
-    private final int bg_width = 1123;
-    private final int bg_height = 715;
-    private final int live_width = 640;
-    private final int live_height = 480;
-    private int screenWidth, screenHeight;
     private Button btnRecorderControl;
 
     @Override
@@ -141,43 +127,15 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 
     private void initLayout() {
 
-        /* get size of screen */
-        Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        screenWidth = display.getWidth();
-        screenHeight = display.getHeight();
-        RelativeLayout.LayoutParams layoutParam = null; 
-        LayoutInflater myInflate = null; 
-        myInflate = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        RelativeLayout topLayout = new RelativeLayout(this);
-        setContentView(topLayout);
-        LinearLayout preViewLayout = (LinearLayout) myInflate.inflate(R.layout.main, null);
-        layoutParam = new RelativeLayout.LayoutParams(screenWidth, screenHeight);
-        topLayout.addView(preViewLayout, layoutParam);
-
         /* add control button: start and stop */
         btnRecorderControl = (Button) findViewById(R.id.recorder_control);
         btnRecorderControl.setText("Start");
         btnRecorderControl.setOnClickListener(this);
-
-        /* add camera view */
-        int display_width_d = (int) (1.0 * bg_screen_width * screenWidth / bg_width);
-        int display_height_d = (int) (1.0 * bg_screen_height * screenHeight / bg_height);
-        int prev_rw, prev_rh;
-        if (1.0 * display_width_d / display_height_d > 1.0 * live_width / live_height) {
-            prev_rh = display_height_d;
-            prev_rw = (int) (1.0 * display_height_d * live_width / live_height);
-        } else {
-            prev_rw = display_width_d;
-            prev_rh = (int) (1.0 * display_width_d * live_height / live_width);
-        }
-        layoutParam = new RelativeLayout.LayoutParams(prev_rw, prev_rh);
-        layoutParam.topMargin = (int) (1.0 * bg_screen_by * screenHeight / bg_height);
-        layoutParam.leftMargin = (int) (1.0 * bg_screen_bx * screenWidth / bg_width);
-
+        
+        cameraView = (CameraView)findViewById(R.id.cam);
         cameraDevice = Camera.open(0);
-        Log.i(LOG_TAG, "cameara open");
-        cameraView = new CameraView(this, cameraDevice,imageWidth,imageHeight,frameRate,yuvIplimage,recorder,startTime,recording);
-        topLayout.addView(cameraView, layoutParam);
+        cameraView.setCamera(cameraDevice);
+        
         Log.i(LOG_TAG, "cameara preview start: OK");
     }
 
@@ -297,7 +255,7 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
                 //Log.v(LOG_TAG,"recording? " + recording);
                 bufferReadResult = audioRecord.read(audioData, 0, audioData.length);
                 if (bufferReadResult > 0) {
-                    Log.v(LOG_TAG,"bufferReadResult: " + bufferReadResult);
+                    //Log.v(LOG_TAG,"bufferReadResult: " + bufferReadResult);
                     // If "recording" isn't true when start this thread, it never get's set according to this if statement...!!!
                     // Why?  Good question...
                     if (recording) {

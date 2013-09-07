@@ -7,6 +7,6 @@
     <string name="title_activity_stream_list">StreamList</string>
 	<string name="refresh">Refresh</string>
 	<string name="broadcast_live">Broadcast Live</string>
-	<string name="http_gateway_url">http://192.168.1.23:5080/ButterFly_Red5/gateway</string>
-	<string name="rtmp_url">rtmp://192.168.1.23/ButterFly_Red5/</string>
+	<string name="http_gateway_url">http://192.168.1.146:5080/ButterFly_Red5/gateway</string>
+	<string name="rtmp_url">rtmp://192.168.1.146/ButterFly_Red5/</string>
 </resources>
