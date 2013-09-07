@@ -9,6 +9,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.hardware.Camera;
+import android.hardware.Camera.Size;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -146,11 +147,6 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 
         Log.w(LOG_TAG,"init recorder");
 
-        if (yuvIplimage == null) {
-            yuvIplimage = IplImage.create(imageWidth, imageHeight, IPL_DEPTH_8U, 2);
-            Log.i(LOG_TAG, "create yuvIplimage");
-        }
-
         ffmpeg_link += (int) (Math.random()*100000) + System.currentTimeMillis();
         Log.i(LOG_TAG, "ffmpeg_url: " + ffmpeg_link);
         
@@ -175,6 +171,12 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 
     public void startRecording() {
 
+    	if (yuvIplimage == null) {
+    		Size previewSize = cameraDevice.getParameters().getPreviewSize();
+            yuvIplimage = IplImage.create(previewSize.width, previewSize.height, IPL_DEPTH_8U, 2);
+            Log.i(LOG_TAG, "create yuvIplimage");
+        }
+    	
         try {
         	if(recorder == null)
         		createRecorder();
