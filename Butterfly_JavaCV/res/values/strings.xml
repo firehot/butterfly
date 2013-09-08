@@ -9,4 +9,7 @@
 	<string name="broadcast_live">Broadcast Live</string>
 	<string name="http_gateway_url">http://192.168.1.23:5080/ButterFly_Red5/gateway</string>
 	<string name="rtmp_url">rtmp://192.168.1.23/ButterFly_Red5/</string>
+	<string name="write_name_of_stream">Please write the name of the stream</string>
+	<string name="connectivityProblem">Problem in connectivity</string>
+	<string name="noLiveStream">No live streams right now</string>
 </resources>

@@ -142,18 +142,27 @@ public class StreamList extends ListActivity {
 		protected void onPostExecute(HashMap<String, String> streams) {
 			adapter.clear();
 
-			if (streams.size() > 0) {
+			if (streams != null) {
+				if (streams.size() > 0) {
 
-				Set<Entry<String, String>> entrySet = streams.entrySet();
+					Set<Entry<String, String>> entrySet = streams.entrySet();
 
-				for (Iterator iterator = entrySet.iterator(); iterator
-						.hasNext();) {
-					Entry<String, String> entry = (Entry<String, String>) iterator
-							.next();
-					adapter.add(new Stream(entry.getValue(), entry.getKey()));
+					for (Iterator iterator = entrySet.iterator(); iterator
+							.hasNext();) {
+						Entry<String, String> entry = (Entry<String, String>) iterator
+								.next();
+						adapter.add(new Stream(entry.getValue(), entry.getKey()));
+					}
+
+					adapter.notifyDataSetChanged();
 				}
+				else {
+					Toast.makeText(getApplicationContext(), getString(R.string.noLiveStream), Toast.LENGTH_LONG).show();
+				}
+			}
+			else {
+				Toast.makeText(getApplicationContext(), getString(R.string.connectivityProblem), Toast.LENGTH_LONG).show();
 
-				adapter.notifyDataSetChanged();
 			}
 			setProgressBarIndeterminateVisibility(false);
 			super.onPostExecute(streams);
