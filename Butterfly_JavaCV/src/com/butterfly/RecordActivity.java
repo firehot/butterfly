@@ -6,7 +6,10 @@ import java.nio.Buffer;
 import java.nio.ShortBuffer;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
 import android.hardware.Camera;
 import android.hardware.Camera.Size;
@@ -22,6 +25,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -31,6 +35,7 @@ import com.butterfly.debug.BugSense;
 import com.butterfly.listener.OnPreviewListener;
 import com.butterfly.view.CameraView;
 import com.googlecode.javacv.FFmpegFrameRecorder;
+import com.googlecode.javacv.FrameRecorder.Exception;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
 import flex.messaging.io.MessageIOConstants;
@@ -39,7 +44,7 @@ import flex.messaging.io.amf.client.exceptions.ClientStatusException;
 import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
 public class RecordActivity extends Activity implements OnClickListener,
-		OnPreviewListener {
+		OnPreviewListener, android.content.DialogInterface.OnClickListener {
 
 	private final static String CLASS_LABEL = "RecordActivity";
 	private final static String LOG_TAG = CLASS_LABEL;
@@ -55,8 +60,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 	private volatile FFmpegFrameRecorder recorder;
 
 	private int sampleAudioRateInHz = 44100;
-	private int imageWidth = 320;
-	private int imageHeight = 240;
 	private int frameRate = 30;
 
 	/* audio data getting thread */
@@ -75,6 +78,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 	private String httpGatewayURL;
 	private String streamURL;
 	private EditText streamNameEditText;
+
+	private ProgressDialog m_ProgressDialog;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -100,7 +105,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 		mWakeLock.acquire();
 
 		initLayout();
-		initRecorder();
 
 		streamNameEditText = (EditText) findViewById(R.id.stream_name);
 	}
@@ -133,6 +137,15 @@ public class RecordActivity extends Activity implements OnClickListener,
 		BugSenseHandler.closeSession(this);
 
 		recording = false;
+		runAudioThread = false;
+		if (recorder != null) {
+			try {
+				recorder.release();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			recorder = null;
+		}
 
 		if (cameraView != null) {
 			cameraView.stopPreview();
@@ -166,25 +179,31 @@ public class RecordActivity extends Activity implements OnClickListener,
 	private void initRecorder() {
 
 		Log.w(LOG_TAG, "init recorder");
-
-		streamURL = String.valueOf((int) (Math.random() * 100000)
-				+ System.currentTimeMillis());
-		ffmpeg_link += streamURL;
+		// if link is set, dont set it again
+		if (ffmpeg_link.equals(getString(R.string.rtmp_url))) {
+			streamURL = String.valueOf((int) (Math.random() * 100000)
+					+ System.currentTimeMillis());
+			ffmpeg_link += streamURL;
+		}
 		Log.i(LOG_TAG, "ffmpeg_url: " + ffmpeg_link);
 
 		createRecorder();
 
 		Log.i(LOG_TAG, "recorder initialize success");
 
+		runAudioThread = true;
 		audioRecordRunnable = new AudioRecordRunnable();
 		audioThread = new Thread(audioRecordRunnable);
 		audioThread.start();
 	}
 
 	private void createRecorder() {
-		Size previewSize = cameraDevice.getParameters().getPreviewSize();
-		recorder = new FFmpegFrameRecorder(ffmpeg_link, previewSize.width,
-				previewSize.height, 1);
+		// if recorder is created , dont create it again
+		if (recorder == null) {
+			Size previewSize = cameraDevice.getParameters().getPreviewSize();
+			recorder = new FFmpegFrameRecorder(ffmpeg_link, previewSize.width,
+					previewSize.height, 1);
+		}
 		recorder.setFormat("flv");
 		recorder.setSampleRate(sampleAudioRateInHz);
 		// Set in the surface changed method
@@ -208,7 +227,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 			startTime = System.currentTimeMillis();
 
 			recording = true;
-			// audioThread.start();
 
 		} catch (FFmpegFrameRecorder.Exception e) {
 			e.printStackTrace();
@@ -220,19 +238,11 @@ public class RecordActivity extends Activity implements OnClickListener,
 		runAudioThread = false;
 
 		if (recorder != null && recording) {
-
-			recording = false;
-			Log.v(LOG_TAG,
-					"Finishing recording, calling stop and release on recorder");
-			try {
-				recorder.stop();
-				recorder.release();
-			} catch (FFmpegFrameRecorder.Exception e) {
-				e.printStackTrace();
-			}
-			recorder = null;
-
+			StopRecordingTask stopTask = new StopRecordingTask();
+			stopTask.execute(recorder);
 		}
+
+		recording = false;
 	}
 
 	@Override
@@ -281,7 +291,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 			/* ffmpeg_audio encoding loop */
 			while (runAudioThread) {
-				// Log.v(LOG_TAG,"recording? " + recording);
+				Log.v(LOG_TAG, "recording? " + recording);
 				bufferReadResult = audioRecord.read(audioData, 0,
 						audioData.length);
 				if (bufferReadResult > 0) {
@@ -307,30 +317,58 @@ public class RecordActivity extends Activity implements OnClickListener,
 			Log.v(LOG_TAG, "AudioThread Finished, release audioRecord");
 
 			/* encoding finish, release recorder */
-			if (audioRecord != null) {
-				audioRecord.stop();
-				audioRecord.release();
-				audioRecord = null;
-				Log.v(LOG_TAG, "audioRecord released");
-			}
+
+			stopAudioRecording();
+		}
+
+	}
+
+	private void stopAudioRecording() {
+
+		if (audioRecord != null) {
+			audioRecord.stop();
+			audioRecord.release();
+			audioRecord = null;
+			audioThread = null;
+			audioRecordRunnable = null;
+			Log.v(LOG_TAG, "audioRecord released");
 		}
 	}
 
 	@Override
 	public void onClick(View v) {
 		if (!recording) {
+
 			String name = streamNameEditText.getText().toString();
 			if (name != null && name.length() > 0) {
+
+				m_ProgressDialog = ProgressDialog.show(this, "Please Wait",
+						"Initializing...", true);
+				InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+				imm.hideSoftInputFromWindow(
+						streamNameEditText.getWindowToken(), 0);
+				streamNameEditText.setVisibility(View.GONE);
+				initRecorder();
 				new RegisterStreamTask().execute(httpGatewayURL, name,
 						streamURL);
+			} else {
+				AlertDialog.Builder builder = new AlertDialog.Builder(this);
+				builder.setPositiveButton("OK", this);
+				builder.setTitle("Error");
+				builder.setMessage("Please enter a name...").show();
 			}
 
 		} else {
 			// This will trigger the audio recording loop to stop and then set
 			// isRecorderStart = false;
+			m_ProgressDialog = ProgressDialog.show(this, "Please Wait",
+					"Stopping...", true);
 			stopRecording();
+			runAudioThread = false;
 			Log.w(LOG_TAG, "Stop Button Pushed");
 			btnRecorderControl.setText("Start");
+			streamNameEditText.setVisibility(View.VISIBLE);
+
 		}
 	}
 
@@ -373,10 +411,10 @@ public class RecordActivity extends Activity implements OnClickListener,
 						params[1], params[2]);
 
 			} catch (ClientStatusException e) {
-				// TODO Auto-generated catch block
+
 				e.printStackTrace();
 			} catch (ServerStatusException e) {
-				// TODO Auto-generated catch block
+
 				e.printStackTrace();
 			}
 			amfConnection.close();
@@ -395,7 +433,44 @@ public class RecordActivity extends Activity implements OnClickListener,
 						"Debug: register failed", Toast.LENGTH_LONG).show();
 			}
 			super.onPostExecute(result);
+
+			m_ProgressDialog.dismiss();
 		}
+
+	}
+
+	public class StopRecordingTask extends
+			AsyncTask<FFmpegFrameRecorder, Void, Void> {
+
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+		}
+
+		@Override
+		protected Void doInBackground(FFmpegFrameRecorder... params) {
+
+			try {
+				params[0].stop();
+			} catch (Exception e) {
+
+			}
+
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Void result) {
+
+			super.onPostExecute(result);
+
+			m_ProgressDialog.dismiss();
+		}
+
+	}
+
+	@Override
+	public void onClick(DialogInterface arg0, int arg1) {
 
 	}
 

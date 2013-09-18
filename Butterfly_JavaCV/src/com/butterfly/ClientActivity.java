@@ -15,7 +15,8 @@ import android.view.MenuItem;
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.debug.BugSense;
 
-public class ClientActivity extends Activity {
+public class ClientActivity extends Activity implements
+		io.vov.vitamio.MediaPlayer.OnCompletionListener {
 
 	public static final String TAG = "TAG";
 
@@ -92,6 +93,9 @@ public class ClientActivity extends Activity {
 					return false;
 				}
 			});
+
+			videoView.setOnCompletionListener(this);
+
 		}
 
 	}
@@ -133,6 +137,12 @@ public class ClientActivity extends Activity {
 		super.onDestroy();
 
 		BugSenseHandler.closeSession(this);
+	}
+
+	@Override
+	public void onCompletion(MediaPlayer mediaPlayer) {
+		videoView.stopPlayback();
+		this.finish();
 	}
 
 }
