@@ -26,6 +26,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.bugsense.trace.BugSenseHandler;
+import com.butterfly.debug.BugSense;
 import com.butterfly.listener.OnPreviewListener;
 import com.butterfly.view.CameraView;
 import com.googlecode.javacv.FFmpegFrameRecorder;
@@ -36,16 +38,16 @@ import flex.messaging.io.amf.client.AMFConnection;
 import flex.messaging.io.amf.client.exceptions.ClientStatusException;
 import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
-public class RecordActivity extends Activity implements OnClickListener,OnPreviewListener {
-
+public class RecordActivity extends Activity implements OnClickListener,
+		OnPreviewListener {
 
 	private final static String CLASS_LABEL = "RecordActivity";
 	private final static String LOG_TAG = CLASS_LABEL;
 
 	private PowerManager.WakeLock mWakeLock;
 
-	private String ffmpeg_link; 
-	//  private String ffmpeg_link = "/mnt/sdcard/stream.flv";
+	private String ffmpeg_link;
+	// private String ffmpeg_link = "/mnt/sdcard/stream.flv";
 
 	long startTime = 0;
 	boolean recording = false;
@@ -78,9 +80,11 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		BugSenseHandler.initAndStartSession(this, BugSense.API_KEY);
+
 		ffmpeg_link = getString(R.string.rtmp_url);
 
-		//Hide title
+		// Hide title
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
@@ -90,9 +94,10 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 
 		httpGatewayURL = getString(R.string.http_gateway_url);
 
-		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE); 
-		mWakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, CLASS_LABEL); 
-		mWakeLock.acquire(); 
+		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		mWakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,
+				CLASS_LABEL);
+		mWakeLock.acquire();
 
 		initLayout();
 		initRecorder();
@@ -100,14 +105,14 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 		streamNameEditText = (EditText) findViewById(R.id.stream_name);
 	}
 
-
 	@Override
 	protected void onResume() {
 		super.onResume();
 
 		if (mWakeLock == null) {
 			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-			mWakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, CLASS_LABEL);
+			mWakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,
+					CLASS_LABEL);
 			mWakeLock.acquire();
 		}
 	}
@@ -125,6 +130,7 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		BugSenseHandler.closeSession(this);
 
 		recording = false;
 
@@ -140,32 +146,31 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 		}
 	}
 
-
 	private void initLayout() {
 
 		/* add control button: start and stop */
 		btnRecorderControl = (Button) findViewById(R.id.recorder_control);
-	btnRecorderControl.setText("Start");
-	btnRecorderControl.setOnClickListener(this);
+		btnRecorderControl.setText("Start");
+		btnRecorderControl.setOnClickListener(this);
 
-	cameraView = (CameraView)findViewById(R.id.cam);
-	cameraDevice = Camera.open(0);
-	cameraView.setCamera(cameraDevice);
+		cameraView = (CameraView) findViewById(R.id.cam);
+		cameraDevice = Camera.open(0);
+		cameraView.setCamera(cameraDevice);
 
-	Log.i(LOG_TAG, "cameara preview start: OK");
+		Log.i(LOG_TAG, "cameara preview start: OK");
 	}
 
-	//---------------------------------------
+	// ---------------------------------------
 	// initialize ffmpeg_recorder
-	//---------------------------------------
+	// ---------------------------------------
 	private void initRecorder() {
 
-		Log.w(LOG_TAG,"init recorder");
+		Log.w(LOG_TAG, "init recorder");
 
-		streamURL = String.valueOf((int) (Math.random()*100000) + System.currentTimeMillis());
+		streamURL = String.valueOf((int) (Math.random() * 100000)
+				+ System.currentTimeMillis());
 		ffmpeg_link += streamURL;
 		Log.i(LOG_TAG, "ffmpeg_url: " + ffmpeg_link);
-
 
 		createRecorder();
 
@@ -176,10 +181,10 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 		audioThread.start();
 	}
 
-
 	private void createRecorder() {
 		Size previewSize = cameraDevice.getParameters().getPreviewSize();
-		recorder = new FFmpegFrameRecorder(ffmpeg_link, previewSize.width, previewSize.height, 1);
+		recorder = new FFmpegFrameRecorder(ffmpeg_link, previewSize.width,
+				previewSize.height, 1);
 		recorder.setFormat("flv");
 		recorder.setSampleRate(sampleAudioRateInHz);
 		// Set in the surface changed method
@@ -190,19 +195,20 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 
 		if (yuvIplimage == null) {
 			Size previewSize = cameraDevice.getParameters().getPreviewSize();
-			yuvIplimage = IplImage.create(previewSize.width, previewSize.height, IPL_DEPTH_8U, 2);
+			yuvIplimage = IplImage.create(previewSize.width,
+					previewSize.height, IPL_DEPTH_8U, 2);
 			Log.i(LOG_TAG, "create yuvIplimage");
 		}
 
 		try {
-			if(recorder == null)
+			if (recorder == null)
 				createRecorder();
 
 			recorder.start();
 			startTime = System.currentTimeMillis();
 
 			recording = true;
-			//    audioThread.start();
+			// audioThread.start();
 
 		} catch (FFmpegFrameRecorder.Exception e) {
 			e.printStackTrace();
@@ -216,7 +222,8 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 		if (recorder != null && recording) {
 
 			recording = false;
-			Log.v(LOG_TAG,"Finishing recording, calling stop and release on recorder");
+			Log.v(LOG_TAG,
+					"Finishing recording, calling stop and release on recorder");
 			try {
 				recorder.stop();
 				recorder.release();
@@ -244,25 +251,28 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 		return super.onKeyDown(keyCode, event);
 	}
 
-
-	//---------------------------------------------
+	// ---------------------------------------------
 	// audio thread, gets and encodes audio data
-	//---------------------------------------------
+	// ---------------------------------------------
 	class AudioRecordRunnable implements Runnable {
 
 		@Override
 		public void run() {
-			android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+			android.os.Process
+					.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 
 			// Audio
 			int bufferSize;
 			short[] audioData;
 			int bufferReadResult;
 
-			bufferSize = AudioRecord.getMinBufferSize(sampleAudioRateInHz, 
-					AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-			audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleAudioRateInHz, 
-					AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
+			bufferSize = AudioRecord
+					.getMinBufferSize(sampleAudioRateInHz,
+							AudioFormat.CHANNEL_IN_MONO,
+							AudioFormat.ENCODING_PCM_16BIT);
+			audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
+					sampleAudioRateInHz, AudioFormat.CHANNEL_IN_MONO,
+					AudioFormat.ENCODING_PCM_16BIT, bufferSize);
 
 			audioData = new short[bufferSize];
 
@@ -271,62 +281,64 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 
 			/* ffmpeg_audio encoding loop */
 			while (runAudioThread) {
-				//Log.v(LOG_TAG,"recording? " + recording);
-				bufferReadResult = audioRecord.read(audioData, 0, audioData.length);
+				// Log.v(LOG_TAG,"recording? " + recording);
+				bufferReadResult = audioRecord.read(audioData, 0,
+						audioData.length);
 				if (bufferReadResult > 0) {
-					//Log.v(LOG_TAG,"bufferReadResult: " + bufferReadResult);
-					// If "recording" isn't true when start this thread, it never get's set according to this if statement...!!!
-					// Why?  Good question...
+					// Log.v(LOG_TAG,"bufferReadResult: " + bufferReadResult);
+					// If "recording" isn't true when start this thread, it
+					// never get's set according to this if statement...!!!
+					// Why? Good question...
 					if (recording) {
 						try {
 							Buffer[] buffer = new Buffer[1];
-							buffer[0] = ShortBuffer.wrap(audioData, 0, bufferReadResult);
+							buffer[0] = ShortBuffer.wrap(audioData, 0,
+									bufferReadResult);
 							recorder.record(buffer);
-							//Log.v(LOG_TAG,"recording " + 1024*i + " to " + 1024*i+1024);
+							// Log.v(LOG_TAG,"recording " + 1024*i + " to " +
+							// 1024*i+1024);
 						} catch (FFmpegFrameRecorder.Exception e) {
-							Log.v(LOG_TAG,e.getMessage());
+							Log.v(LOG_TAG, e.getMessage());
 							e.printStackTrace();
 						}
 					}
 				}
 			}
-			Log.v(LOG_TAG,"AudioThread Finished, release audioRecord");
+			Log.v(LOG_TAG, "AudioThread Finished, release audioRecord");
 
 			/* encoding finish, release recorder */
 			if (audioRecord != null) {
 				audioRecord.stop();
 				audioRecord.release();
 				audioRecord = null;
-				Log.v(LOG_TAG,"audioRecord released");
+				Log.v(LOG_TAG, "audioRecord released");
 			}
 		}
 	}
-
-
 
 	@Override
 	public void onClick(View v) {
 		if (!recording) {
 			String name = streamNameEditText.getText().toString();
 			if (name != null && name.length() > 0) {
-				new RegisterStreamTask().execute(httpGatewayURL, name, streamURL);
+				new RegisterStreamTask().execute(httpGatewayURL, name,
+						streamURL);
 			}
 
 		} else {
-			// This will trigger the audio recording loop to stop and then set isRecorderStart = false;
+			// This will trigger the audio recording loop to stop and then set
+			// isRecorderStart = false;
 			stopRecording();
 			Log.w(LOG_TAG, "Stop Button Pushed");
 			btnRecorderControl.setText("Start");
 		}
 	}
 
-
 	@Override
 	public void onPreviewChanged(byte[] data) {
 
 		if (yuvIplimage != null && recording) {
 			yuvIplimage.getByteBuffer().put(data);
-
 
 			try {
 				long t = 1000 * (System.currentTimeMillis() - startTime);
@@ -344,7 +356,6 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 
 	public class RegisterStreamTask extends AsyncTask<String, Void, Boolean> {
 
-
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
@@ -353,12 +364,13 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 		@Override
 		protected Boolean doInBackground(String... params) {
 			Boolean result = false;
-			AMFConnection amfConnection = new AMFConnection();			
+			AMFConnection amfConnection = new AMFConnection();
 			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
 			try {
 				System.out.println(params[0]);
 				amfConnection.connect(params[0]);
-				result = (Boolean) amfConnection.call("registerLiveStream", params[1], params[2]);
+				result = (Boolean) amfConnection.call("registerLiveStream",
+						params[1], params[2]);
 
 			} catch (ClientStatusException e) {
 				// TODO Auto-generated catch block
@@ -369,7 +381,6 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 			}
 			amfConnection.close();
 
-
 			return result;
 		}
 
@@ -379,13 +390,13 @@ public class RecordActivity extends Activity implements OnClickListener,OnPrevie
 				startRecording();
 				Log.w(LOG_TAG, "Start Button Pushed");
 				btnRecorderControl.setText("Stop");
-			}
-			else {
-				Toast.makeText(getApplicationContext(), "Debug: register failed", Toast.LENGTH_LONG).show();
+			} else {
+				Toast.makeText(getApplicationContext(),
+						"Debug: register failed", Toast.LENGTH_LONG).show();
 			}
 			super.onPostExecute(result);
 		}
 
-	}	
+	}
 
 }

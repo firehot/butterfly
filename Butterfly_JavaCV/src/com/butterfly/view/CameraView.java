@@ -19,172 +19,189 @@ import com.butterfly.listener.OnPreviewListener;
 //---------------------------------------------
 // camera thread, gets and encodes video data
 //---------------------------------------------
-public class CameraView extends ViewGroup implements SurfaceHolder.Callback, PreviewCallback {
+public class CameraView extends ViewGroup implements SurfaceHolder.Callback,
+		PreviewCallback {
 
-    private SurfaceHolder mHolder;
-    private Camera mCamera;
-    private boolean isPreviewOn = false;
-    OnPreviewListener previewListener;
-    Size mPreviewSize;
-    List<Size> mSupportedPreviewSizes;
-    SurfaceView mSurfaceView;
+	private SurfaceHolder mHolder;
+	private Camera mCamera;
+	private boolean isPreviewOn = false;
+	OnPreviewListener previewListener;
+	Size mPreviewSize;
+	List<Size> mSupportedPreviewSizes;
+	SurfaceView mSurfaceView;
 
-    public CameraView(Context context, Camera camera) {
-        super(context);
-        Log.w("camera","camera view");
-        mSurfaceView = new SurfaceView(context);
-        addView(mSurfaceView);
-        mCamera = camera;
-        mHolder = mSurfaceView.getHolder();
-        mHolder.addCallback(CameraView.this);
-        mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-        mCamera.setPreviewCallback(CameraView.this);
-        this.previewListener = (OnPreviewListener)context;
-    }
-    
-    public CameraView(Context context, AttributeSet attrs) {
+	public CameraView(Context context, Camera camera) {
+		super(context);
+		Log.w("camera", "camera view");
+		mSurfaceView = new SurfaceView(context);
+		addView(mSurfaceView);
+		mCamera = camera;
+		mHolder = mSurfaceView.getHolder();
+		mHolder.addCallback(CameraView.this);
+		mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+		mCamera.setPreviewCallback(CameraView.this);
+		this.previewListener = (OnPreviewListener) context;
+	}
+
+	public CameraView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 
-        mSurfaceView = new SurfaceView(context);
-        addView(mSurfaceView);
+		mSurfaceView = new SurfaceView(context);
+		addView(mSurfaceView);
 		mHolder = mSurfaceView.getHolder();
 		mHolder.addCallback(this);
 		// deprecated setting, but required on Android versions prior to 3.0
-		mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);	
-		this.previewListener = (OnPreviewListener)context;
+		mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+		this.previewListener = (OnPreviewListener) context;
 	}
 
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-        try {
-            stopPreview();
-            mCamera.setPreviewDisplay(holder);
-        } catch (IOException exception) {
-            mCamera.release();
-            mCamera = null;
-        }
-    }
+	@Override
+	public void surfaceCreated(SurfaceHolder holder) {
+		try {
+			stopPreview();
+			mCamera.setPreviewDisplay(holder);
+		} catch (IOException exception) {
+			mCamera.release();
+			mCamera = null;
+		}
+	}
 
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-    	stopPreview();
-        Camera.Parameters camParams = mCamera.getParameters();
-        camParams.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
+	public void surfaceChanged(SurfaceHolder holder, int format, int width,
+			int height) {
+		stopPreview();
+		Camera.Parameters camParams = mCamera.getParameters();
+		// camParams.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
+		camParams.setPreviewSize(mSupportedPreviewSizes.get(0).width,
+				mSupportedPreviewSizes.get(0).height);
 		requestLayout();
 		mCamera.setParameters(camParams);
 
-        startPreview();
-    }
+		startPreview();
+	}
 
-    public void setCamera(Camera camera) {
+	public void setCamera(Camera camera) {
 		mCamera = camera;
 		mCamera.setPreviewCallback(CameraView.this);
 		if (mCamera != null) {
-            mSupportedPreviewSizes = mCamera.getParameters().getSupportedPreviewSizes();
-            requestLayout();
-        }
+			mSupportedPreviewSizes = mCamera.getParameters()
+					.getSupportedPreviewSizes();
+			requestLayout();
+		}
 	}
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        try {
-            mHolder.addCallback(null);
-            mCamera.setPreviewCallback(null);
-        } catch (RuntimeException e) {
-            // The camera has probably just been released, ignore.
-        }
-    }
 
-    public void startPreview() {
-        if (!isPreviewOn && mCamera != null) {
-            isPreviewOn = true;
-            mCamera.startPreview();
-        }
-    }
+	@Override
+	public void surfaceDestroyed(SurfaceHolder holder) {
+		try {
+			mHolder.addCallback(null);
+			mCamera.setPreviewCallback(null);
+		} catch (RuntimeException e) {
+			// The camera has probably just been released, ignore.
+		}
+	}
 
-    public void stopPreview() {
-        if (isPreviewOn && mCamera != null) {
-            isPreviewOn = false;
-            mCamera.stopPreview();
-        }
-    }
+	public void startPreview() {
+		if (!isPreviewOn && mCamera != null) {
+			isPreviewOn = true;
+			mCamera.startPreview();
+		}
+	}
 
-    @Override
-    public void onPreviewFrame(byte[] data, Camera camera) {
-        this.previewListener.onPreviewChanged(data);
-    }
-    
-    
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        // We purposely disregard child measurements because act as a
-        // wrapper to a SurfaceView that centers the camera preview instead
-        // of stretching it.
-        final int width = resolveSize(getSuggestedMinimumWidth(), widthMeasureSpec);
-        final int height = resolveSize(getSuggestedMinimumHeight(), heightMeasureSpec);
-        setMeasuredDimension(width, height);
+	public void stopPreview() {
+		if (isPreviewOn && mCamera != null) {
+			isPreviewOn = false;
+			mCamera.stopPreview();
+		}
+	}
 
-        if (mSupportedPreviewSizes != null) {
-            mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, width, height);
-        }
-    }
-    
-    private Size getOptimalPreviewSize(List<Size> sizes, int w, int h) {
-        final double ASPECT_TOLERANCE = 0.1;
-        double targetRatio = (double) w / h;
-        if (sizes == null) return null;
+	@Override
+	public void onPreviewFrame(byte[] data, Camera camera) {
+		this.previewListener.onPreviewChanged(data);
+	}
 
-        Size optimalSize = null;
-        double minDiff = Double.MAX_VALUE;
+	@Override
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+		// We purposely disregard child measurements because act as a
+		// wrapper to a SurfaceView that centers the camera preview instead
+		// of stretching it.
+		final int width = resolveSize(getSuggestedMinimumWidth(),
+				widthMeasureSpec);
+		final int height = resolveSize(getSuggestedMinimumHeight(),
+				heightMeasureSpec);
+		setMeasuredDimension(width, height);
 
-        int targetHeight = h;
+		if (mSupportedPreviewSizes != null) {
+			mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, width,
+					height);
+		}
+	}
 
-        // Try to find an size match aspect ratio and size
-        for (Size size : sizes) {
-            double ratio = (double) size.width / size.height;
-            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
-            if (Math.abs(size.height - targetHeight) < minDiff) {
-                optimalSize = size;
-                minDiff = Math.abs(size.height - targetHeight);
-            }
-        }
+	private Size getOptimalPreviewSize(List<Size> sizes, int w, int h) {
+		final double ASPECT_TOLERANCE = 0.1;
+		double targetRatio = (double) w / h;
+		if (sizes == null)
+			return null;
 
-        // Cannot find the one match the aspect ratio, ignore the requirement
-        if (optimalSize == null) {
-            minDiff = Double.MAX_VALUE;
-            for (Size size : sizes) {
-                if (Math.abs(size.height - targetHeight) < minDiff) {
-                    optimalSize = size;
-                    minDiff = Math.abs(size.height - targetHeight);
-                }
-            }
-        }
-        return optimalSize;
-    }
+		Size optimalSize = null;
+		double minDiff = Double.MAX_VALUE;
 
-    @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        if (changed && getChildCount() > 0) {
-            final View child = getChildAt(0);
+		int targetHeight = h;
 
-            final int width = r - l;
-            final int height = b - t;
+		// Try to find an size match aspect ratio and size
+		for (Size size : sizes) {
+			double ratio = (double) size.width / size.height;
+			if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) {
+				continue;
+			}
+			if (Math.abs(size.height - targetHeight) < minDiff) {
+				optimalSize = size;
+				minDiff = Math.abs(size.height - targetHeight);
+			}
 
-            int previewWidth = width;
-            int previewHeight = height;
-            if (mPreviewSize != null) {
-                previewWidth = mPreviewSize.width;
-                previewHeight = mPreviewSize.height;
-            }
+		}
 
-            // Center the child SurfaceView within the parent.
-            if (width * previewHeight > height * previewWidth) {
-                final int scaledChildWidth = previewWidth * height / previewHeight;
-                child.layout((width - scaledChildWidth) / 2, 0,
-                        (width + scaledChildWidth) / 2, height);
-            } else {
-                final int scaledChildHeight = previewHeight * width / previewWidth;
-                child.layout(0, (height - scaledChildHeight) / 2,
-                        width, (height + scaledChildHeight) / 2);
-            }
-        }
-    }
+		// Cannot find the one match the aspect ratio, ignore the requirement
+		if (optimalSize == null) {
+			minDiff = Double.MAX_VALUE;
+			for (Size size : sizes) {
+				if (Math.abs(size.height - targetHeight) < minDiff) {
+					System.out
+							.println(" optimal size fit preview size width, height "
+									+ size.width + " " + size.height);
+					optimalSize = size;
+					minDiff = Math.abs(size.height - targetHeight);
+				}
+			}
+		}
+		return optimalSize;
+	}
+
+	@Override
+	protected void onLayout(boolean changed, int l, int t, int r, int b) {
+		if (changed && getChildCount() > 0) {
+			final View child = getChildAt(0);
+
+			final int width = r - l;
+			final int height = b - t;
+
+			int previewWidth = width;
+			int previewHeight = height;
+			if (mPreviewSize != null) {
+				previewWidth = mPreviewSize.width;
+				previewHeight = mPreviewSize.height;
+			}
+
+			// Center the child SurfaceView within the parent.
+			if (width * previewHeight > height * previewWidth) {
+				final int scaledChildWidth = previewWidth * height
+						/ previewHeight;
+				child.layout((width - scaledChildWidth) / 2, 0,
+						(width + scaledChildWidth) / 2, height);
+			} else {
+				final int scaledChildHeight = previewHeight * width
+						/ previewWidth;
+				child.layout(0, (height - scaledChildHeight) / 2, width,
+						(height + scaledChildHeight) / 2);
+			}
+		}
+	}
 }
