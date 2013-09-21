@@ -25,13 +25,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
 
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IConnection;
@@ -45,13 +47,10 @@ import org.red5.server.api.stream.IBroadcastStream;
  * @author The Red5 Project (red5@osflash.org)
  */
 public class Application extends MultiThreadedApplicationAdapter {
-	
-	    private static final String url = "jdbc:mysql://localhost/test";
-	    private static final String user = "root";
-	    private static final String pass = "Deneme123";
 
 	Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
-	
+	private EntityManager entityManager;
+
 	public class Stream implements Serializable {
 		public String streamName;
 		public String streamUrl;
@@ -62,21 +61,21 @@ public class Application extends MultiThreadedApplicationAdapter {
 			this.streamUrl = streamUrl;
 			this.registerTime = registerTime;
 		}
-		
+
 	}
-	
+
 	/** {@inheritDoc} */
-    @Override
+	@Override
 	public boolean connect(IConnection conn, IScope scope, Object[] params) {
 		return true;
 	}
 
 	/** {@inheritDoc} */
-    @Override
+	@Override
 	public void disconnect(IConnection conn, IScope scope) {
 		super.disconnect(conn, scope);
 	}
-    
+
 	public HashMap<String, String> getLiveStreams() {
 		HashMap<String, String> streams = new HashMap<String, String>();
 		IScope target = null;
@@ -93,8 +92,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 		return streams;
 	}
-	
-	
+
+
 	public boolean registerLiveStream(String streamName, String url) {
 		boolean result = false;
 		if (registeredStreams.containsKey(url) == false) {
@@ -103,27 +102,26 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 		return result;
 	}
-	
-	public boolean registerUser(String register_id, String mail )
+
+	public boolean registerUser(int register_id, String mail) 
 	{
-		
-		boolean result = false;
-		try 
-		   {
-   			Connection mySQLConn = DriverManager.getConnection( url , user , pass );
-            Statement sttmnt = mySQLConn.createStatement( );
-            String insert = "INSERT INTO  test.gcm_users(gcm_reg_id,email)  VALUES('"+register_id+"','"+mail+"')";
-            sttmnt.executeUpdate( insert );
-            result = true;
-    	   }
-			catch (Exception e) 
-			{
-			System.out.print("Hata");
-			System.err.print(e.getMessage());
-			}
-		return result ;
+		boolean result;
+		try {
+			beginTransaction();
+			GcmUsers gcmUsers = new GcmUsers(register_id, mail);
+			getEntityManager().persist(gcmUsers);
+			commit();
+			closeEntityManager();
+			result = true;
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			result = false;
+		}
+		return result;
+
 	}
-	
+
 	@Override
 	public void streamBroadcastClose(IBroadcastStream stream) {
 		String streamUrl = stream.getPublishedName();
@@ -142,7 +140,27 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 		return result;
 	}
+
+
+	private void beginTransaction() {
+		getEntityManager().getTransaction().begin();
+	}
+
+	private EntityManager getEntityManager() {
+		if (entityManager == null) {
+			EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("ButterFly_Red5");
+			entityManager = entityManagerFactory.createEntityManager();
+		}
+		return entityManager;
+	}
+
+	private void commit() {
+		getEntityManager().getTransaction().commit();
+	}
 	
-	
+	private void closeEntityManager() {
+		getEntityManager().close();
+	}
+
 
 }

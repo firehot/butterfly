@@ -48,9 +48,15 @@ public class ApplicationTester {
 		
 		registerLiveStream = butterflyApp.removeStream("publishUrl" + 1234);
 		assertEquals(registerLiveStream, false);
+	}
+	
+	@Test
+	public void testRegisterUser() {
+		int t = (int) (Math.random()*1000);
+		boolean result = butterflyApp.registerUser(t, "dgsdgs");
 		
+		assertEquals(true, result);
 		
-
 	}
 
 }
