@@ -26,6 +26,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
@@ -39,7 +46,9 @@ import org.red5.server.api.stream.IBroadcastStream;
  */
 public class Application extends MultiThreadedApplicationAdapter {
 	
-	
+	    private static final String url = "jdbc:mysql://localhost/test";
+	    private static final String user = "root";
+	    private static final String pass = "Deneme123";
 
 	Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
 	
@@ -95,7 +104,25 @@ public class Application extends MultiThreadedApplicationAdapter {
 		return result;
 	}
 	
-	
+	public boolean registerUser(String register_id, String mail )
+	{
+		
+		boolean result = false;
+		try 
+		   {
+   			Connection mySQLConn = DriverManager.getConnection( url , user , pass );
+            Statement sttmnt = mySQLConn.createStatement( );
+            String insert = "INSERT INTO  test.gcm_users(gcm_reg_id,email)  VALUES('"+register_id+"','"+mail+"')";
+            sttmnt.executeUpdate( insert );
+            result = true;
+    	   }
+			catch (Exception e) 
+			{
+			System.out.print("Hata");
+			System.err.print(e.getMessage());
+			}
+		return result ;
+	}
 	
 	@Override
 	public void streamBroadcastClose(IBroadcastStream stream) {
