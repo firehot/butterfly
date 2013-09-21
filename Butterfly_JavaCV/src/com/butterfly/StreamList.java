@@ -17,14 +17,16 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
+
+import com.bugsense.trace.BugSenseHandler;
+import com.butterfly.debug.BugSense;
+
 import flex.messaging.io.MessageIOConstants;
 import flex.messaging.io.amf.client.AMFConnection;
 import flex.messaging.io.amf.client.exceptions.ClientStatusException;
 import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
-
 public class StreamList extends ListActivity {
-
 
 	public static final String STREAM_PUBLISHED_NAME = "stream-name";
 	String httpGatewayURL;
@@ -33,6 +35,7 @@ public class StreamList extends ListActivity {
 	public class Stream {
 		public String name;
 		public String url;
+
 		public Stream(String name, String url) {
 			super();
 			this.name = name;
@@ -49,11 +52,15 @@ public class StreamList extends ListActivity {
 	private OnItemClickListener itemClickListener = new OnItemClickListener() {
 
 		@Override
-		public void onItemClick(AdapterView<?> arg0, View view, int position, long id) {
-			Toast.makeText(getApplicationContext(), adapter.getItem(position).name, Toast.LENGTH_SHORT).show();
+		public void onItemClick(AdapterView<?> arg0, View view, int position,
+				long id) {
+			Toast.makeText(getApplicationContext(),
+					adapter.getItem(position).name, Toast.LENGTH_SHORT).show();
 
-			Intent intent = new Intent(getApplicationContext(), ClientActivity.class);
-			intent.putExtra(STREAM_PUBLISHED_NAME, adapter.getItem(position).url);
+			Intent intent = new Intent(getApplicationContext(),
+					ClientActivity.class);
+			intent.putExtra(STREAM_PUBLISHED_NAME,
+					adapter.getItem(position).url);
 			startActivity(intent);
 
 		}
@@ -62,15 +69,25 @@ public class StreamList extends ListActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		BugSenseHandler.initAndStartSession(this, BugSense.API_KEY);
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		httpGatewayURL = getString(R.string.http_gateway_url);
 
-		adapter = new ArrayAdapter<Stream>(StreamList.this, android.R.layout.simple_list_item_1);
+		adapter = new ArrayAdapter<Stream>(StreamList.this,
+				android.R.layout.simple_list_item_1);
 		setListAdapter(adapter);
 
-		getListView().setOnItemClickListener(itemClickListener );
+		getListView().setOnItemClickListener(itemClickListener);
 
+	}
 
+	@Override
+	protected void onDestroy() {
+		// TODO Auto-generated method stub
+		super.onDestroy();
+
+		BugSenseHandler.closeSession(this);
 	}
 
 	@Override
@@ -84,9 +101,6 @@ public class StreamList extends ListActivity {
 		getMenuInflater().inflate(R.menu.activity_client, menu);
 		return true;
 	}
-
-
-
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -104,9 +118,8 @@ public class StreamList extends ListActivity {
 		return super.onOptionsItemSelected(item);
 	}
 
-
-	public class GetStreamListTask extends AsyncTask<String, Void, HashMap<String, String>> {
-
+	public class GetStreamListTask extends
+			AsyncTask<String, Void, HashMap<String, String>> {
 
 		@Override
 		protected void onPreExecute() {
@@ -117,12 +130,13 @@ public class StreamList extends ListActivity {
 		@Override
 		protected HashMap<String, String> doInBackground(String... params) {
 			HashMap<String, String> streams = null;
-			AMFConnection amfConnection = new AMFConnection();			
+			AMFConnection amfConnection = new AMFConnection();
 			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
 			try {
 				System.out.println(params[0]);
 				amfConnection.connect(params[0]);
-				streams = (HashMap<String, String>) amfConnection.call("getLiveStreams");
+				streams = (HashMap<String, String>) amfConnection
+						.call("getLiveStreams");
 				System.out.println("result count -> " + streams.size());
 
 			} catch (ClientStatusException e) {
@@ -134,7 +148,6 @@ public class StreamList extends ListActivity {
 			}
 			amfConnection.close();
 
-
 			return streams;
 		}
 
@@ -142,23 +155,34 @@ public class StreamList extends ListActivity {
 		protected void onPostExecute(HashMap<String, String> streams) {
 			adapter.clear();
 
-			if (streams.size() > 0) {
+			if (streams != null) {
+				if (streams.size() > 0) {
 
-				Set<Entry<String, String>> entrySet = streams.entrySet();
+					Set<Entry<String, String>> entrySet = streams.entrySet();
 
-				for (Iterator iterator = entrySet.iterator(); iterator
-						.hasNext();) {
-					Entry<String, String> entry = (Entry<String, String>) iterator
-							.next();
-					adapter.add(new Stream(entry.getValue(), entry.getKey()));
+					for (Iterator iterator = entrySet.iterator(); iterator
+							.hasNext();) {
+						Entry<String, String> entry = (Entry<String, String>) iterator
+								.next();
+						adapter.add(new Stream(entry.getValue(), entry.getKey()));
+					}
+
+					adapter.notifyDataSetChanged();
+				} else {
+					Toast.makeText(getApplicationContext(),
+							getString(R.string.noLiveStream), Toast.LENGTH_LONG)
+							.show();
 				}
+			} else {
+				Toast.makeText(getApplicationContext(),
+						getString(R.string.connectivityProblem),
+						Toast.LENGTH_LONG).show();
 
-				adapter.notifyDataSetChanged();
 			}
 			setProgressBarIndeterminateVisibility(false);
 			super.onPostExecute(streams);
 		}
 
-	}	
+	}
 
 }

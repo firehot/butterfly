@@ -6,361 +6,472 @@ import java.nio.Buffer;
 import java.nio.ShortBuffer;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
 import android.hardware.Camera;
+import android.hardware.Camera.Size;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.util.Log;
-import android.view.Display;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
+import android.widget.EditText;
+import android.widget.Toast;
 
+import com.bugsense.trace.BugSenseHandler;
+import com.butterfly.debug.BugSense;
 import com.butterfly.listener.OnPreviewListener;
 import com.butterfly.view.CameraView;
 import com.googlecode.javacv.FFmpegFrameRecorder;
+import com.googlecode.javacv.FrameRecorder.Exception;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
-public class RecordActivity extends Activity implements OnClickListener,OnPreviewListener {
-	
+import flex.messaging.io.MessageIOConstants;
+import flex.messaging.io.amf.client.AMFConnection;
+import flex.messaging.io.amf.client.exceptions.ClientStatusException;
+import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
-    private final static String CLASS_LABEL = "RecordActivity";
-    private final static String LOG_TAG = CLASS_LABEL;
+public class RecordActivity extends Activity implements OnClickListener,
+		OnPreviewListener, android.content.DialogInterface.OnClickListener {
 
-    private PowerManager.WakeLock mWakeLock;
+	private final static String CLASS_LABEL = "RecordActivity";
+	private final static String LOG_TAG = CLASS_LABEL;
 
-    private String ffmpeg_link; 
-  //  private String ffmpeg_link = "/mnt/sdcard/stream.flv";
+	private PowerManager.WakeLock mWakeLock;
 
-    long startTime = 0;
-    boolean recording = false;
+	private String ffmpeg_link;
+	// private String ffmpeg_link = "/mnt/sdcard/stream.flv";
 
-    private volatile FFmpegFrameRecorder recorder;
+	long startTime = 0;
+	boolean recording = false;
 
-    private int sampleAudioRateInHz = 44100;
-    private int imageWidth = 320;
-    private int imageHeight = 240;
-    private int frameRate = 30;
+	private volatile FFmpegFrameRecorder recorder;
 
-    /* audio data getting thread */
-    private AudioRecord audioRecord;
-    private AudioRecordRunnable audioRecordRunnable;
-    private Thread audioThread;
-    volatile boolean runAudioThread = true;
+	private int sampleAudioRateInHz = 44100;
+	private int frameRate = 30;
 
-    /* video data getting thread */
-    private Camera cameraDevice;
-    private CameraView cameraView;
+	/* audio data getting thread */
+	private AudioRecord audioRecord;
+	private AudioRecordRunnable audioRecordRunnable;
+	private Thread audioThread;
+	volatile boolean runAudioThread = true;
 
-    private IplImage yuvIplimage = null;
+	/* video data getting thread */
+	private Camera cameraDevice;
+	private CameraView cameraView;
 
-    /* layout setting */
-    private final int bg_screen_bx = 232;
-    private final int bg_screen_by = 128;
-    private final int bg_screen_width = 700;
-    private final int bg_screen_height = 500;
-    private final int bg_width = 1123;
-    private final int bg_height = 715;
-    private final int live_width = 640;
-    private final int live_height = 480;
-    private int screenWidth, screenHeight;
-    private Button btnRecorderControl;
+	private IplImage yuvIplimage = null;
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        
-        ffmpeg_link = getString(R.string.rtmp_url);
-        
-        //Hide title
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+	private Button btnRecorderControl;
+	private String httpGatewayURL;
+	private String streamURL;
+	private EditText streamNameEditText;
 
-        setContentView(R.layout.main);
+	private ProgressDialog m_ProgressDialog;
 
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE); 
-        mWakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, CLASS_LABEL); 
-        mWakeLock.acquire(); 
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
 
-        initLayout();
-        initRecorder();
-    }
+		BugSenseHandler.initAndStartSession(this, BugSense.API_KEY);
 
+		ffmpeg_link = getString(R.string.rtmp_url);
 
-    @Override
-    protected void onResume() {
-        super.onResume();
+		// Hide title
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        if (mWakeLock == null) {
-           PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-           mWakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, CLASS_LABEL);
-           mWakeLock.acquire();
-        }
-    }
+		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
-    @Override
-    protected void onPause() {
-        super.onPause();
+		setContentView(R.layout.main);
 
-        if (mWakeLock != null) {
-            mWakeLock.release();
-            mWakeLock = null;
-        }
-    }
+		httpGatewayURL = getString(R.string.http_gateway_url);
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
+		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		mWakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,
+				CLASS_LABEL);
+		mWakeLock.acquire();
 
-        recording = false;
+		initLayout();
 
-        if (cameraView != null) {
-            cameraView.stopPreview();
-            cameraDevice.release();
-            cameraDevice = null;
-        }
-
-        if (mWakeLock != null) {
-            mWakeLock.release();
-            mWakeLock = null;
-        }
-    }
-
-
-    private void initLayout() {
-
-        /* get size of screen */
-        Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        screenWidth = display.getWidth();
-        screenHeight = display.getHeight();
-        RelativeLayout.LayoutParams layoutParam = null; 
-        LayoutInflater myInflate = null; 
-        myInflate = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        RelativeLayout topLayout = new RelativeLayout(this);
-        setContentView(topLayout);
-        LinearLayout preViewLayout = (LinearLayout) myInflate.inflate(R.layout.main, null);
-        layoutParam = new RelativeLayout.LayoutParams(screenWidth, screenHeight);
-        topLayout.addView(preViewLayout, layoutParam);
-
-        /* add control button: start and stop */
-        btnRecorderControl = (Button) findViewById(R.id.recorder_control);
-        btnRecorderControl.setText("Start");
-        btnRecorderControl.setOnClickListener(this);
-
-        /* add camera view */
-        int display_width_d = (int) (1.0 * bg_screen_width * screenWidth / bg_width);
-        int display_height_d = (int) (1.0 * bg_screen_height * screenHeight / bg_height);
-        int prev_rw, prev_rh;
-        if (1.0 * display_width_d / display_height_d > 1.0 * live_width / live_height) {
-            prev_rh = display_height_d;
-            prev_rw = (int) (1.0 * display_height_d * live_width / live_height);
-        } else {
-            prev_rw = display_width_d;
-            prev_rh = (int) (1.0 * display_width_d * live_height / live_width);
-        }
-        layoutParam = new RelativeLayout.LayoutParams(prev_rw, prev_rh);
-        layoutParam.topMargin = (int) (1.0 * bg_screen_by * screenHeight / bg_height);
-        layoutParam.leftMargin = (int) (1.0 * bg_screen_bx * screenWidth / bg_width);
-
-        cameraDevice = Camera.open(0);
-        Log.i(LOG_TAG, "cameara open");
-        cameraView = new CameraView(this, cameraDevice,imageWidth,imageHeight,frameRate,yuvIplimage,recorder,startTime,recording);
-        topLayout.addView(cameraView, layoutParam);
-        Log.i(LOG_TAG, "cameara preview start: OK");
-    }
-
-    //---------------------------------------
-    // initialize ffmpeg_recorder
-    //---------------------------------------
-    private void initRecorder() {
-
-        Log.w(LOG_TAG,"init recorder");
-
-        if (yuvIplimage == null) {
-            yuvIplimage = IplImage.create(imageWidth, imageHeight, IPL_DEPTH_8U, 2);
-            Log.i(LOG_TAG, "create yuvIplimage");
-        }
-
-        ffmpeg_link += (int) (Math.random()*100000) + System.currentTimeMillis();
-        Log.i(LOG_TAG, "ffmpeg_url: " + ffmpeg_link);
-        
-        
-        createRecorder();
-
-        Log.i(LOG_TAG, "recorder initialize success");
-
-        audioRecordRunnable = new AudioRecordRunnable();
-        audioThread = new Thread(audioRecordRunnable);
-        audioThread.start();
-    }
-
-
-	private void createRecorder() {
-		recorder = new FFmpegFrameRecorder(ffmpeg_link, imageWidth, imageHeight, 1);
-        recorder.setFormat("flv");
-        recorder.setSampleRate(sampleAudioRateInHz);
-        // Set in the surface changed method
-        recorder.setFrameRate(frameRate);
+		streamNameEditText = (EditText) findViewById(R.id.stream_name);
 	}
 
-    public void startRecording() {
+	@Override
+	protected void onResume() {
+		super.onResume();
 
-        try {
-        	if(recorder == null)
-        		createRecorder();
-        	
-            recorder.start();
-            startTime = System.currentTimeMillis();
+		if (mWakeLock == null) {
+			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+			mWakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,
+					CLASS_LABEL);
+			mWakeLock.acquire();
+		}
+	}
 
-            recording = true;
-        //    audioThread.start();
+	@Override
+	protected void onPause() {
+		super.onPause();
 
-        } catch (FFmpegFrameRecorder.Exception e) {
-            e.printStackTrace();
-        }
-    }
+		if (mWakeLock != null) {
+			mWakeLock.release();
+			mWakeLock = null;
+		}
+	}
 
-    public void stopRecording() {
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		BugSenseHandler.closeSession(this);
 
-        runAudioThread = false;
+		recording = false;
+		runAudioThread = false;
+		if (recorder != null) {
+			try {
+				recorder.release();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			recorder = null;
+		}
 
-        if (recorder != null && recording) {
+		if (cameraView != null) {
+			cameraView.stopPreview();
+			cameraDevice.release();
+			cameraDevice = null;
+		}
 
-            recording = false;
-            Log.v(LOG_TAG,"Finishing recording, calling stop and release on recorder");
-            try {
-                recorder.stop();
-                recorder.release();
-            } catch (FFmpegFrameRecorder.Exception e) {
-                e.printStackTrace();
-            }
-            recorder = null;
+		if (mWakeLock != null) {
+			mWakeLock.release();
+			mWakeLock = null;
+		}
+	}
 
-        }
-    }
+	private void initLayout() {
 
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
+		/* add control button: start and stop */
+		btnRecorderControl = (Button) findViewById(R.id.recorder_control);
+		btnRecorderControl.setText("Start");
+		btnRecorderControl.setOnClickListener(this);
 
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (recording) {
-                stopRecording();
-            }
+		cameraView = (CameraView) findViewById(R.id.cam);
+		cameraDevice = Camera.open(0);
+		cameraView.setCamera(cameraDevice);
 
-            finish();
+		Log.i(LOG_TAG, "cameara preview start: OK");
+	}
 
-            return true;
-        }
+	// ---------------------------------------
+	// initialize ffmpeg_recorder
+	// ---------------------------------------
+	private void initRecorder() {
 
-        return super.onKeyDown(keyCode, event);
-    }
+		Log.w(LOG_TAG, "init recorder");
+		// if link is set, dont set it again
+		if (ffmpeg_link.equals(getString(R.string.rtmp_url))) {
+			streamURL = String.valueOf((int) (Math.random() * 100000)
+					+ System.currentTimeMillis());
+			ffmpeg_link += streamURL;
+		}
+		Log.i(LOG_TAG, "ffmpeg_url: " + ffmpeg_link);
 
+		createRecorder();
 
-    //---------------------------------------------
-    // audio thread, gets and encodes audio data
-    //---------------------------------------------
-    class AudioRecordRunnable implements Runnable {
+		Log.i(LOG_TAG, "recorder initialize success");
 
-        @Override
-        public void run() {
-            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+		runAudioThread = true;
+		audioRecordRunnable = new AudioRecordRunnable();
+		audioThread = new Thread(audioRecordRunnable);
+		audioThread.start();
+	}
 
-            // Audio
-            int bufferSize;
-            short[] audioData;
-            int bufferReadResult;
+	private void createRecorder() {
+		// if recorder is created , dont create it again
+		if (recorder == null) {
+			Size previewSize = cameraDevice.getParameters().getPreviewSize();
+			recorder = new FFmpegFrameRecorder(ffmpeg_link, previewSize.width,
+					previewSize.height, 1);
+		}
+		recorder.setFormat("flv");
+		recorder.setSampleRate(sampleAudioRateInHz);
+		// Set in the surface changed method
+		recorder.setFrameRate(frameRate);
+	}
 
-            bufferSize = AudioRecord.getMinBufferSize(sampleAudioRateInHz, 
-                    AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-            audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleAudioRateInHz, 
-                    AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
+	public void startRecording() {
 
-            audioData = new short[bufferSize];
+		if (yuvIplimage == null) {
+			Size previewSize = cameraDevice.getParameters().getPreviewSize();
+			yuvIplimage = IplImage.create(previewSize.width,
+					previewSize.height, IPL_DEPTH_8U, 2);
+			Log.i(LOG_TAG, "create yuvIplimage");
+		}
 
-            Log.d(LOG_TAG, "audioRecord.startRecording()");
-            audioRecord.startRecording();
+		try {
+			if (recorder == null)
+				createRecorder();
 
-            /* ffmpeg_audio encoding loop */
-            while (runAudioThread) {
-                //Log.v(LOG_TAG,"recording? " + recording);
-                bufferReadResult = audioRecord.read(audioData, 0, audioData.length);
-                if (bufferReadResult > 0) {
-                    Log.v(LOG_TAG,"bufferReadResult: " + bufferReadResult);
-                    // If "recording" isn't true when start this thread, it never get's set according to this if statement...!!!
-                    // Why?  Good question...
-                    if (recording) {
-                        try {
-                        	Buffer[] buffer = new Buffer[1];
-                        	buffer[0] = ShortBuffer.wrap(audioData, 0, bufferReadResult);
-                            recorder.record(buffer);
-                            //Log.v(LOG_TAG,"recording " + 1024*i + " to " + 1024*i+1024);
-                        } catch (FFmpegFrameRecorder.Exception e) {
-                            Log.v(LOG_TAG,e.getMessage());
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-            Log.v(LOG_TAG,"AudioThread Finished, release audioRecord");
+			recorder.start();
+			startTime = System.currentTimeMillis();
 
-            /* encoding finish, release recorder */
-            if (audioRecord != null) {
-                audioRecord.stop();
-                audioRecord.release();
-                audioRecord = null;
-                Log.v(LOG_TAG,"audioRecord released");
-            }
-        }
-    }
+			recording = true;
 
+		} catch (FFmpegFrameRecorder.Exception e) {
+			e.printStackTrace();
+		}
+	}
 
+	public void stopRecording() {
 
-    @Override
-    public void onClick(View v) {
-        if (!recording) {
-            startRecording();
-            Log.w(LOG_TAG, "Start Button Pushed");
-            btnRecorderControl.setText("Stop");
-        } else {
-            // This will trigger the audio recording loop to stop and then set isRecorderStart = false;
-            stopRecording();
-            Log.w(LOG_TAG, "Stop Button Pushed");
-            btnRecorderControl.setText("Start");
-        }
-    }
+		runAudioThread = false;
 
+		if (recorder != null && recording) {
+			StopRecordingTask stopTask = new StopRecordingTask();
+			stopTask.execute(recorder);
+		}
+
+		recording = false;
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+			if (recording) {
+				stopRecording();
+			}
+
+			finish();
+
+			return true;
+		}
+
+		return super.onKeyDown(keyCode, event);
+	}
+
+	// ---------------------------------------------
+	// audio thread, gets and encodes audio data
+	// ---------------------------------------------
+	class AudioRecordRunnable implements Runnable {
+
+		@Override
+		public void run() {
+			android.os.Process
+					.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+
+			// Audio
+			int bufferSize;
+			short[] audioData;
+			int bufferReadResult;
+
+			bufferSize = AudioRecord
+					.getMinBufferSize(sampleAudioRateInHz,
+							AudioFormat.CHANNEL_IN_MONO,
+							AudioFormat.ENCODING_PCM_16BIT);
+			audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
+					sampleAudioRateInHz, AudioFormat.CHANNEL_IN_MONO,
+					AudioFormat.ENCODING_PCM_16BIT, bufferSize);
+
+			audioData = new short[bufferSize];
+
+			Log.d(LOG_TAG, "audioRecord.startRecording()");
+			audioRecord.startRecording();
+
+			/* ffmpeg_audio encoding loop */
+			while (runAudioThread) {
+				Log.v(LOG_TAG, "recording? " + recording);
+				bufferReadResult = audioRecord.read(audioData, 0,
+						audioData.length);
+				if (bufferReadResult > 0) {
+					// Log.v(LOG_TAG,"bufferReadResult: " + bufferReadResult);
+					// If "recording" isn't true when start this thread, it
+					// never get's set according to this if statement...!!!
+					// Why? Good question...
+					if (recording) {
+						try {
+							Buffer[] buffer = new Buffer[1];
+							buffer[0] = ShortBuffer.wrap(audioData, 0,
+									bufferReadResult);
+							recorder.record(buffer);
+							// Log.v(LOG_TAG,"recording " + 1024*i + " to " +
+							// 1024*i+1024);
+						} catch (FFmpegFrameRecorder.Exception e) {
+							Log.v(LOG_TAG, e.getMessage());
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+			Log.v(LOG_TAG, "AudioThread Finished, release audioRecord");
+
+			/* encoding finish, release recorder */
+
+			stopAudioRecording();
+		}
+
+	}
+
+	private void stopAudioRecording() {
+
+		if (audioRecord != null) {
+			audioRecord.stop();
+			audioRecord.release();
+			audioRecord = null;
+			audioThread = null;
+			audioRecordRunnable = null;
+			Log.v(LOG_TAG, "audioRecord released");
+		}
+	}
+
+	@Override
+	public void onClick(View v) {
+		if (!recording) {
+
+			String name = streamNameEditText.getText().toString();
+			if (name != null && name.length() > 0) {
+
+				m_ProgressDialog = ProgressDialog.show(this, "Please Wait",
+						"Initializing...", true);
+				InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+				imm.hideSoftInputFromWindow(
+						streamNameEditText.getWindowToken(), 0);
+				streamNameEditText.setVisibility(View.GONE);
+				initRecorder();
+				new RegisterStreamTask().execute(httpGatewayURL, name,
+						streamURL);
+			} else {
+				AlertDialog.Builder builder = new AlertDialog.Builder(this);
+				builder.setPositiveButton("OK", this);
+				builder.setTitle("Error");
+				builder.setMessage("Please enter a name...").show();
+			}
+
+		} else {
+			// This will trigger the audio recording loop to stop and then set
+			// isRecorderStart = false;
+			m_ProgressDialog = ProgressDialog.show(this, "Please Wait",
+					"Stopping...", true);
+			stopRecording();
+			runAudioThread = false;
+			Log.w(LOG_TAG, "Stop Button Pushed");
+			btnRecorderControl.setText("Start");
+			streamNameEditText.setVisibility(View.VISIBLE);
+
+		}
+	}
 
 	@Override
 	public void onPreviewChanged(byte[] data) {
-		
+
 		if (yuvIplimage != null && recording) {
-            yuvIplimage.getByteBuffer().put(data);
+			yuvIplimage.getByteBuffer().put(data);
 
+			try {
+				long t = 1000 * (System.currentTimeMillis() - startTime);
+				if (t > recorder.getTimestamp()) {
+					recorder.setTimestamp(t);
+				}
+				recorder.record(yuvIplimage);
+			} catch (FFmpegFrameRecorder.Exception e) {
 
-            try {
-                long t = 1000 * (System.currentTimeMillis() - startTime);
-                if (t > recorder.getTimestamp()) {
-                    recorder.setTimestamp(t);
-                }
-                recorder.record(yuvIplimage);
-            } catch (FFmpegFrameRecorder.Exception e) {
+				e.printStackTrace();
+			}
+		}
 
-                e.printStackTrace();
-            }
-        }
-		
+	}
+
+	public class RegisterStreamTask extends AsyncTask<String, Void, Boolean> {
+
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+		}
+
+		@Override
+		protected Boolean doInBackground(String... params) {
+			Boolean result = false;
+			AMFConnection amfConnection = new AMFConnection();
+			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
+			try {
+				System.out.println(params[0]);
+				amfConnection.connect(params[0]);
+				result = (Boolean) amfConnection.call("registerLiveStream",
+						params[1], params[2]);
+
+			} catch (ClientStatusException e) {
+
+				e.printStackTrace();
+			} catch (ServerStatusException e) {
+
+				e.printStackTrace();
+			}
+			amfConnection.close();
+
+			return result;
+		}
+
+		@Override
+		protected void onPostExecute(Boolean result) {
+			if (result == true) {
+				startRecording();
+				Log.w(LOG_TAG, "Start Button Pushed");
+				btnRecorderControl.setText("Stop");
+			} else {
+				Toast.makeText(getApplicationContext(),
+						"Debug: register failed", Toast.LENGTH_LONG).show();
+			}
+			super.onPostExecute(result);
+
+			m_ProgressDialog.dismiss();
+		}
+
+	}
+
+	public class StopRecordingTask extends
+			AsyncTask<FFmpegFrameRecorder, Void, Void> {
+
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+		}
+
+		@Override
+		protected Void doInBackground(FFmpegFrameRecorder... params) {
+
+			try {
+				params[0].stop();
+			} catch (Exception e) {
+
+			}
+
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Void result) {
+
+			super.onPostExecute(result);
+
+			m_ProgressDialog.dismiss();
+		}
+
+	}
+
+	@Override
+	public void onClick(DialogInterface arg0, int arg1) {
+
 	}
 
 }

@@ -8,27 +8,20 @@ import io.vov.vitamio.widget.VideoView;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.EditText;
-import android.widget.ToggleButton;
-import com.butterfly.R;
 
+import com.bugsense.trace.BugSenseHandler;
+import com.butterfly.debug.BugSense;
 
-public class ClientActivity extends Activity {
+public class ClientActivity extends Activity implements
+		io.vov.vitamio.MediaPlayer.OnCompletionListener {
 
 	public static final String TAG = "TAG";
 
-	//	private SurfaceView surfaceView;
+	// private SurfaceView surfaceView;
 	private VideoView videoView;
-
-	private ToggleButton startButton;
-
-	private EditText serverAddressEditText;
 
 	protected Process ffmpegAudioProcess;
 
@@ -36,96 +29,36 @@ public class ClientActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		BugSenseHandler.initAndStartSession(this, BugSense.API_KEY);
+
 		if (!io.vov.vitamio.LibsChecker.checkVitamioLibs(this))
 			return;
 
 		String rtmpUrl = getString(R.string.rtmp_url);
-		
+
 		Intent intent = getIntent();
-		String streamName = intent.getStringExtra(StreamList.STREAM_PUBLISHED_NAME);
+		String streamName = intent
+				.getStringExtra(StreamList.STREAM_PUBLISHED_NAME);
 
 		setContentView(R.layout.activity_client);
-		
-
-		serverAddressEditText = (EditText) findViewById(R.id.portNumText);
 
 		videoView = (VideoView) findViewById(R.id.surface_view);
-		
+
 		if (streamName != null) {
 			videoView.setVideoPath(rtmpUrl + streamName + " live=1");
-			
+
 			videoView.setVideoQuality(MediaPlayer.VIDEOQUALITY_HIGH);
-			videoView.setBufferSize(1024*10);
+			videoView.setBufferSize(1024 * 10);
 
-
-
-			videoView.setOnBufferingUpdateListener(new OnBufferingUpdateListener() {
-				int i = 0;
-				@Override
-				public void onBufferingUpdate(MediaPlayer arg0, int percent) {
-
-					if (percent>=0 && videoView.isPlaying() == false) {
-						videoView.start();
-					}
-					if (i > 20) {
-						Log.i("Buffer update", "buffer " + percent);
-						i = 0;
-					}
-					i++;
-
-				}
-			});
-
-			videoView.setOnInfoListener(new OnInfoListener() {
-
-				@Override
-				public boolean onInfo(MediaPlayer arg0, int what, int extra) {
-					if (what == MediaPlayer.MEDIA_INFO_BUFFERING_START) {
-						videoView.start();
-					}
-					else if (what == MediaPlayer.MEDIA_INFO_BUFFERING_END && videoView.isPlaying() == false) {
-						videoView.start();
-					}
-					return false;
-				}
-			});
-
-
-			videoView.setOnErrorListener(new OnErrorListener() {
-
-				@Override
-				public boolean onError(MediaPlayer arg0, int arg1, int arg2) {
-					System.out.println("Error on media player arg1:" + arg1 + " arg2:"+ arg2);
-					return false;
-				}
-			});
-		}
-		
-
-		startButton = (ToggleButton) findViewById(R.id.button_start);
-
-		startButton.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View arg0) {
-
-				if (startButton.isChecked()) {
-					
-					//videoView.setVideoPath("http://"+serverAddressEditText.getText().toString()+":24007/liveVideo");
-					//videoView.setVideoPath("rtsp://"+serverAddressEditText.getText().toString()+":6454/live.ts");
-					videoView.setVideoPath(Environment.getExternalStorageDirectory()+"/Video/small.mp4");
-					
-					videoView.setVideoQuality(MediaPlayer.VIDEOQUALITY_HIGH);
-					videoView.setBufferSize(1024*10);
-
-
-
-					videoView.setOnBufferingUpdateListener(new OnBufferingUpdateListener() {
+			videoView
+					.setOnBufferingUpdateListener(new OnBufferingUpdateListener() {
 						int i = 0;
-						@Override
-						public void onBufferingUpdate(MediaPlayer arg0, int percent) {
 
-							if (percent>=0 && videoView.isPlaying() == false) {
+						@Override
+						public void onBufferingUpdate(MediaPlayer arg0,
+								int percent) {
+
+							if (percent >= 0 && videoView.isPlaying() == false) {
 								videoView.start();
 							}
 							if (i > 20) {
@@ -137,41 +70,35 @@ public class ClientActivity extends Activity {
 						}
 					});
 
-					videoView.setOnInfoListener(new OnInfoListener() {
+			videoView.setOnInfoListener(new OnInfoListener() {
 
-						@Override
-						public boolean onInfo(MediaPlayer arg0, int what, int extra) {
-							if (what == MediaPlayer.MEDIA_INFO_BUFFERING_START) {
-								videoView.start();
-							}
-							else if (what == MediaPlayer.MEDIA_INFO_BUFFERING_END && videoView.isPlaying() == false) {
-								videoView.start();
-							}
-							return false;
-						}
-					});
-
-
-					videoView.setOnErrorListener(new OnErrorListener() {
-
-						@Override
-						public boolean onError(MediaPlayer arg0, int arg1, int arg2) {
-							System.out.println("Error on media player arg1:" + arg1 + " arg2:"+ arg2);
-							return false;
-						}
-					});
+				@Override
+				public boolean onInfo(MediaPlayer arg0, int what, int extra) {
+					if (what == MediaPlayer.MEDIA_INFO_BUFFERING_START) {
+						videoView.start();
+					} else if (what == MediaPlayer.MEDIA_INFO_BUFFERING_END
+							&& videoView.isPlaying() == false) {
+						videoView.start();
+					}
+					return false;
 				}
-				else {
-					stopStreaming();
+			});
+
+			videoView.setOnErrorListener(new OnErrorListener() {
+
+				@Override
+				public boolean onError(MediaPlayer arg0, int arg1, int arg2) {
+					System.out.println("Error on media player arg1:" + arg1
+							+ " arg2:" + arg2);
+					return false;
 				}
+			});
 
+			videoView.setOnCompletionListener(this);
 
-			}
-		});
+		}
+
 	}
-
-	
-
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -186,8 +113,6 @@ public class ClientActivity extends Activity {
 		return super.onOptionsItemSelected(item);
 	}
 
-
-
 	@Override
 	protected void onPause() {
 		stopStreaming();
@@ -195,19 +120,29 @@ public class ClientActivity extends Activity {
 		super.onPause();
 	}
 
-
-
 	@Override
 	protected void onResume() {
-		//	prepareInterface2();
+		// prepareInterface2();
 		super.onResume();
 	}
 
-
-
 	public void stopStreaming() {
-		if(videoView != null)
+		if (videoView != null)
 			videoView.stopPlayback();
+	}
+
+	@Override
+	protected void onDestroy() {
+		// TODO Auto-generated method stub
+		super.onDestroy();
+
+		BugSenseHandler.closeSession(this);
+	}
+
+	@Override
+	public void onCompletion(MediaPlayer mediaPlayer) {
+		videoView.stopPlayback();
+		this.finish();
 	}
 
 }
