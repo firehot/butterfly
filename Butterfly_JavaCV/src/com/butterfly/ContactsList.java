@@ -27,6 +27,8 @@ import com.butterfly.debug.BugSense;
 
 public class ContactsList extends Activity {
 
+	public static final String MAILS_TO_BE_NOTIFIED = "mails_to_be_notified";
+
 	SimpleCursorAdapter mAdapter;
 
 	private ListView selectedContactList;
@@ -207,10 +209,12 @@ public class ContactsList extends Activity {
 			int count = selectedContactAdapter.getCount();
 			String mails = new String();
 			for (int i = 0; i < count; i++) {
-				mails += "," + selectedContactAdapter.getItem(i).email;
+				mails += selectedContactAdapter.getItem(i).email + ",";
 			}
+			mails = mails.substring(0, mails.length() - 1);
+			// System.out.println("**** mails " + mails);
 			Intent i = new Intent(this, RecordActivity.class);
-			i.putExtra("mails", mails);
+			i.putExtra(MAILS_TO_BE_NOTIFIED, mails);
 			startActivity(i);
 			return true;
 

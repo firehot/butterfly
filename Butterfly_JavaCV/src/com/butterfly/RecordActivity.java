@@ -80,6 +80,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 	private EditText streamNameEditText;
 
 	private ProgressDialog m_ProgressDialog;
+	private String mailsToBeNotified;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -88,6 +89,9 @@ public class RecordActivity extends Activity implements OnClickListener,
 		BugSenseHandler.initAndStartSession(this, BugSense.API_KEY);
 
 		ffmpeg_link = getString(R.string.rtmp_url);
+
+		mailsToBeNotified = getIntent().getExtras().getString(
+				ContactsList.MAILS_TO_BE_NOTIFIED);
 
 		// Hide title
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -411,7 +415,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 						params[1], params[2]);
 
 			} catch (ClientStatusException e) {
-
 				e.printStackTrace();
 			} catch (ServerStatusException e) {
 
@@ -428,6 +431,10 @@ public class RecordActivity extends Activity implements OnClickListener,
 				startRecording();
 				Log.w(LOG_TAG, "Start Button Pushed");
 				btnRecorderControl.setText("Stop");
+				if (mailsToBeNotified != null) {
+					new SendNotificationTask().execute(httpGatewayURL,
+							mailsToBeNotified);
+				}
 			} else {
 				Toast.makeText(getApplicationContext(),
 						"Debug: register failed", Toast.LENGTH_LONG).show();
@@ -435,6 +442,37 @@ public class RecordActivity extends Activity implements OnClickListener,
 			super.onPostExecute(result);
 
 			m_ProgressDialog.dismiss();
+		}
+
+	}
+
+	public class SendNotificationTask extends AsyncTask<String, Void, Boolean> {
+
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+		}
+
+		@Override
+		protected Boolean doInBackground(String... params) {
+			Boolean result = false;
+			AMFConnection amfConnection = new AMFConnection();
+			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
+			try {
+				System.out.println(params[0]);
+				amfConnection.connect(params[0]);
+				result = (Boolean) amfConnection.call("sendNotifications",
+						params[1]);
+
+			} catch (ClientStatusException e) {
+				e.printStackTrace();
+			} catch (ServerStatusException e) {
+
+				e.printStackTrace();
+			}
+			amfConnection.close();
+
+			return result;
 		}
 
 	}

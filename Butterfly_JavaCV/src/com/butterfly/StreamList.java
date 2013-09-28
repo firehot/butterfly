@@ -106,7 +106,7 @@ public class StreamList extends ListActivity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.broadcast_live:
-			Intent i = new Intent(getApplicationContext(), RecordActivity.class);
+			Intent i = new Intent(getApplicationContext(), ContactsList.class);
 			startActivity(i);
 			return true;
 		case R.id.refresh:
