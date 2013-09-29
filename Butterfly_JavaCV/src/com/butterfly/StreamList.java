@@ -20,6 +20,9 @@ import android.widget.Toast;
 
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.debug.BugSense;
+import com.butterfly.message.CloudMessaging;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 
 import flex.messaging.io.MessageIOConstants;
 import flex.messaging.io.amf.client.AMFConnection;
@@ -29,6 +32,7 @@ import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 public class StreamList extends ListActivity {
 
 	public static final String STREAM_PUBLISHED_NAME = "stream-name";
+	private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 	String httpGatewayURL;
 	private ArrayAdapter<Stream> adapter;
 
@@ -80,6 +84,12 @@ public class StreamList extends ListActivity {
 
 		getListView().setOnItemClickListener(itemClickListener);
 
+		// Check device for Play Services APK.
+		if (checkPlayServices()) {
+
+			CloudMessaging msg = new CloudMessaging(this.getApplicationContext(), this);
+		}
+
 	}
 
 	@Override
@@ -94,6 +104,7 @@ public class StreamList extends ListActivity {
 	protected void onResume() {
 		new GetStreamListTask().execute(httpGatewayURL);
 		super.onResume();
+		checkPlayServices();
 	}
 
 	@Override
@@ -116,6 +127,22 @@ public class StreamList extends ListActivity {
 			break;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+
+	private boolean checkPlayServices() {
+		int resultCode = GooglePlayServicesUtil
+				.isGooglePlayServicesAvailable(this);
+		if (resultCode != ConnectionResult.SUCCESS) {
+			if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
+				GooglePlayServicesUtil.getErrorDialog(resultCode, this,
+						PLAY_SERVICES_RESOLUTION_REQUEST).show();
+			} else {
+
+				finish();
+			}
+			return false;
+		}
+		return true;
 	}
 
 	public class GetStreamListTask extends
