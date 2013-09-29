@@ -32,7 +32,6 @@ import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 public class StreamList extends ListActivity {
 
 	public static final String STREAM_PUBLISHED_NAME = "stream-name";
-	private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 	String httpGatewayURL;
 	private ArrayAdapter<Stream> adapter;
 
@@ -135,7 +134,7 @@ public class StreamList extends ListActivity {
 		if (resultCode != ConnectionResult.SUCCESS) {
 			if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
 				GooglePlayServicesUtil.getErrorDialog(resultCode, this,
-						PLAY_SERVICES_RESOLUTION_REQUEST).show();
+						CloudMessaging.PLAY_SERVICES_RESOLUTION_REQUEST).show();
 			} else {
 
 				finish();

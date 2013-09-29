@@ -18,7 +18,7 @@ public class CloudMessaging {
 	public static final String EXTRA_MESSAGE = "message";
 	public static final String PROPERTY_REG_ID = "registration_id";
 	private static final String PROPERTY_APP_VERSION = "appVersion";
-	private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+	public final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
 	public static String SENDER_ID = "Your-Sender-ID";
 
