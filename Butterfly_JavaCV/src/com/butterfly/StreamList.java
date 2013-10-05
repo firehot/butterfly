@@ -5,7 +5,9 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -73,6 +75,22 @@ public class StreamList extends ListActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		AlertDialog.Builder myAlertDialog = new AlertDialog.Builder(this);
+		myAlertDialog.setTitle(R.string.privacy_policy);
+		myAlertDialog.setMessage(R.string.terms_and_conditions);
+		myAlertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+			public void onClick(DialogInterface arg0, int arg1) {
+				// do something when the OK button is clicked
+			}});
+		myAlertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+
+			public void onClick(DialogInterface arg0, int arg1) {
+				// do something when the Cancel button is clicked
+				StreamList.this.finish();
+			}});
+		myAlertDialog.show();
+
 		BugSenseHandler.initAndStartSession(this, BugSense.API_KEY);
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		httpGatewayURL = getString(R.string.http_gateway_url);
@@ -86,10 +104,12 @@ public class StreamList extends ListActivity {
 		// Check device for Play Services APK.
 		if (checkPlayServices()) {
 
-			//CloudMessaging msg = new CloudMessaging(this.getApplicationContext(), this);
+			//CloudMessaging msg = new CloudMessaging(this.getApplicationContext(), this, httpGatewayURL);
 		}
 
 	}
+
+
 
 	@Override
 	protected void onDestroy() {
@@ -145,7 +165,7 @@ public class StreamList extends ListActivity {
 	}
 
 	public class GetStreamListTask extends
-			AsyncTask<String, Void, HashMap<String, String>> {
+	AsyncTask<String, Void, HashMap<String, String>> {
 
 		@Override
 		protected void onPreExecute() {
@@ -176,6 +196,8 @@ public class StreamList extends ListActivity {
 
 			return streams;
 		}
+
+
 
 		@Override
 		protected void onPostExecute(HashMap<String, String> streams) {
@@ -210,5 +232,9 @@ public class StreamList extends ListActivity {
 		}
 
 	}
+
+
+
+
 
 }

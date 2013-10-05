@@ -1,8 +1,17 @@
 package com.butterfly.message;
 
+import flex.messaging.io.MessageIOConstants;
+import flex.messaging.io.amf.client.AMFConnection;
+import flex.messaging.io.amf.client.exceptions.ClientStatusException;
+import flex.messaging.io.amf.client.exceptions.ServerStatusException;
+import io.vov.utils.Log;
+
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -10,6 +19,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Patterns;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
@@ -25,15 +35,17 @@ public class CloudMessaging {
 	public static GoogleCloudMessaging gcm;
 	public static AtomicInteger msgId = new AtomicInteger();
 
-	public static String regid;
+	public String regid;
 	private Context context;
 	private Activity activity;
+	private String backendServer;
 
-	public CloudMessaging(Context context, Activity activity) {
+	public CloudMessaging(Context context, Activity activity, String backendServer) {
 		this.context = context;
 		this.activity = activity;
 		gcm = GoogleCloudMessaging.getInstance(this.context);
 		regid = getRegistrationId(this.context);
+		this.backendServer = backendServer;
 
 		if (regid.isEmpty()) {
 			registerInBackground();
@@ -93,10 +105,47 @@ public class CloudMessaging {
 
 		new RegisterTask().execute(null,null);
 	}
+	
+	private void sendRegistrationIdToBackend() 
+	{
+		Pattern emailPattern = Patterns.EMAIL_ADDRESS; // API level 8+
+		Account[] accounts = AccountManager.get(activity).getAccounts();
+		for (Account account : accounts) {
+			if (emailPattern.matcher(account.name).matches()) {
+				String possibleEmail = account.name;
+				if (possibleEmail.contains("gmail.com"))
+				{
+					Log.e("butterfly", possibleEmail);	
+					registerUser(backendServer, regid, possibleEmail);
+					break;
+				}
 
-	private void sendRegistrationIdToBackend() {
-
+			}
+		}
 	}
+	
+	protected Boolean registerUser(String backendServer, String registerId, String mail) {
+		Boolean isRegistered = false;
+		AMFConnection amfConnection = new AMFConnection();
+		amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
+		try {
+			System.out.println(registerId);
+			amfConnection.connect(backendServer);
+			isRegistered = (Boolean) amfConnection
+					.call("registerUser",registerId, mail);
+
+		} catch (ClientStatusException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServerStatusException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		amfConnection.close();
+
+		return isRegistered;
+	}
+	
 	
 	private class RegisterTask extends AsyncTask<Void, Void, String> {
 	     protected String doInBackground(Void... params) {
