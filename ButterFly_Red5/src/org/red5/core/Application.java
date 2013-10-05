@@ -20,20 +20,15 @@ package org.red5.core;
  */
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.NoResultException;
 import javax.persistence.Persistence;
+import javax.persistence.Query;
 
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IConnection;
@@ -121,6 +116,67 @@ public class Application extends MultiThreadedApplicationAdapter {
 		return result;
 
 	}
+	
+	public void sendNotificationsOrMail(String mails) {
+		
+		 int result = 0;
+		 
+		 String [] splits = mails.split(",");
+		 
+		 for(int i = 0; i<splits.length; i++){
+			 
+			result = getRegistrationId(splits[i]);
+			 
+			 
+			if (result == 0)
+			{
+						//sendMail();
+			}
+			else
+			{
+		         //sendPush();*/
+			}
+				
+		      
+		 }
+	}
+		 
+		 
+		
+		
+	
+	
+
+	/**
+	 * @param mail
+	 * @return
+	 * registration id of mail in the table
+	 * if mail is not exist, 0 returns
+	 */
+	public int getRegistrationId(String mail){
+
+		int result = 0;
+		try{
+			beginTransaction();
+			Query query = getEntityManager().createQuery("FROM GcmUsers where email= :email");
+			query.setParameter("email", mail);
+			GcmUsers gcmUsers =  (GcmUsers) query.getSingleResult();
+			result = gcmUsers.getGcmRegId();
+			commit();
+			closeEntityManager();
+			
+		}
+		catch (NoResultException e) {
+			e.printStackTrace();
+		}
+		catch (Exception e){
+			e.printStackTrace();
+		}
+
+		return result;
+	}
+
+
 
 	@Override
 	public void streamBroadcastClose(IBroadcastStream stream) {
@@ -157,9 +213,10 @@ public class Application extends MultiThreadedApplicationAdapter {
 	private void commit() {
 		getEntityManager().getTransaction().commit();
 	}
-	
+
 	private void closeEntityManager() {
 		getEntityManager().close();
+		entityManager = null;
 	}
 
 
