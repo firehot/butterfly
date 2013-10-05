@@ -5,8 +5,11 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
@@ -20,6 +23,9 @@ import android.widget.Toast;
 
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.debug.BugSense;
+import com.butterfly.message.CloudMessaging;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 
 import flex.messaging.io.MessageIOConstants;
 import flex.messaging.io.amf.client.AMFConnection;
@@ -70,6 +76,31 @@ public class StreamList extends ListActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		final SharedPreferences applicationPrefs = getSharedPreferences("applicationDetails", MODE_PRIVATE);
+		Boolean firstInstallation = applicationPrefs.getBoolean("firstInstallation",false);
+		if (!firstInstallation)
+		{
+
+			AlertDialog.Builder myAlertDialog = new AlertDialog.Builder(this);
+			myAlertDialog.setTitle(R.string.privacy_policy);
+			myAlertDialog.setMessage(R.string.terms_and_conditions);
+			myAlertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+				public void onClick(DialogInterface arg0, int arg1) {
+					// do something when the OK button is clicked
+					SharedPreferences.Editor mInstallationEditor = applicationPrefs.edit();
+					mInstallationEditor.putBoolean("firstInstallation",true);
+					mInstallationEditor.commit();
+				}});
+			myAlertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+
+				public void onClick(DialogInterface arg0, int arg1) {
+					// do something when the Cancel button is clicked
+					StreamList.this.finish();
+				}});
+			myAlertDialog.show();
+		}
+
 		BugSenseHandler.initAndStartSession(this, BugSense.API_KEY);
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		httpGatewayURL = getString(R.string.http_gateway_url);
@@ -80,7 +111,15 @@ public class StreamList extends ListActivity {
 
 		getListView().setOnItemClickListener(itemClickListener);
 
+		// Check device for Play Services APK.
+		if (checkPlayServices()) {
+
+			//CloudMessaging msg = new CloudMessaging(this.getApplicationContext(), this, httpGatewayURL);
+		}
+
 	}
+
+
 
 	@Override
 	protected void onDestroy() {
@@ -94,6 +133,7 @@ public class StreamList extends ListActivity {
 	protected void onResume() {
 		new GetStreamListTask().execute(httpGatewayURL);
 		super.onResume();
+		checkPlayServices();
 	}
 
 	@Override
@@ -106,7 +146,7 @@ public class StreamList extends ListActivity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.broadcast_live:
-			Intent i = new Intent(getApplicationContext(), RecordActivity.class);
+			Intent i = new Intent(getApplicationContext(), ContactsList.class);
 			startActivity(i);
 			return true;
 		case R.id.refresh:
@@ -118,8 +158,24 @@ public class StreamList extends ListActivity {
 		return super.onOptionsItemSelected(item);
 	}
 
+	private boolean checkPlayServices() {
+		int resultCode = GooglePlayServicesUtil
+				.isGooglePlayServicesAvailable(this);
+		if (resultCode != ConnectionResult.SUCCESS) {
+			if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
+				GooglePlayServicesUtil.getErrorDialog(resultCode, this,
+						CloudMessaging.PLAY_SERVICES_RESOLUTION_REQUEST).show();
+			} else {
+
+				finish();
+			}
+			return false;
+		}
+		return true;
+	}
+
 	public class GetStreamListTask extends
-			AsyncTask<String, Void, HashMap<String, String>> {
+	AsyncTask<String, Void, HashMap<String, String>> {
 
 		@Override
 		protected void onPreExecute() {
@@ -150,6 +206,8 @@ public class StreamList extends ListActivity {
 
 			return streams;
 		}
+
+
 
 		@Override
 		protected void onPostExecute(HashMap<String, String> streams) {
@@ -184,5 +242,9 @@ public class StreamList extends ListActivity {
 		}
 
 	}
+
+
+
+
 
 }

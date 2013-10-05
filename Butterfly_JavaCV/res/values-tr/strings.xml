@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">ButterFly</string>
+    <string name="action_settings">Ayarlar</string>
+    <string name="hello_world">Merhaba Dünya!</string>
+    <string name="title_activity_stream_list">YayınListesi</string>
+	<string name="refresh">Yenile</string>
+	<string name="broadcast_live">Canlı Yayın</string>
+	<string name="http_gateway_url">http://192.168.1.23:5080/ButterFly_Red5/gateway</string>
+	<string name="rtmp_url">rtmp://192.168.1.23/ButterFly_Red5/</string>
+	<string name="write_name_of_stream">Lütfen yayıyın ismini giriniz</string>
+	<string name="connectivityProblem">Bağlantı Hatası</string>
+	<string name="noLiveStream">Şu anda canlı yayın bulunmamaktadır</string>
+	<string name="write_contact_name_or_email_addr">isim veya email adresi giriniz</string>
+	<string name="next">ileri</string>
+	<string name="privacy_policy">Gizlilik Sözleşmesi</string>
+</resources>

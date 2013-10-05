@@ -1,6 +1,6 @@
 package com.butterfly;
 
-import static com.googlecode.javacv.cpp.opencv_core.IPL_DEPTH_8U;
+import static com.googlecode.javacv.cpp.avcodec.AV_CODEC_ID_H264;
 
 import java.nio.Buffer;
 import java.nio.ShortBuffer;
@@ -33,10 +33,9 @@ import android.widget.Toast;
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.debug.BugSense;
 import com.butterfly.listener.OnPreviewListener;
+import com.butterfly.recorder.FFmpegFrameRecorder;
 import com.butterfly.view.CameraView;
-import com.googlecode.javacv.FFmpegFrameRecorder;
-import com.googlecode.javacv.FrameRecorder.Exception;
-import com.googlecode.javacv.cpp.opencv_core.IplImage;
+import com.googlecode.javacpp.BytePointer;
 
 import flex.messaging.io.MessageIOConstants;
 import flex.messaging.io.amf.client.AMFConnection;
@@ -72,7 +71,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 	private Camera cameraDevice;
 	private CameraView cameraView;
 
-	private IplImage yuvIplimage = null;
+	// private IplImage yuvIplimage = null;
 
 	private Button btnRecorderControl;
 	private String httpGatewayURL;
@@ -80,6 +79,9 @@ public class RecordActivity extends Activity implements OnClickListener,
 	private EditText streamNameEditText;
 
 	private ProgressDialog m_ProgressDialog;
+	private String mailsToBeNotified;
+	private Size previewSize;
+	private BytePointer bytePointer;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -88,6 +90,13 @@ public class RecordActivity extends Activity implements OnClickListener,
 		BugSenseHandler.initAndStartSession(this, BugSense.API_KEY);
 
 		ffmpeg_link = getString(R.string.rtmp_url);
+
+		Bundle extras = getIntent().getExtras();
+		if (extras != null
+				&& extras.containsKey(ContactsList.MAILS_TO_BE_NOTIFIED)) {
+			mailsToBeNotified = getIntent().getExtras().getString(
+					ContactsList.MAILS_TO_BE_NOTIFIED);
+		}
 
 		// Hide title
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -206,18 +215,15 @@ public class RecordActivity extends Activity implements OnClickListener,
 		}
 		recorder.setFormat("flv");
 		recorder.setSampleRate(sampleAudioRateInHz);
+		recorder.setVideoCodec(AV_CODEC_ID_H264);
+		recorder.setVideoQuality(36);
 		// Set in the surface changed method
 		recorder.setFrameRate(frameRate);
 	}
 
 	public void startRecording() {
 
-		if (yuvIplimage == null) {
-			Size previewSize = cameraDevice.getParameters().getPreviewSize();
-			yuvIplimage = IplImage.create(previewSize.width,
-					previewSize.height, IPL_DEPTH_8U, 2);
-			Log.i(LOG_TAG, "create yuvIplimage");
-		}
+		previewSize = cameraDevice.getParameters().getPreviewSize();
 
 		try {
 			if (recorder == null)
@@ -375,15 +381,20 @@ public class RecordActivity extends Activity implements OnClickListener,
 	@Override
 	public void onPreviewChanged(byte[] data) {
 
-		if (yuvIplimage != null && recording) {
-			yuvIplimage.getByteBuffer().put(data);
+		if (/* bytePointer != null && */recording) {
+			// yuvIplimage.getByteBuffer().put(data);
+			if (bytePointer == null) {
+				bytePointer = new BytePointer(data.length);
+			}
+			bytePointer.put(data);
 
 			try {
 				long t = 1000 * (System.currentTimeMillis() - startTime);
 				if (t > recorder.getTimestamp()) {
 					recorder.setTimestamp(t);
 				}
-				recorder.record(yuvIplimage);
+				recorder.record(bytePointer, previewSize.width,
+						previewSize.height);
 			} catch (FFmpegFrameRecorder.Exception e) {
 
 				e.printStackTrace();
@@ -411,7 +422,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 						params[1], params[2]);
 
 			} catch (ClientStatusException e) {
-
 				e.printStackTrace();
 			} catch (ServerStatusException e) {
 
@@ -428,6 +438,10 @@ public class RecordActivity extends Activity implements OnClickListener,
 				startRecording();
 				Log.w(LOG_TAG, "Start Button Pushed");
 				btnRecorderControl.setText("Stop");
+				if (mailsToBeNotified != null) {
+					new SendNotificationTask().execute(httpGatewayURL,
+							mailsToBeNotified);
+				}
 			} else {
 				Toast.makeText(getApplicationContext(),
 						"Debug: register failed", Toast.LENGTH_LONG).show();
@@ -435,6 +449,37 @@ public class RecordActivity extends Activity implements OnClickListener,
 			super.onPostExecute(result);
 
 			m_ProgressDialog.dismiss();
+		}
+
+	}
+
+	public class SendNotificationTask extends AsyncTask<String, Void, Boolean> {
+
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+		}
+
+		@Override
+		protected Boolean doInBackground(String... params) {
+			Boolean result = false;
+			AMFConnection amfConnection = new AMFConnection();
+			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
+			try {
+				System.out.println(params[0]);
+				amfConnection.connect(params[0]);
+				result = (Boolean) amfConnection.call("sendNotifications",
+						params[1]);
+
+			} catch (ClientStatusException e) {
+				e.printStackTrace();
+			} catch (ServerStatusException e) {
+
+				e.printStackTrace();
+			}
+			amfConnection.close();
+
+			return result;
 		}
 
 	}
