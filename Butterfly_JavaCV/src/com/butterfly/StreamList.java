@@ -9,6 +9,7 @@ import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
@@ -75,21 +76,30 @@ public class StreamList extends ListActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		AlertDialog.Builder myAlertDialog = new AlertDialog.Builder(this);
-		myAlertDialog.setTitle(R.string.privacy_policy);
-		myAlertDialog.setMessage(R.string.terms_and_conditions);
-		myAlertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+		final SharedPreferences applicationPrefs = getSharedPreferences("applicationDetails", MODE_PRIVATE);
+		Boolean firstInstallation = applicationPrefs.getBoolean("firstInstallation",false);
+		if (!firstInstallation)
+		{
 
-			public void onClick(DialogInterface arg0, int arg1) {
-				// do something when the OK button is clicked
-			}});
-		myAlertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+			AlertDialog.Builder myAlertDialog = new AlertDialog.Builder(this);
+			myAlertDialog.setTitle(R.string.privacy_policy);
+			myAlertDialog.setMessage(R.string.terms_and_conditions);
+			myAlertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
 
-			public void onClick(DialogInterface arg0, int arg1) {
-				// do something when the Cancel button is clicked
-				StreamList.this.finish();
-			}});
-		myAlertDialog.show();
+				public void onClick(DialogInterface arg0, int arg1) {
+					// do something when the OK button is clicked
+					SharedPreferences.Editor mInstallationEditor = applicationPrefs.edit();
+					mInstallationEditor.putBoolean("firstInstallation",true);
+					mInstallationEditor.commit();
+				}});
+			myAlertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+
+				public void onClick(DialogInterface arg0, int arg1) {
+					// do something when the Cancel button is clicked
+					StreamList.this.finish();
+				}});
+			myAlertDialog.show();
+		}
 
 		BugSenseHandler.initAndStartSession(this, BugSense.API_KEY);
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
