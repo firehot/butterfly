@@ -22,8 +22,15 @@ package org.red5.core;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.NoResultException;
@@ -217,6 +224,42 @@ public class Application extends MultiThreadedApplicationAdapter {
 	private void closeEntityManager() {
 		getEntityManager().close();
 		entityManager = null;
+	}
+	
+	public boolean sendMail(String email,String subject,String messagex)
+	{
+		boolean resultx = false;
+		final String username = "butterfyproject@gmail.com";
+		final String password = "123456Abc";
+ 		Properties props = new Properties();
+		props.put("mail.smtp.auth", "true");
+		props.put("mail.smtp.starttls.enable", "true");
+		props.put("mail.smtp.host", "smtp.gmail.com");
+		props.put("mail.smtp.port", "587");
+ 
+		Session session = Session.getInstance(props,
+		  new javax.mail.Authenticator() {
+			protected PasswordAuthentication getPasswordAuthentication() {
+				return new PasswordAuthentication(username, password);
+			}
+		  });
+ 
+		try 
+		{
+ 			javax.mail.Message message = new MimeMessage(session);
+			message.setFrom(new InternetAddress(email.toString()));
+			message.setRecipients(javax.mail.Message.RecipientType.TO, InternetAddress.parse(email));
+			message.setSubject(subject);
+			message.setText(messagex);
+ 			Transport.send(message);
+			resultx = true;
+			System.out.println("Done");
+		} catch (MessagingException e) 
+		{
+			resultx = false;
+		}
+	return resultx;
+	
 	}
 
 
