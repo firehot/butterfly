@@ -14,5 +14,7 @@
 	<string name="noLiveStream">Şu anda canlı yayın bulunmamaktadır</string>
 	<string name="write_contact_name_or_email_addr">isim veya email adresi giriniz</string>
 	<string name="next">ileri</string>
-	<string name="privacy_policy">Gizlilik Sözleşmesi</string>
+	<string name="accept">Kabul ediyorum</string>
+    <string name="cancel">İptal</string>
+	<string name="terms_of_service_title">Kullanım Sözleşmesi</string>
 </resources>

@@ -82,9 +82,9 @@ public class StreamList extends ListActivity {
 		{
 
 			AlertDialog.Builder myAlertDialog = new AlertDialog.Builder(this);
-			myAlertDialog.setTitle(R.string.privacy_policy);
-			myAlertDialog.setMessage(R.string.terms_and_conditions);
-			myAlertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+			myAlertDialog.setTitle(R.string.terms_of_service_title);
+			myAlertDialog.setMessage(R.string.terms_of_service);
+			myAlertDialog.setPositiveButton(R.string.accept, new DialogInterface.OnClickListener() {
 
 				public void onClick(DialogInterface arg0, int arg1) {
 					// do something when the OK button is clicked
@@ -92,7 +92,7 @@ public class StreamList extends ListActivity {
 					mInstallationEditor.putBoolean("firstInstallation",true);
 					mInstallationEditor.commit();
 				}});
-			myAlertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+			myAlertDialog.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
 
 				public void onClick(DialogInterface arg0, int arg1) {
 					// do something when the Cancel button is clicked
