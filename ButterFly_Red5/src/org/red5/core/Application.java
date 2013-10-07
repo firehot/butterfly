@@ -20,7 +20,9 @@ package org.red5.core;
  */
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -43,6 +45,10 @@ import org.red5.server.api.Red5;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
 
+import com.google.android.gcm.server.Message;
+import com.google.android.gcm.server.MulticastResult;
+import com.google.android.gcm.server.Sender;
+
 /**
  * Sample application that uses the client manager.
  * 
@@ -50,6 +56,7 @@ import org.red5.server.api.stream.IBroadcastStream;
  */
 public class Application extends MultiThreadedApplicationAdapter {
 
+	private static final String SENDER_ID = "AIzaSyDZTWZxWM3ufPxdeJyyFdudN4RLsIjvjJ4";
 	Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
 	private EntityManager entityManager;
 
@@ -123,36 +130,36 @@ public class Application extends MultiThreadedApplicationAdapter {
 		return result;
 
 	}
-	
+
 	public void sendNotificationsOrMail(String mails) {
-		
-		 int result = 0;
-		 
-		 String [] splits = mails.split(",");
-		 
-		 for(int i = 0; i<splits.length; i++){
-			 
+
+		int result = 0;
+
+		String [] splits = mails.split(",");
+
+		for(int i = 0; i<splits.length; i++){
+
 			result = getRegistrationId(splits[i]);
-			 
-			 
+
+
 			if (result == 0)
 			{
-						//sendMail();
+				//sendMail(); // mail arrayList ekle
 			}
 			else
 			{
-		         //sendPush();*/
+				//sendPush();*/ push notification arrayliste ekle
 			}
-				
-		      
-		 }
+
+
+		}
 	}
-		 
-		 
-		
-		
-	
-	
+
+
+
+
+
+
 
 	/**
 	 * @param mail
@@ -171,7 +178,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 			result = gcmUsers.getGcmRegId();
 			commit();
 			closeEntityManager();
-			
+
 		}
 		catch (NoResultException e) {
 			e.printStackTrace();
@@ -225,42 +232,102 @@ public class Application extends MultiThreadedApplicationAdapter {
 		getEntityManager().close();
 		entityManager = null;
 	}
-	
-	public boolean sendMail(String email,String subject,String messagex)
+
+	public boolean sendMail(ArrayList<String> email,String subject,String messagex)
 	{
 		boolean resultx = false;
 		final String username = "butterfyproject@gmail.com";
 		final String password = "123456Abc";
- 		Properties props = new Properties();
+		Properties props = new Properties();
 		props.put("mail.smtp.auth", "true");
 		props.put("mail.smtp.starttls.enable", "true");
 		props.put("mail.smtp.host", "smtp.gmail.com");
 		props.put("mail.smtp.port", "587");
- 
+
 		Session session = Session.getInstance(props,
-		  new javax.mail.Authenticator() {
+				new javax.mail.Authenticator() {
 			protected PasswordAuthentication getPasswordAuthentication() {
 				return new PasswordAuthentication(username, password);
 			}
-		  });
- 
+		});
+
 		try 
 		{
- 			javax.mail.Message message = new MimeMessage(session);
+			javax.mail.Message message = new MimeMessage(session);
 			message.setFrom(new InternetAddress(email.toString()));
-			message.setRecipients(javax.mail.Message.RecipientType.TO, InternetAddress.parse(email));
-			message.setSubject(subject);
-			message.setText(messagex);
- 			Transport.send(message);
+			
+			for (int i = 0; i < email.size(); i++) {
+				message.setRecipients(javax.mail.Message.RecipientType.TO, InternetAddress.parse(email.get(i)));
+				message.setSubject(subject);
+				message.setText(messagex);
+				Transport.send(message);
+			}
+			
 			resultx = true;
 			System.out.println("Done");
 		} catch (MessagingException e) 
 		{
 			resultx = false;
 		}
-	return resultx;
-	
+		return resultx;
+
 	}
 
+	private boolean sendNotification(ArrayList<String> androidTargets, String userMessage)
+	{
+		boolean resx = false;
+
+		// Instance of com.android.gcm.server.Sender, that does the
+		// transmission of a Message to the Google Cloud Messaging service.
+		Sender sender = new Sender(SENDER_ID);
+
+
+		// This Message object will hold the data that is being transmitted
+		// to the Android client devices. For this demo, it is a simple text
+		// string, but could certainly be a JSON object.
+		Message message = new Message.Builder()
+
+
+		// If multiple messages are sent using the same .collapseKey()
+		// the android target device, if it was offline during earlier
+		// message
+		// transmissions, will only receive the latest message for that
+		// key when
+		// it goes back on-line.
+		.collapseKey("1").timeToLive(30).delayWhileIdle(true)
+		.addData("price", userMessage).build();
+
+
+		try {
+			// use this for multicast messages. The second parameter
+			// of sender.send() will need to be an array of register ids.
+			MulticastResult result = sender.send(message, androidTargets, 1);
+
+
+			if (result.getResults() != null) {
+				int canonicalRegId = result.getCanonicalIds();
+				if (canonicalRegId != 0) {
+
+
+				}
+			} else {
+				int error = result.getFailure();
+				System.out.println("Broadcast failure: " + error);
+			}
+
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+
+		// We'll pass the CollapseKey and Message values back to index.jsp, only
+		// so
+		// we can display it in our form again
+		System.out.println("OK");
+		return resx;
+	}
 
 }
+
+
