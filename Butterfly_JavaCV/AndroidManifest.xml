@@ -60,14 +60,14 @@
         </activity>
         
         <receiver
-            android:name=".GcmBroadcastReceiver"
+            android:name="com.butterfly.message.GcmBroadcastReceiver"
             android:permission="com.google.android.c2dm.permission.SEND" >
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
-                <category android:name="com.example.gcm" />
+                <category android:name="com.butterfly" />
             </intent-filter>
         </receiver>
-        <service android:name=".GcmIntentService" />
+        <service android:name="com.butterfly.message.GcmIntentService" />
     </application>
 
 </manifest>

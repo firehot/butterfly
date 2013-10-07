@@ -30,7 +30,7 @@ public class CloudMessaging {
 	private static final String PROPERTY_APP_VERSION = "appVersion";
 	public final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
-	public static String SENDER_ID = "Your-Sender-ID";
+	public static String SENDER_ID = "451796524204";
 
 	public static GoogleCloudMessaging gcm;
 	public static AtomicInteger msgId = new AtomicInteger();

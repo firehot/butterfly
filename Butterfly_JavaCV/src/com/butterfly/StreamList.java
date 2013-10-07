@@ -114,7 +114,7 @@ public class StreamList extends ListActivity {
 		// Check device for Play Services APK.
 		if (checkPlayServices()) {
 
-			//CloudMessaging msg = new CloudMessaging(this.getApplicationContext(), this, httpGatewayURL);
+			CloudMessaging msg = new CloudMessaging(this.getApplicationContext(), this, httpGatewayURL);
 		}
 
 	}
