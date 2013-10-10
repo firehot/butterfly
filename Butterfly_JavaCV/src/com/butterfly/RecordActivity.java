@@ -468,8 +468,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 			try {
 				System.out.println(params[0]);
 				amfConnection.connect(params[0]);
-				result = (Boolean) amfConnection.call("sendNotifications",
-						params[1]);
+				result = (Boolean) amfConnection.call(
+						"sendNotificationsOrMail", params[1]);
 
 			} catch (ClientStatusException e) {
 				e.printStackTrace();
