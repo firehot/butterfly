@@ -350,6 +350,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 				m_ProgressDialog = ProgressDialog.show(this, "Please Wait",
 						"Initializing...", true);
+				m_ProgressDialog.setCancelable(true);
 				InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 				imm.hideSoftInputFromWindow(
 						streamNameEditText.getWindowToken(), 0);
@@ -434,6 +435,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		@Override
 		protected void onPostExecute(Boolean result) {
+			m_ProgressDialog.dismiss();
 			if (result == true) {
 				startRecording();
 				Log.w(LOG_TAG, "Start Button Pushed");
@@ -444,13 +446,15 @@ public class RecordActivity extends Activity implements OnClickListener,
 				}
 			} else {
 				Toast.makeText(getApplicationContext(),
-						"Debug: register failed", Toast.LENGTH_LONG).show();
+						getString(R.string.stream_registration_failed),
+						Toast.LENGTH_LONG).show();
+				streamNameEditText.setVisibility(View.VISIBLE);
+				// Toast.makeText(getApplicationContext(),
+				// "Debug: register failed", Toast.LENGTH_LONG).show();
 			}
 			super.onPostExecute(result);
 
-			m_ProgressDialog.dismiss();
 		}
-
 	}
 
 	public class SendNotificationTask extends AsyncTask<String, Void, Boolean> {
