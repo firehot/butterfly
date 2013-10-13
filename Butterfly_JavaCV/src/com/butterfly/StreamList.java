@@ -98,6 +98,17 @@ public class StreamList extends ListActivity {
 					// do something when the Cancel button is clicked
 					StreamList.this.finish();
 				}});
+			
+			myAlertDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+				
+				@Override
+				public void onCancel(DialogInterface dialog) {
+					// do something when the back button is clicked
+					dialog.dismiss();
+					StreamList.this.finish();
+					
+				}
+			});
 			myAlertDialog.show();
 		}
 
