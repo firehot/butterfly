@@ -1,6 +1,5 @@
 package com.butterfly.message;
 
-import android.R;
 import android.app.IntentService;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -9,6 +8,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 
+import com.butterfly.R;
 import com.butterfly.StreamList;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
@@ -76,11 +76,11 @@ public class GcmIntentService extends IntentService {
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
-        .setSmallIcon(R.drawable.ic_menu_report_image)
-        .setContentTitle("GCM Notification")
+        .setSmallIcon(R.drawable.butterfly)
+        .setContentTitle("Canlý Yayýn Uyarýsý")
         .setStyle(new NotificationCompat.BigTextStyle()
         .bigText(msg))
-        .setContentText(msg);
+        .setContentText("Murat sizinle bir canlý yayýn paylaþtý. izlemek için týklayýn.");
 
         mBuilder.setContentIntent(contentIntent);
         mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
