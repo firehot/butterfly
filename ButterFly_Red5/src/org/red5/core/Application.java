@@ -132,11 +132,17 @@ public class Application extends MultiThreadedApplicationAdapter {
 	}
 
 	public void sendNotificationsOrMail(String mails) {
-
+		
+		String subject = "subject";
+		String message = "message";
+		String userMessage = "userMessage";
 		int result = 0;
 
+	    ArrayList <String> mailList1 = new ArrayList (); // This List will be used for mails, which are not available on the database
+		ArrayList <String> mailList2 = new ArrayList (); // This List will be used for mails, which are available on the database
+		
 		String [] splits = mails.split(",");
-
+		
 		for(int i = 0; i<splits.length; i++){
 
 			result = getRegistrationId(splits[i]);
@@ -144,15 +150,21 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 			if (result == 0)
 			{
-				//sendMail(); // mail arrayList ekle
+				mailList1.add(splits[i]); 
+									
 			}
+			
 			else
-			{
-				//sendPush();*/ push notification arrayliste ekle
+			{	
+				mailList2.add(splits[i]); // using as a parameter for sendNotification() function.
+				
 			}
 
 
 		}
+		
+		sendMail(mailList1, subject, message);
+		sendNotification(mailList2, userMessage);
 	}
 
 
