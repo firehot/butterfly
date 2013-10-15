@@ -41,6 +41,7 @@ public class StreamList extends ListActivity {
 	public class Stream {
 		public String name;
 		public String url;
+		
 
 		public Stream(String name, String url) {
 			super();
