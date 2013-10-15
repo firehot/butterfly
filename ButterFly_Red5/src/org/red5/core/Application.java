@@ -138,7 +138,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 		String userMessage = "userMessage";
 		int result = 0;
 
-		
 	    ArrayList <String> mailList1 = new ArrayList (); // This List will be used for mails, which are not available on the database
 		ArrayList <String> mailList2 = new ArrayList (); // This List will be used for mails, which are available on the database
 		
