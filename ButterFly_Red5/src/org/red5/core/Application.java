@@ -161,7 +161,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 				
 			}
 
-
 		}
 		
 		sendMail(mailList1, subject, message);
