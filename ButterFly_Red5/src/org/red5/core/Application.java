@@ -133,7 +133,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 	public void sendNotificationsOrMail(String mails) {
 		
-		
 		String subject = "subject";
 		String message = "message";
 		String userMessage = "userMessage";
