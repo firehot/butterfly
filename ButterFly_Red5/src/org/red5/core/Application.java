@@ -168,11 +168,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 	}
 
 
-
-
-
-
-
 	/**
 	 * @param mail
 	 * @return
