@@ -41,6 +41,7 @@ public class StreamList extends ListActivity {
 	public class Stream {
 		public String name;
 		public String url;
+		
 
 		public Stream(String name, String url) {
 			super();
@@ -98,6 +99,17 @@ public class StreamList extends ListActivity {
 					// do something when the Cancel button is clicked
 					StreamList.this.finish();
 				}});
+			
+			myAlertDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+				
+				@Override
+				public void onCancel(DialogInterface dialog) {
+					// do something when the back button is clicked
+					dialog.dismiss();
+					StreamList.this.finish();
+					
+				}
+			});
 			myAlertDialog.show();
 		}
 

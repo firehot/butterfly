@@ -1,6 +1,5 @@
 package com.butterfly.message;
 
-import android.R;
 import android.app.IntentService;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -8,7 +7,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 
+import com.butterfly.ClientActivity;
+import com.butterfly.R;
 import com.butterfly.StreamList;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
@@ -71,18 +73,38 @@ public class GcmIntentService extends IntentService {
         mNotificationManager = (NotificationManager)
                 this.getSystemService(Context.NOTIFICATION_SERVICE);
 
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-                new Intent(this, StreamList.class), 0);
+        //todo bu kýsým mesajdan alinmalidir
+        String sender = "Murat";
+        String video_url = "1381872617510";
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
-        .setSmallIcon(R.drawable.ic_menu_report_image)
-        .setContentTitle("GCM Notification")
-        .setStyle(new NotificationCompat.BigTextStyle()
-        .bigText(msg))
-        .setContentText(msg);
+                .setSmallIcon(R.drawable.butterfly)
+                .setAutoCancel(true)
+                .setContentTitle("Canlý Yayýn Uyarýsý")
+                .setStyle(new NotificationCompat.BigTextStyle()
+                .bigText(msg))
+                .setContentText(sender+" sizinle bir canlý yayýn paylaþtý. izlemek için týklayýn.");
+        // Creates an explicit intent for an Activity in your app
+        Intent resultIntent = new Intent(this, ClientActivity.class);
+        resultIntent.putExtra(StreamList.STREAM_PUBLISHED_NAME, video_url);
 
-        mBuilder.setContentIntent(contentIntent);
+        // The stack builder object will contain an artificial back stack for the
+        // started Activity.
+        // This ensures that navigating backward from the Activity leads out of
+        // your application to the Home screen.
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        // Adds the back stack for the Intent (but not the Intent itself)
+        stackBuilder.addParentStack(ClientActivity.class);
+        // Adds the Intent that starts the Activity to the top of the stack
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent =
+                stackBuilder.getPendingIntent(
+                    0,
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        mBuilder.setContentIntent(resultPendingIntent);
+
         mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
     }
 }

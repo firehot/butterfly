@@ -171,9 +171,7 @@ public class CloudMessaging {
 	                storeRegistrationId(context, regid);
 	            } catch (IOException ex) {
 	
-	                // If there is an error, don't just keep trying to register.
-	                // Require the user to click a button again, or perform
-	                // exponential back-off.
+	                System.out.println("register hata:"+ex.getMessage());
 	            }
 	            return regid;
 	     }
