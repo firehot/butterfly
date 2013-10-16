@@ -163,6 +163,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 		}
 		
+		
 		sendMail(mailList1, subject, message);
 		sendNotification(mailList2, userMessage);
 	}
