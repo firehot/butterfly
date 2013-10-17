@@ -139,33 +139,25 @@ public class Application extends MultiThreadedApplicationAdapter {
 		int result = 0;
 
 		
-	    ArrayList <String> mailList1 = new ArrayList (); // This List will be used for mails, which are not available on the database
-		ArrayList <String> mailList2 = new ArrayList (); // This List will be used for mails, which are available on the database
+	    ArrayList<String> mailListNotifiedByMail = new ArrayList<String>(); // This List will be used for mails, which are not available on the database
+		ArrayList<String> mailListNotifiedByPush = new ArrayList<String>(); // This List will be used for mails, which are available on the database
 		
 		String [] splits = mails.split(",");
 		
 		for(int i = 0; i<splits.length; i++){
-
 			result = getRegistrationId(splits[i]);
 
-
-			if (result == 0)
-			{
-				mailList1.add(splits[i]); 
+			if (result == 0){
+				mailListNotifiedByMail.add(splits[i]); 
 									
+			}			
+			else {	
+				mailListNotifiedByPush.add(splits[i]); // using as a parameter for sendNotification() function.
 			}
-			
-			else
-			{	
-				mailList2.add(splits[i]); // using as a parameter for sendNotification() function.
-				
-			}
-
 		}
 		
-		
-		sendMail(mailList1, subject, message);
-		sendNotification(mailList2, userMessage);
+		sendMail(mailListNotifiedByMail, subject, message);
+		sendNotification(mailListNotifiedByPush, userMessage);
 	}
 
 
@@ -262,7 +254,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		try 
 		{
 			javax.mail.Message message = new MimeMessage(session);
-			message.setFrom(new InternetAddress(email.toString()));
+			message.setFrom(new InternetAddress(username));
 			
 			for (int i = 0; i < email.size(); i++) {
 				message.setRecipients(javax.mail.Message.RecipientType.TO, InternetAddress.parse(email.get(i)));

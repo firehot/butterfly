@@ -1,7 +1,9 @@
-/*
+
 package tests;
 
 import static org.junit.Assert.*;
+
+import java.util.ArrayList;
 
 import org.junit.After;
 import org.junit.Before;
@@ -66,15 +68,32 @@ public class ApplicationTester {
 		boolean result = butterflyApp.registerUser(t, mail);
 		assertEquals(result, true);
 
-	//	int registerId = butterflyApp.getRegistrationId(mail);
+		int registerId = butterflyApp.getRegistrationId(mail);
 
 		assertEquals(registerId, t);
 
-//		registerId = butterflyApp.getRegistrationId("slkdjfþlasjf");
+		registerId = butterflyApp.getRegistrationId("slkdjflasjf" + t);
 
 		assertEquals(registerId, 0);
-
-
+	}
+	
+//	@Test
+//	public void testSendMail() {
+//		ArrayList<String> mail = new ArrayList<String>();
+//		mail.add("ahmetmermerkaya@gmail.com");
+//		butterflyApp.sendMail(mail, "Test mail ", "Bu bir test mailidir.");
+//		
+//		String mailString = new String();
+//		for (int i = 0; i < mail.size(); i++) {
+//			mailString += mail.get(i) + ",";
+//		}
+//		fail("to correct this test check mail is received at " + mailString);
+//	}
+	
+	@Test
+	public void testSendNotificationOrMail()
+	{
+		butterflyApp.sendNotificationsOrMail("ahmetmermerkaya@gmail.com");
 	}
 
 
@@ -87,4 +106,4 @@ public class ApplicationTester {
 
 
 }
-*/
+
