@@ -172,7 +172,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		/* add control button: start and stop */
 		btnRecorderControl = (Button) findViewById(R.id.recorder_control);
-		btnRecorderControl.setText("Start");
+		btnRecorderControl.setText(R.string.start);
 		btnRecorderControl.setOnClickListener(this);
 
 		cameraView = (CameraView) findViewById(R.id.cam);
@@ -347,9 +347,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 			String name = streamNameEditText.getText().toString();
 			if (name != null && name.length() > 0) {
-
-				m_ProgressDialog = ProgressDialog.show(this, "Please Wait",
-						"Initializing...", true);
+				m_ProgressDialog = ProgressDialog.show(this, getString(R.string.please_wait),
+						getString(R.string.initializing), true);
 				m_ProgressDialog.setCancelable(true);
 				InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 				imm.hideSoftInputFromWindow(
@@ -360,20 +359,20 @@ public class RecordActivity extends Activity implements OnClickListener,
 						streamURL);
 			} else {
 				AlertDialog.Builder builder = new AlertDialog.Builder(this);
-				builder.setPositiveButton("OK", this);
-				builder.setTitle("Error");
-				builder.setMessage("Please enter a name...").show();
+				builder.setPositiveButton(R.string.ok, this);
+				builder.setTitle(R.string.error);
+				builder.setMessage(R.string.write_name_of_stream).show();
 			}
 
 		} else {
 			// This will trigger the audio recording loop to stop and then set
 			// isRecorderStart = false;
-			m_ProgressDialog = ProgressDialog.show(this, "Please Wait",
-					"Stopping...", true);
+			m_ProgressDialog = ProgressDialog.show(this, getString(R.string.please_wait),
+					getString(R.string.stopping), true);
 			stopRecording();
 			runAudioThread = false;
 			Log.w(LOG_TAG, "Stop Button Pushed");
-			btnRecorderControl.setText("Start");
+			btnRecorderControl.setText(R.string.start);
 			streamNameEditText.setVisibility(View.VISIBLE);
 
 		}
@@ -439,7 +438,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 			if (result == true) {
 				startRecording();
 				Log.w(LOG_TAG, "Start Button Pushed");
-				btnRecorderControl.setText("Stop");
+				btnRecorderControl.setText(R.string.stop);
 				if (mailsToBeNotified != null) {
 					new SendNotificationTask().execute(httpGatewayURL,
 							mailsToBeNotified);

@@ -18,9 +18,15 @@
     <string name="write_contact_name_or_email_addr">Write contact name or email address</string>
     <string name="next">Next</string>
     <string name="start">Start</string>
+    <string name="stop">Stop</string>
     <string name="delete">Delete</string>
     <string name="accept">I Agree</string>
     <string name="cancel">Cancel</string>
+    <string name="error">Error</string>
+    <string name="ok">OK</string>
+    <string name="please_wait">Please Wait</string>
+    <string name="initializing">Initializing</string>
+    <string name="stopping">Stopping</string>
     <string name="stream_registration_failed">Stream registration failed. Check your connectivity and try again</string>
     <string name="terms_of_service_title">Terms of Service</string>
     <string name="terms_of_service">
