@@ -14,6 +14,8 @@
 	<string name="noLiveStream">Şu anda canlı yayın bulunmamaktadır</string>
 	<string name="write_contact_name_or_email_addr">isim veya email adresi giriniz</string>
 	<string name="next">ileri</string>
+	<string name="start">Başlat</string>
+	<string name="delete">Sil</string>
 	<string name="accept">Kabul ediyorum</string>
     <string name="cancel">İptal</string>
         <string name="stream_registration_failed">Yayın kayıt edilemedi. Lütfen bağlantınızı kontrol ediniz ve tekrar deneyiniz</string>
