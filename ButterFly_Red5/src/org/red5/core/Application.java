@@ -55,7 +55,7 @@ import com.google.android.gcm.server.Sender;
  */
 public class Application extends MultiThreadedApplicationAdapter {
 
-	private static final String SENDER_ID = "AIzaSyDZTWZxWM3ufPxdeJyyFdudN4RLsIjvjJ4";
+	private static final String SENDER_ID = "AIzaSyCFmHIbJO0qCtPo6klp7Ade3qjeGLgtZWw";
 	Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
 	private EntityManager entityManager;
 
