@@ -9,13 +9,21 @@
 	<string name="broadcast_live">Canlı Yayın</string>
 	<string name="http_gateway_url">http://192.168.1.23:5080/ButterFly_Red5/gateway</string>
 	<string name="rtmp_url">rtmp://192.168.1.23/ButterFly_Red5/</string>
-	<string name="write_name_of_stream">Lütfen yayıyın ismini giriniz</string>
+	<string name="write_name_of_stream">Lütfen yayının ismini giriniz</string>
 	<string name="connectivityProblem">Bağlantı Hatası</string>
 	<string name="noLiveStream">Şu anda canlı yayın bulunmamaktadır</string>
 	<string name="write_contact_name_or_email_addr">isim veya email adresi giriniz</string>
 	<string name="next">ileri</string>
+	<string name="start">Başlat</string>
+	<string name="stop">Durdur</string>
+	<string name="delete">Sil</string>
 	<string name="accept">Kabul ediyorum</string>
     <string name="cancel">İptal</string>
-        <string name="stream_registration_failed">Yayın kayıt edilemedi. Lütfen bağlantınızı kontrol ediniz ve tekrar deneyiniz</string>
+    <string name="error">Hata</string>
+    <string name="ok">Tamam</string>
+    <string name="please_wait">Lütfen bekleyiniz</string>
+    <string name="initializing">Başlatılıyor</string>
+    <string name="stopping">Durduruluyor</string>
+    <string name="stream_registration_failed">Yayın kayıt edilemedi. Lütfen bağlantınızı kontrol ediniz ve tekrar deneyiniz</string>
 	<string name="terms_of_service_title">Kullanım Sözleşmesi</string>
 </resources>
