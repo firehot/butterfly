@@ -10,8 +10,8 @@
     <string name="title_activity_stream_list">StreamList</string>
     <string name="refresh">Refresh</string>
     <string name="broadcast_live">Broadcast Live</string>
-    <string name="http_gateway_url">http://ec2&#8211;54&#8211;200&#8211;34&#8211;35.us&#8211;west&#8211;2.compute.amazonaws.com:5080/ButterFly_Red5/gateway</string>
-    <string name="rtmp_url">rtmp://ec2&#8211;54&#8211;200&#8211;34&#8211;35.us&#8211;west&#8211;2.compute.amazonaws.com/ButterFly_Red5/</string>
+    <string name="http_gateway_url">http://ec2-54-200-34-35.us-west-2.compute.amazonaws.com:5080/ButterFly_Red5/gateway</string>
+    <string name="rtmp_url">rtmp://ec2-54-200-34-35.us-west-2.compute.amazonaws.com/ButterFly_Red5/</string>
     <string name="write_name_of_stream">Please write the name of the stream</string>
     <string name="connectivityProblem">Problem in connectivity</string>
     <string name="noLiveStream">No live streams right now</string>
