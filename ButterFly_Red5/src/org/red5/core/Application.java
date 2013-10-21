@@ -72,6 +72,11 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 
 	}
+	
+	public class UserMessage{
+		public String senderMail;
+		public String videoUrl;
+		}
 
 	/** {@inheritDoc} */
 	@Override
@@ -131,33 +136,35 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 	}
 
-	public void sendNotificationsOrMail(String mails) {
+	public void sendNotificationsOrMail(String mails, UserMessage userMessage) {
 		
 		String subject = "subject";
-		String message = "message";
-		String userMessage = "userMessage";
+		String message = "Arkadaþýnýz sizinle bir yayýn paylaþmak istedi. Paylaþýmý görebilmeniz için siz de uygulamayý indirmelisiniz.";
+		//String userMessage = "userMessage";
 		int result = 0;
-
+		
 		
 	    ArrayList<String> mailListNotifiedByMail = new ArrayList<String>(); // This List will be used for mails, which are not available on the database
-		ArrayList<String> mailListNotifiedByPush = new ArrayList<String>(); // This List will be used for mails, which are available on the database
-		
+		ArrayList<String> registerIdList = new ArrayList<String>();// This List will be used for registerIds, which are available on the database
 		String [] splits = mails.split(",");
 		
 		for(int i = 0; i<splits.length; i++){
 			result = getRegistrationId(splits[i]);
 
 			if (result == 0){
-				mailListNotifiedByMail.add(splits[i]); 
+				mailListNotifiedByMail.add(splits[i]); // using as a parameter for sendMail() function
 									
 			}			
 			else {	
-				mailListNotifiedByPush.add(splits[i]); // using as a parameter for sendNotification() function.
+				
+				registerIdList.add(Integer.toString(result)); // using as a parameter for sendNotification() function
+				
 			}
 		}
 		
 		sendMail(mailListNotifiedByMail, subject, message);
-		sendNotification(mailListNotifiedByPush, userMessage);
+		
+		sendNotification(registerIdList, userMessage);
 	}
 
 
@@ -166,6 +173,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	 * @return
 	 * registration id of mail in the table
 	 * if mail is not exist, 0 returns
+	 * else return GcmRegId of mail
 	 */
 	public int getRegistrationId(String mail){
 
@@ -273,7 +281,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 	}
 
-	private boolean sendNotification(ArrayList<String> androidTargets, String userMessage)
+	private boolean sendNotification(ArrayList<String> androidTargets, UserMessage userMessage)
 	{
 		boolean resx = false;
 
