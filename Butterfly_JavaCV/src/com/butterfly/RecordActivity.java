@@ -33,6 +33,7 @@ import android.widget.Toast;
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.debug.BugSense;
 import com.butterfly.listener.OnPreviewListener;
+import com.butterfly.message.CloudMessaging;
 import com.butterfly.recorder.FFmpegFrameRecorder;
 import com.butterfly.view.CameraView;
 import com.googlecode.javacpp.BytePointer;
@@ -441,7 +442,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 				btnRecorderControl.setText(R.string.stop);
 				if (mailsToBeNotified != null) {
 					new SendNotificationTask().execute(httpGatewayURL,
-							mailsToBeNotified);
+							mailsToBeNotified,CloudMessaging.mail+";"+streamURL);
 				}
 			} else {
 				Toast.makeText(getApplicationContext(),
@@ -472,7 +473,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 				System.out.println(params[0]);
 				amfConnection.connect(params[0]);
 				result = (Boolean) amfConnection.call(
-						"sendNotificationsOrMail", params[1]);
+						"sendNotificationsOrMail", params[1],params[2]);
 
 			} catch (ClientStatusException e) {
 				e.printStackTrace();

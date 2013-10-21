@@ -39,6 +39,7 @@ public class CloudMessaging {
 	private Context context;
 	private Activity activity;
 	private String backendServer;
+	public static String mail;
 
 	public CloudMessaging(Context context, Activity activity, String backendServer) {
 		this.context = context;
@@ -117,6 +118,7 @@ public class CloudMessaging {
 				{
 					Log.e("butterfly", possibleEmail);	
 					registerUser(backendServer, regid, possibleEmail);
+					mail = possibleEmail;
 					break;
 				}
 

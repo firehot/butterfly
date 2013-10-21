@@ -22,7 +22,6 @@ package org.red5.core;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -72,11 +71,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 
 	}
-	
-	public class UserMessage{
-		public String senderMail;
-		public String videoUrl;
-		}
+
 
 	/** {@inheritDoc} */
 	@Override
@@ -136,11 +131,10 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 	}
 
-	public void sendNotificationsOrMail(String mails, UserMessage userMessage) {
+	public void sendNotificationsOrMail(String mails, String userMessage) {
 		
-		String subject = "subject";
+		String subject = "ButterFly'den Mesajýnýz Var";
 		String message = "Arkadaþýnýz sizinle bir yayýn paylaþmak istedi. Paylaþýmý görebilmeniz için siz de uygulamayý indirmelisiniz.";
-		//String userMessage = "userMessage";
 		int result = 0;
 		
 		
@@ -281,7 +275,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 	}
 
-	private boolean sendNotification(ArrayList<String> androidTargets, UserMessage userMessage)
+	private boolean sendNotification(ArrayList<String> androidTargets, String userMessage)
 	{
 		boolean resx = false;
 
@@ -303,7 +297,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		// key when
 		// it goes back on-line.
 		.collapseKey("1").timeToLive(30).delayWhileIdle(true)
-		.addData("price", userMessage).build();
+		.addData("notification", userMessage).build();
 
 
 		try {

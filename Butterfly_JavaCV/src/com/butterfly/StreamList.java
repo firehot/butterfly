@@ -37,6 +37,7 @@ public class StreamList extends ListActivity {
 	public static final String STREAM_PUBLISHED_NAME = "stream-name";
 	String httpGatewayURL;
 	private ArrayAdapter<Stream> adapter;
+	public static CloudMessaging msg;
 
 	public class Stream {
 		public String name;

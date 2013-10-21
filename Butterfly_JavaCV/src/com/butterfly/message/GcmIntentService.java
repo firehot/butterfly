@@ -26,6 +26,7 @@ public class GcmIntentService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         Bundle extras = intent.getExtras();
+        String message = intent.getStringExtra("notification");
         GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(this);
         // The getMessageType() intent parameter must be the intent you received
         // in your BroadcastReceiver.
@@ -48,17 +49,9 @@ public class GcmIntentService extends IntentService {
             // If it's a regular GCM message, do some work.
             } else if (GoogleCloudMessaging.
                     MESSAGE_TYPE_MESSAGE.equals(messageType)) {
-                // This loop represents the service doing some work.
-                for (int i=0; i<5; i++) {
-
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                    }
-                }
 
                 // Post notification of received message.
-                sendNotification("Received: " + extras.toString());
+                sendNotification(message);
 
             }
         }
@@ -73,9 +66,9 @@ public class GcmIntentService extends IntentService {
         mNotificationManager = (NotificationManager)
                 this.getSystemService(Context.NOTIFICATION_SERVICE);
 
-        //todo bu kýsým mesajdan alinmalidir
-        String sender = "Murat";
-        String video_url = "1381872617510";
+        String[] strArray = msg.split(";");
+        String sender = strArray[0];
+        String video_url = strArray[1];
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
