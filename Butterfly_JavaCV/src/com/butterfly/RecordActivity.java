@@ -462,11 +462,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 	public class SendNotificationTask extends AsyncTask<String, Void, Boolean> {
 
 		@Override
-		protected void onPreExecute() {
-			super.onPreExecute();
-		}
-
-		@Override
 		protected Boolean doInBackground(String... params) {
 			Boolean result = false;
 			AMFConnection amfConnection = new AMFConnection();
