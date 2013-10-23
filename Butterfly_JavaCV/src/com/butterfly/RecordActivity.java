@@ -503,7 +503,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 			try {
 				params[0].stop();
-				stopAudioRecording();
+
 			} catch (Exception e) {
 
 			}
