@@ -56,7 +56,7 @@ public class ApplicationTester {
 	@Test
 	public void testRegisterUser() {
 		int t = (int) (Math.random()*1000);
-		boolean result = butterflyApp.registerUser(t, "dgsdgs");
+		boolean result = butterflyApp.registerUser(String.valueOf(t), "dgsdgs");
 		assertEquals(true, result);
 	}
 
@@ -65,10 +65,10 @@ public class ApplicationTester {
 	public void testGetRegistrationId() {
 		int t = (int) (Math.random()*1000);
 		String mail = "mail@mailc.com" + t;
-		boolean result = butterflyApp.registerUser(t, mail);
+		boolean result = butterflyApp.registerUser(String.valueOf(t), mail);
 		assertEquals(result, true);
 
-		int registerId = butterflyApp.getRegistrationId(mail);
+		String registerId = butterflyApp.getRegistrationId(mail);
 
 		assertEquals(registerId, t);
 
