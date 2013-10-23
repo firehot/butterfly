@@ -9,7 +9,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
 import android.hardware.Camera;
 import android.hardware.Camera.Size;
@@ -44,7 +43,7 @@ import flex.messaging.io.amf.client.exceptions.ClientStatusException;
 import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
 public class RecordActivity extends Activity implements OnClickListener,
-		OnPreviewListener, android.content.DialogInterface.OnClickListener {
+		OnPreviewListener {
 
 	private final static String CLASS_LABEL = "RecordActivity";
 	private final static String LOG_TAG = CLASS_LABEL;
@@ -298,7 +297,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 			/* ffmpeg_audio encoding loop */
 			while (runAudioThread) {
-				Log.v(LOG_TAG, "recording? " + recording);
+				// Log.v(LOG_TAG, "recording? " + recording);
 				bufferReadResult = audioRecord.read(audioData, 0,
 						audioData.length);
 				if (bufferReadResult > 0) {
@@ -315,7 +314,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 							// Log.v(LOG_TAG,"recording " + 1024*i + " to " +
 							// 1024*i+1024);
 						} catch (FFmpegFrameRecorder.Exception e) {
-							Log.v(LOG_TAG, e.getMessage());
+							// Log.v(LOG_TAG, e.getMessage());
 							e.printStackTrace();
 						}
 					}
@@ -348,7 +347,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 			String name = streamNameEditText.getText().toString();
 			if (name != null && name.length() > 0) {
-				m_ProgressDialog = ProgressDialog.show(this, getString(R.string.please_wait),
+				m_ProgressDialog = ProgressDialog.show(this,
+						getString(R.string.please_wait),
 						getString(R.string.initializing), true);
 				m_ProgressDialog.setCancelable(true);
 				InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -360,7 +360,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 						streamURL);
 			} else {
 				AlertDialog.Builder builder = new AlertDialog.Builder(this);
-				builder.setPositiveButton(R.string.ok, this);
+				// builder.setPositiveButton(R.string.ok, this);
 				builder.setTitle(R.string.error);
 				builder.setMessage(R.string.write_name_of_stream).show();
 			}
@@ -368,7 +368,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 		} else {
 			// This will trigger the audio recording loop to stop and then set
 			// isRecorderStart = false;
-			m_ProgressDialog = ProgressDialog.show(this, getString(R.string.please_wait),
+			m_ProgressDialog = ProgressDialog.show(this,
+					getString(R.string.please_wait),
 					getString(R.string.stopping), true);
 			stopRecording();
 			runAudioThread = false;
@@ -442,7 +443,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 				btnRecorderControl.setText(R.string.stop);
 				if (mailsToBeNotified != null) {
 					new SendNotificationTask().execute(httpGatewayURL,
-							mailsToBeNotified,CloudMessaging.mail+";"+streamURL);
+							mailsToBeNotified, CloudMessaging.mail + ";"
+									+ streamURL);
 				}
 			} else {
 				Toast.makeText(getApplicationContext(),
@@ -473,7 +475,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 				System.out.println(params[0]);
 				amfConnection.connect(params[0]);
 				result = (Boolean) amfConnection.call(
-						"sendNotificationsOrMail", params[1],params[2]);
+						"sendNotificationsOrMail", params[1], params[2]);
 
 			} catch (ClientStatusException e) {
 				e.printStackTrace();
@@ -501,6 +503,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 			try {
 				params[0].stop();
+				stopAudioRecording();
 			} catch (Exception e) {
 
 			}
@@ -515,11 +518,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 			m_ProgressDialog.dismiss();
 		}
-
-	}
-
-	@Override
-	public void onClick(DialogInterface arg0, int arg1) {
 
 	}
 
