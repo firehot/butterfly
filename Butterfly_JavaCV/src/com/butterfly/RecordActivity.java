@@ -357,7 +357,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 				streamNameEditText.setVisibility(View.GONE);
 				initRecorder();
 				new RegisterStreamTask().execute(httpGatewayURL, name,
-						streamURL);
+						streamURL,CloudMessaging.getPossibleMail(this));
 			} else {
 				AlertDialog.Builder builder = new AlertDialog.Builder(this);
 				// builder.setPositiveButton(R.string.ok, this);
@@ -407,6 +407,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 	public class RegisterStreamTask extends AsyncTask<String, Void, Boolean> {
 
+		String possibleMail;
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
@@ -415,6 +416,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 		@Override
 		protected Boolean doInBackground(String... params) {
 			Boolean result = false;
+			this.possibleMail = params[3];
 			AMFConnection amfConnection = new AMFConnection();
 			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
 			try {
@@ -443,7 +445,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 				btnRecorderControl.setText(R.string.stop);
 				if (mailsToBeNotified != null) {
 					new SendNotificationTask().execute(httpGatewayURL,
-							mailsToBeNotified, CloudMessaging.mail + ";"
+							mailsToBeNotified, this.possibleMail + ";"
 									+ streamURL);
 				}
 			} else {
