@@ -14,24 +14,24 @@ import javax.persistence.Table;
 @Table(name = "gcm_users")
 public class GcmUsers implements java.io.Serializable {
 
-	private int gcmRegId;
+	private String gcmRegId;
 	private String email;
 
 	public GcmUsers() {
 	}
 
-	public GcmUsers(int gcmRegId, String email) {
+	public GcmUsers(String gcmRegId, String email) {
 		this.gcmRegId = gcmRegId;
 		this.email = email;
 	}
 
 	@Id
 	@Column(name = "gcm_reg_id", unique = true, nullable = false)
-	public int getGcmRegId() {
+	public String getGcmRegId() {
 		return this.gcmRegId;
 	}
 
-	public void setGcmRegId(int gcmRegId) {
+	public void setGcmRegId(String gcmRegId) {
 		this.gcmRegId = gcmRegId;
 	}
 

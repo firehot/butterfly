@@ -122,7 +122,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		return result;
 	}
 
-	public boolean registerUser(int register_id, String mail) 
+	public boolean registerUser(String register_id, String mail) 
 	{
 		boolean result;
 		try {
@@ -151,7 +151,7 @@ public class Application extends MultiThreadedApplicationAdapter {
         String subject = messages.getString("mail_notification_subject");
         String message = messages.getString("mail_notification_message");
 		
-		int result = 0;
+		String result = null;
 		
 		
 	    ArrayList<String> mailListNotifiedByMail = new ArrayList<String>(); // This List will be used for mails, which are not available on the database
@@ -160,11 +160,11 @@ public class Application extends MultiThreadedApplicationAdapter {
 		
 		for(int i = 0; i<splits.length; i++){
 			result = getRegistrationId(splits[i]);
-			if (result == 0){
+			if (result == null){
 				mailListNotifiedByMail.add(splits[i]); // using as a parameter for sendMail() function
 			}			
 			else {	
-				registerIdList.add(Integer.toString(result)); // using as a parameter for sendNotification() function
+				registerIdList.add(result); // using as a parameter for sendNotification() function
 			}
 		}
 		
@@ -181,9 +181,9 @@ public class Application extends MultiThreadedApplicationAdapter {
 	 * if mail is not exist, 0 returns
 	 * else return GcmRegId of mail
 	 */
-	public int getRegistrationId(String mail){
+	public String getRegistrationId(String mail){
 
-		int result = 0;
+		String result = null;
 		try{
 			beginTransaction();
 			Query query = getEntityManager().createQuery("FROM GcmUsers where email= :email");

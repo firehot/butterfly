@@ -39,7 +39,6 @@ public class CloudMessaging {
 	private Context context;
 	private Activity activity;
 	private String backendServer;
-	public static String mail;
 
 	public CloudMessaging(Context context, Activity activity, String backendServer) {
 		this.context = context;
@@ -109,6 +108,15 @@ public class CloudMessaging {
 	
 	private void sendRegistrationIdToBackend() 
 	{
+		String possibleMail = getPossibleMail(this.activity);
+		if(possibleMail != null)
+		{
+			Log.e("butterfly", possibleMail);	
+			registerUser(backendServer, regid, possibleMail);
+		}
+	}
+
+	public static String getPossibleMail(Activity activity) {
 		Pattern emailPattern = Patterns.EMAIL_ADDRESS; // API level 8+
 		Account[] accounts = AccountManager.get(activity).getAccounts();
 		for (Account account : accounts) {
@@ -116,14 +124,13 @@ public class CloudMessaging {
 				String possibleEmail = account.name;
 				if (possibleEmail.contains("gmail.com"))
 				{
-					Log.e("butterfly", possibleEmail);	
-					registerUser(backendServer, regid, possibleEmail);
-					mail = possibleEmail;
-					break;
+					return possibleEmail;
 				}
 
 			}
 		}
+		
+		return null;
 	}
 	
 	protected Boolean registerUser(String backendServer, String registerId, String mail) {
