@@ -22,8 +22,10 @@ package org.red5.core;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ResourceBundle;
 import java.util.Set;
 
 import javax.mail.MessagingException;
@@ -58,6 +60,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 	private static final String SENDER_ID = "AIzaSyCFmHIbJO0qCtPo6klp7Ade3qjeGLgtZWw";
 	Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
 	private EntityManager entityManager;
+	private ResourceBundle messagesTR;
+	private ResourceBundle messagesEN;
 
 	public class Stream implements Serializable {
 		public String streamName;
@@ -69,6 +73,12 @@ public class Application extends MultiThreadedApplicationAdapter {
 			this.streamUrl = streamUrl;
 			this.registerTime = registerTime;
 		}
+
+	}
+	
+	public Application() {
+        messagesTR = ResourceBundle.getBundle("resources/LanguageBundle", new Locale("tr"));
+        messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
 
 	}
 
@@ -131,10 +141,16 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 	}
 
-	public void sendNotificationsOrMail(String mails, String userMessage) {
+	public void sendNotificationsOrMail(String mails, String userMessage, String deviceLanguage) {
+
+		ResourceBundle messages = messagesEN;
+		if (deviceLanguage.equals("tur")) {
+			messages = messagesTR;
+		}
 		
-		String subject = "ButterFly'den Mesajýnýz Var";
-		String message = "Arkadaþýnýz sizinle bir yayýn paylaþmak istedi. Paylaþýmý görebilmeniz için siz de uygulamayý indirmelisiniz.";
+        String subject = messages.getString("mail_notification_subject");
+        String message = messages.getString("mail_notification_message");
+		
 		int result = 0;
 		
 		
@@ -144,15 +160,11 @@ public class Application extends MultiThreadedApplicationAdapter {
 		
 		for(int i = 0; i<splits.length; i++){
 			result = getRegistrationId(splits[i]);
-
 			if (result == 0){
 				mailListNotifiedByMail.add(splits[i]); // using as a parameter for sendMail() function
-									
 			}			
 			else {	
-				
 				registerIdList.add(Integer.toString(result)); // using as a parameter for sendNotification() function
-				
 			}
 		}
 		

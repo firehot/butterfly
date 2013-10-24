@@ -93,7 +93,7 @@ public class ApplicationTester {
 	@Test
 	public void testSendNotificationOrMail()
 	{
-		butterflyApp.sendNotificationsOrMail("ahmetmermerkaya@gmail.com","mail;videourl");
+		butterflyApp.sendNotificationsOrMail("ahmetmermerkaya@gmail.com","mail;videourl","en");
 	}
 
 

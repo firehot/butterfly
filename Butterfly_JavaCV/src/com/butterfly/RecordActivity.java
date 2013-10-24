@@ -4,6 +4,7 @@ import static com.googlecode.javacv.cpp.avcodec.AV_CODEC_ID_H264;
 
 import java.nio.Buffer;
 import java.nio.ShortBuffer;
+import java.util.Locale;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -470,7 +471,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 				System.out.println(params[0]);
 				amfConnection.connect(params[0]);
 				result = (Boolean) amfConnection.call(
-						"sendNotificationsOrMail", params[1], params[2]);
+						"sendNotificationsOrMail", params[1], params[2], Locale
+								.getDefault().getISO3Language());
 
 			} catch (ClientStatusException e) {
 				e.printStackTrace();
@@ -482,7 +484,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 			return result;
 		}
-
 	}
 
 	public class StopRecordingTask extends

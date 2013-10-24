@@ -7,8 +7,6 @@
     <string name="title_activity_stream_list">YayınListesi</string>
 	<string name="refresh">Yenile</string>
 	<string name="broadcast_live">Canlı Yayın</string>
-	<string name="http_gateway_url">http://192.168.1.23:5080/ButterFly_Red5/gateway</string>
-	<string name="rtmp_url">rtmp://192.168.1.23/ButterFly_Red5/</string>
 	<string name="write_name_of_stream">Lütfen yayının ismini giriniz</string>
 	<string name="connectivityProblem">Bağlantı Hatası</string>
 	<string name="noLiveStream">Şu anda canlı yayın bulunmamaktadır</string>
