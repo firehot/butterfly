@@ -74,7 +74,7 @@ public class GcmIntentService extends IntentService {
                 new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.butterfly)
                 .setAutoCancel(true)
-                .setContentTitle("Canlý Yayýn Uyarýsý")
+                .setContentTitle(getApplicationContext().getString(R.string.live_stream_warning))
                 .setStyle(new NotificationCompat.BigTextStyle()
                 .bigText(msg))
                 .setContentText(sender+" sizinle bir canlý yayýn paylaþtý. izlemek için týklayýn.");
