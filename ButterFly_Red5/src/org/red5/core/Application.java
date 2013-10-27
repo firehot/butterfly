@@ -22,6 +22,7 @@ package org.red5.core;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -127,8 +128,22 @@ public class Application extends MultiThreadedApplicationAdapter {
 		boolean result;
 		try {
 			beginTransaction();
-			GcmUsers gcmUsers = new GcmUsers(register_id, mail);
-			getEntityManager().persist(gcmUsers);
+			
+			Query query = getEntityManager().createQuery("FROM GcmUsers where email= :email");
+			query.setParameter("email", mail);
+			List results = query.getResultList();
+			if(results.size() > 0)
+			{
+				GcmUsers gcmUsers =  (GcmUsers) results.get(0);
+				gcmUsers.setGcmRegId(register_id);
+				getEntityManager().refresh(gcmUsers);
+			}
+			else
+			{
+				GcmUsers gcmUsers = new GcmUsers(register_id, mail);
+				getEntityManager().persist(gcmUsers);
+			}
+
 			commit();
 			closeEntityManager();
 			result = true;
@@ -189,8 +204,13 @@ public class Application extends MultiThreadedApplicationAdapter {
 			beginTransaction();
 			Query query = getEntityManager().createQuery("FROM GcmUsers where email= :email");
 			query.setParameter("email", mail);
-			GcmUsers gcmUsers =  (GcmUsers) query.getSingleResult();
-			result = gcmUsers.getGcmRegId();
+			List results = query.getResultList();
+			if(results.size() > 0)
+			{
+				GcmUsers gcmUsers =  (GcmUsers) results.get(0);
+				result = gcmUsers.getGcmRegId();
+			}
+
 			commit();
 			closeEntityManager();
 
@@ -205,7 +225,29 @@ public class Application extends MultiThreadedApplicationAdapter {
 		return result;
 	}
 
+	
+	public int getUserCount(String mail){
 
+		int result = 0;
+		try{
+			beginTransaction();
+			Query query = getEntityManager().createQuery("FROM GcmUsers where email= :email");
+			query.setParameter("email", mail);
+			List results = query.getResultList();
+			result = results.size();
+			commit();
+			closeEntityManager();
+
+		}
+		catch (NoResultException e) {
+			e.printStackTrace();
+		}
+		catch (Exception e){
+			e.printStackTrace();
+		}
+
+		return result;
+	}
 
 	@Override
 	public void streamBroadcastClose(IBroadcastStream stream) {

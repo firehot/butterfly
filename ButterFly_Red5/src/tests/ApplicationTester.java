@@ -4,6 +4,9 @@ package tests;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.Query;
 
 import org.junit.After;
 import org.junit.Before;
@@ -60,6 +63,33 @@ public class ApplicationTester {
 		assertEquals(true, result);
 	}
 
+	@Test
+	public void testUserUpdate()
+	{
+		int count = butterflyApp.getUserCount("mail1");
+		int initialCount = count;
+		
+		int t = (int) (Math.random()*1000);
+		boolean result = butterflyApp.registerUser(String.valueOf(t), "mail1");
+		assertEquals(true, result);
+		
+		String registerId = butterflyApp.getRegistrationId("mail1");
+		assertEquals(registerId, t);
+		
+		count = butterflyApp.getUserCount("mail1");
+		assertEquals(initialCount+1, count);
+		
+		t = (int) (Math.random()*1000);
+		result = butterflyApp.registerUser(String.valueOf(t), "mail1");
+		assertEquals(true, result);
+		
+		registerId = butterflyApp.getRegistrationId("mail1");
+		assertEquals(registerId, t);
+		
+		count = butterflyApp.getUserCount("mail1");
+		assertEquals(initialCount+1, count);
+
+	}
 
 	@Test
 	public void testGetRegistrationId() {
