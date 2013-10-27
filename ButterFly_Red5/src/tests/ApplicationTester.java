@@ -74,7 +74,7 @@ public class ApplicationTester {
 		assertEquals(true, result);
 		
 		String registerId = butterflyApp.getRegistrationId("mail1");
-		assertEquals(registerId, t);
+		assertEquals(registerId, String.valueOf(t));
 		
 		count = butterflyApp.getUserCount("mail1");
 		assertEquals(initialCount+1, count);
@@ -84,7 +84,7 @@ public class ApplicationTester {
 		assertEquals(true, result);
 		
 		registerId = butterflyApp.getRegistrationId("mail1");
-		assertEquals(registerId, t);
+		assertEquals(registerId, String.valueOf(t));
 		
 		count = butterflyApp.getUserCount("mail1");
 		assertEquals(initialCount+1, count);
@@ -101,11 +101,11 @@ public class ApplicationTester {
 
 		String registerId = butterflyApp.getRegistrationId(mail);
 
-		assertEquals(registerId, t);
+		assertEquals(registerId, String.valueOf(t));
 
 		registerId = butterflyApp.getRegistrationId("slkdjflasjf" + t);
 
-		assertEquals(registerId, 0);
+		assertEquals(registerId, null);
 	}
 	
 //	@Test
