@@ -167,10 +167,11 @@ public class Application extends MultiThreadedApplicationAdapter {
 				registerIdList.add(result); // using as a parameter for sendNotification() function
 			}
 		}
-		
-		sendMail(mailListNotifiedByMail, subject, message);
-		
-		sendNotification(registerIdList, userMessage);
+			
+		if(!mailListNotifiedByMail.isEmpty())
+			sendMail(mailListNotifiedByMail, subject, message);
+		if(!registerIdList.isEmpty())
+			sendNotification(registerIdList, userMessage);
 	}
 
 
