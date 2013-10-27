@@ -58,14 +58,23 @@ public class ApplicationTester {
 		int t = (int) (Math.random()*1000);
 		boolean result = butterflyApp.registerUser(String.valueOf(t), "dgsdgs");
 		assertEquals(true, result);
+		
+		t = (int) (Math.random()*1000);
+		result = butterflyApp.registerUser(String.valueOf(t), "dgsdqweqegs");
+		assertEquals(true, result);
+		
+		t = (int) (Math.random()*1000);
+		result = butterflyApp.registerUser(String.valueOf(t), "dgsdqweqegs");
+		assertEquals(true, result);
 	}
 
+	
 
 	@Test
 	public void testGetRegistrationId() {
-		int t = (int) (Math.random()*1000);
+		String t = String.valueOf((int) (Math.random()*1000));
 		String mail = "mail@mailc.com" + t;
-		boolean result = butterflyApp.registerUser(String.valueOf(t), mail);
+		boolean result = butterflyApp.registerUser(t, mail);
 		assertEquals(result, true);
 
 		String registerId = butterflyApp.getRegistrationId(mail);
@@ -74,7 +83,27 @@ public class ApplicationTester {
 
 		registerId = butterflyApp.getRegistrationId("slkdjflasjf" + t);
 
-		assertEquals(registerId, 0);
+		assertEquals(registerId, null);
+	}
+	
+	@Test
+	public void testRegisterUserAndGetRegistrationId() {
+		String t = String.valueOf((int) (Math.random()*1000));
+		String mail = "mail@mailc.com" + t;
+		boolean result = butterflyApp.registerUser(t, mail);
+		assertEquals(result, true);
+		
+		String registerId = butterflyApp.getRegistrationId(mail);
+
+		assertEquals(registerId, t);
+		
+		t = String.valueOf((int) (Math.random()*1000));
+		mail = "mail@mailc.com" + t;
+		result = butterflyApp.registerUser(t, mail);
+		assertEquals(result, true);
+		
+		registerId = butterflyApp.getRegistrationId(mail);
+		assertEquals(registerId, t);
 	}
 	
 //	@Test
