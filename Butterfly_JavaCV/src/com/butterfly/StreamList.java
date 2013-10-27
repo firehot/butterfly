@@ -34,6 +34,8 @@ import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
 public class StreamList extends ListActivity {
 
+	private static final String SHARED_PREFERENCE_FIRST_INSTALLATION = "firstInstallation";
+	private static final String APP_SHARED_PREFERENCES = "applicationDetails";
 	public static final String STREAM_PUBLISHED_NAME = "stream-name";
 	String httpGatewayURL;
 	private ArrayAdapter<Stream> adapter;
@@ -42,7 +44,6 @@ public class StreamList extends ListActivity {
 	public class Stream {
 		public String name;
 		public String url;
-		
 
 		public Stream(String name, String url) {
 			super();
@@ -77,43 +78,6 @@ public class StreamList extends ListActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
-		final SharedPreferences applicationPrefs = getSharedPreferences("applicationDetails", MODE_PRIVATE);
-		Boolean firstInstallation = applicationPrefs.getBoolean("firstInstallation",false);
-		if (!firstInstallation)
-		{
-
-			AlertDialog.Builder myAlertDialog = new AlertDialog.Builder(this);
-			myAlertDialog.setTitle(R.string.terms_of_service_title);
-			myAlertDialog.setMessage(R.string.terms_of_service);
-			myAlertDialog.setPositiveButton(R.string.accept, new DialogInterface.OnClickListener() {
-
-				public void onClick(DialogInterface arg0, int arg1) {
-					// do something when the OK button is clicked
-					SharedPreferences.Editor mInstallationEditor = applicationPrefs.edit();
-					mInstallationEditor.putBoolean("firstInstallation",true);
-					mInstallationEditor.commit();
-				}});
-			myAlertDialog.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-
-				public void onClick(DialogInterface arg0, int arg1) {
-					// do something when the Cancel button is clicked
-					StreamList.this.finish();
-				}});
-			
-			myAlertDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-				
-				@Override
-				public void onCancel(DialogInterface dialog) {
-					// do something when the back button is clicked
-					dialog.dismiss();
-					StreamList.this.finish();
-					
-				}
-			});
-			myAlertDialog.show();
-		}
-
 		BugSenseHandler.initAndStartSession(this, BugSense.API_KEY);
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		httpGatewayURL = getString(R.string.http_gateway_url);
@@ -124,15 +88,49 @@ public class StreamList extends ListActivity {
 
 		getListView().setOnItemClickListener(itemClickListener);
 
+		final SharedPreferences applicationPrefs = getSharedPreferences(
+				APP_SHARED_PREFERENCES, MODE_PRIVATE);
+		Boolean firstInstallation = applicationPrefs.getBoolean(
+				SHARED_PREFERENCE_FIRST_INSTALLATION, false);
+		if (!firstInstallation) {
+			showTermsOfUse(applicationPrefs);
+		}
+
 		// Check device for Play Services APK.
 		if (checkPlayServices()) {
 
-			CloudMessaging msg = new CloudMessaging(this.getApplicationContext(), this, httpGatewayURL);
+			CloudMessaging msg = new CloudMessaging(
+					this.getApplicationContext(), this, httpGatewayURL);
 		}
 
 	}
 
+	private void showTermsOfUse(final SharedPreferences applicationPrefs) {
+		AlertDialog.Builder myAlertDialog = new AlertDialog.Builder(this);
+		myAlertDialog.setTitle(R.string.terms_of_service_title);
+		myAlertDialog.setMessage(R.string.terms_of_service);
+		myAlertDialog.setPositiveButton(R.string.accept,
+				new DialogInterface.OnClickListener() {
 
+					public void onClick(DialogInterface arg0, int arg1) {
+						// do something when the OK button is clicked
+						SharedPreferences.Editor mInstallationEditor = applicationPrefs
+								.edit();
+						mInstallationEditor.putBoolean(
+								SHARED_PREFERENCE_FIRST_INSTALLATION, true);
+						mInstallationEditor.commit();
+					}
+				});
+		myAlertDialog.setNegativeButton(R.string.cancel,
+				new DialogInterface.OnClickListener() {
+
+					public void onClick(DialogInterface arg0, int arg1) {
+						// do something when the Cancel button is clicked
+						StreamList.this.finish();
+					}
+				});
+		myAlertDialog.show();
+	}
 
 	@Override
 	protected void onDestroy() {
@@ -188,7 +186,7 @@ public class StreamList extends ListActivity {
 	}
 
 	public class GetStreamListTask extends
-	AsyncTask<String, Void, HashMap<String, String>> {
+			AsyncTask<String, Void, HashMap<String, String>> {
 
 		@Override
 		protected void onPreExecute() {
@@ -219,8 +217,6 @@ public class StreamList extends ListActivity {
 
 			return streams;
 		}
-
-
 
 		@Override
 		protected void onPostExecute(HashMap<String, String> streams) {
@@ -255,9 +251,5 @@ public class StreamList extends ListActivity {
 		}
 
 	}
-
-
-
-
 
 }

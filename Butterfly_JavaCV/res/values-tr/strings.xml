@@ -24,4 +24,15 @@
     <string name="stopping">Durduruluyor</string>
     <string name="stream_registration_failed">Yayın kayıt edilemedi. Lütfen bağlantınızı kontrol ediniz ve tekrar deneyiniz</string>
 	<string name="terms_of_service_title">Kullanım Sözleşmesi</string>
+    <string name="terms_of_service">
+Butterfly, canlı ve kayıt edilmiş video ve ses verisinin paylaşılmasını sağlar.\n
+\n
+Eğer Butterfly uygulamasını kullanıyorsanız, bu aşağıdaki kullanım sözleşmesini kabul ettiğinizi göstermektedir.\n
+\n
+1. Herhangi bir ses ve video yayını ile ilgili tüm sorumluluk o yayını yayınlayana aittir.\n
+2. Kullanım sözleşmesi herhangi bir zamanda bilgi verilmeden değiştirilebilir. Geçerli kullanım sözleşmesi son güncellenmiş kullanım sözleşmesidir.\n
+3. Butterfly ekibi yayında olan herhangi bir ses ve video verisini silme hakkına sahiptir.\n
+\n
+27 Ekim 2013
+</string>
 </resources>
