@@ -90,6 +90,7 @@ public class ApplicationTester {
 		assertEquals(initialCount+1, count);
 
 	}
+	
 
 	@Test
 	public void testGetRegistrationId() {
