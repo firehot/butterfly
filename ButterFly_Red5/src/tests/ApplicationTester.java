@@ -28,25 +28,25 @@ public class ApplicationTester {
 
 	@Test
 	public void testRegisterStream() {
-		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl");
+		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", true);
 		assertEquals(registerLiveStream, true);
 
-		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl");
+		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", true);
 		assertEquals(registerLiveStream, false);
 
 
-		registerLiveStream = butterflyApp.registerLiveStream("publishedName"+11, "publishUrl");
+		registerLiveStream = butterflyApp.registerLiveStream("publishedName"+11, "publishUrl", true);
 		//should return false because url is key
 		assertEquals(registerLiveStream, false);
 
-		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl" + 11);
+		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl" + 11, true);
 		//should return true because url is changed
 		assertEquals(registerLiveStream, true);
 	}
 
 	@Test
 	public void testRemoveStream() {
-		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl");
+		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", true);
 		assertEquals(registerLiveStream, true);
 
 		registerLiveStream = butterflyApp.removeStream("publishUrl");

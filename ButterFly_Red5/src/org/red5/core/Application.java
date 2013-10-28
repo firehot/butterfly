@@ -114,10 +114,13 @@ public class Application extends MultiThreadedApplicationAdapter {
 	}
 
 
-	public boolean registerLiveStream(String streamName, String url) {
+	public boolean registerLiveStream(String streamName, String url, boolean isPublic) {
 		boolean result = false;
 		if (registeredStreams.containsKey(url) == false) {
-			registeredStreams.put(url, new Stream(streamName,  url, System.currentTimeMillis()));
+			if (isPublic == true) {
+				registeredStreams.put(url, new Stream(streamName,  url, System.currentTimeMillis()));
+			}
+			// return true even if stream is not public
 			result = true;
 		}
 		return result;

@@ -358,7 +358,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 				streamNameEditText.setVisibility(View.GONE);
 				initRecorder();
 				new RegisterStreamTask().execute(httpGatewayURL, name,
-						streamURL,CloudMessaging.getPossibleMail(this));
+						streamURL, CloudMessaging.getPossibleMail(this));
 			} else {
 				AlertDialog.Builder builder = new AlertDialog.Builder(this);
 				// builder.setPositiveButton(R.string.ok, this);
@@ -409,6 +409,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 	public class RegisterStreamTask extends AsyncTask<String, Void, Boolean> {
 
 		String possibleMail;
+
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
@@ -424,7 +425,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 				System.out.println(params[0]);
 				amfConnection.connect(params[0]);
 				result = (Boolean) amfConnection.call("registerLiveStream",
-						params[1], params[2]);
+						params[1], params[2], true);
 
 			} catch (ClientStatusException e) {
 				e.printStackTrace();
