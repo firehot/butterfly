@@ -5,6 +5,6 @@
         android:angle="180"
         android:dither="true"
         android:endColor="#80FFFFFF"
-        android:startColor="#00FFFFFF" />
+        android:startColor="#20FFFFFF" />
 
 </shape>

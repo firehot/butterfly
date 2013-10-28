@@ -17,10 +17,19 @@
         android:background="@drawable/recordlayoutcolor"
         android:orientation="horizontal" >
 
+        <CheckBox
+        android:id="@+id/check_public"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="?android:attr/textAppearanceMedium"
+        android:text="@string/public_chkbox" />
+        
         <EditText
             android:id="@+id/stream_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
             android:hint="@string/write_name_of_stream" />
 
         <Button

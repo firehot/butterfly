@@ -27,6 +27,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -78,6 +79,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 	private String httpGatewayURL;
 	private String streamURL;
 	private EditText streamNameEditText;
+	private CheckBox publicVideoCheckBox;
 
 	private ProgressDialog m_ProgressDialog;
 	private String mailsToBeNotified;
@@ -117,6 +119,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 		initLayout();
 
 		streamNameEditText = (EditText) findViewById(R.id.stream_name);
+		publicVideoCheckBox = (CheckBox) findViewById(R.id.check_public);
 	}
 
 	@Override
@@ -347,6 +350,11 @@ public class RecordActivity extends Activity implements OnClickListener,
 		if (!recording) {
 
 			String name = streamNameEditText.getText().toString();
+			
+			//Check the video is public or not
+			Boolean is_video_public = publicVideoCheckBox.isChecked();
+			
+			
 			if (name != null && name.length() > 0) {
 				m_ProgressDialog = ProgressDialog.show(this,
 						getString(R.string.please_wait),
@@ -356,9 +364,11 @@ public class RecordActivity extends Activity implements OnClickListener,
 				imm.hideSoftInputFromWindow(
 						streamNameEditText.getWindowToken(), 0);
 				streamNameEditText.setVisibility(View.GONE);
+				publicVideoCheckBox.setVisibility(View.GONE);
 				initRecorder();
+				
 				new RegisterStreamTask().execute(httpGatewayURL, name,
-						streamURL, CloudMessaging.getPossibleMail(this));
+						streamURL, CloudMessaging.getPossibleMail(this),is_video_public.toString());
 			} else {
 				AlertDialog.Builder builder = new AlertDialog.Builder(this);
 				// builder.setPositiveButton(R.string.ok, this);
@@ -377,6 +387,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 			Log.w(LOG_TAG, "Stop Button Pushed");
 			btnRecorderControl.setText(R.string.start);
 			streamNameEditText.setVisibility(View.VISIBLE);
+			publicVideoCheckBox.setVisibility(View.VISIBLE);
 
 		}
 	}
@@ -409,7 +420,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 	public class RegisterStreamTask extends AsyncTask<String, Void, Boolean> {
 
 		String possibleMail;
-
+		
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
@@ -419,13 +430,22 @@ public class RecordActivity extends Activity implements OnClickListener,
 		protected Boolean doInBackground(String... params) {
 			Boolean result = false;
 			this.possibleMail = params[3];
+			
+			Boolean isPublic = false;
+			if (params[4].contentEquals("true"))
+			{
+				isPublic = true;
+			}
+			
 			AMFConnection amfConnection = new AMFConnection();
 			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
 			try {
 				System.out.println(params[0]);
+				System.out.println(params[4]);
+											
 				amfConnection.connect(params[0]);
 				result = (Boolean) amfConnection.call("registerLiveStream",
-						params[1], params[2], true);
+						params[1], params[2], isPublic);
 
 			} catch (ClientStatusException e) {
 				e.printStackTrace();
@@ -455,6 +475,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 						getString(R.string.stream_registration_failed),
 						Toast.LENGTH_LONG).show();
 				streamNameEditText.setVisibility(View.VISIBLE);
+				publicVideoCheckBox.setVisibility(View.VISIBLE);
 				// Toast.makeText(getApplicationContext(),
 				// "Debug: register failed", Toast.LENGTH_LONG).show();
 			}
