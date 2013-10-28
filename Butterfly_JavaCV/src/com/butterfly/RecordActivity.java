@@ -137,6 +137,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 	@Override
 	protected void onPause() {
 		super.onPause();
+		stopRecording();
 
 		if (mWakeLock != null) {
 			mWakeLock.release();
@@ -164,11 +165,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 			cameraView.stopPreview();
 			cameraDevice.release();
 			cameraDevice = null;
-		}
-
-		if (mWakeLock != null) {
-			mWakeLock.release();
-			mWakeLock = null;
 		}
 	}
 
@@ -350,11 +346,10 @@ public class RecordActivity extends Activity implements OnClickListener,
 		if (!recording) {
 
 			String name = streamNameEditText.getText().toString();
-			
-			//Check the video is public or not
+
+			// Check the video is public or not
 			Boolean is_video_public = publicVideoCheckBox.isChecked();
-			
-			
+
 			if (name != null && name.length() > 0) {
 				m_ProgressDialog = ProgressDialog.show(this,
 						getString(R.string.please_wait),
@@ -366,9 +361,10 @@ public class RecordActivity extends Activity implements OnClickListener,
 				streamNameEditText.setVisibility(View.GONE);
 				publicVideoCheckBox.setVisibility(View.GONE);
 				initRecorder();
-				
+
 				new RegisterStreamTask().execute(httpGatewayURL, name,
-						streamURL, CloudMessaging.getPossibleMail(this),is_video_public.toString());
+						streamURL, CloudMessaging.getPossibleMail(this),
+						is_video_public.toString());
 			} else {
 				AlertDialog.Builder builder = new AlertDialog.Builder(this);
 				// builder.setPositiveButton(R.string.ok, this);
@@ -420,7 +416,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 	public class RegisterStreamTask extends AsyncTask<String, Void, Boolean> {
 
 		String possibleMail;
-		
+
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
@@ -430,19 +426,18 @@ public class RecordActivity extends Activity implements OnClickListener,
 		protected Boolean doInBackground(String... params) {
 			Boolean result = false;
 			this.possibleMail = params[3];
-			
-			Boolean isPublic = false;
-			if (params[4].contentEquals("true"))
-			{
+
+			boolean isPublic = false;
+			if (params[4].contentEquals("true")) {
 				isPublic = true;
 			}
-			
+
 			AMFConnection amfConnection = new AMFConnection();
 			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
 			try {
 				System.out.println(params[0]);
 				System.out.println(params[4]);
-											
+
 				amfConnection.connect(params[0]);
 				result = (Boolean) amfConnection.call("registerLiveStream",
 						params[1], params[2], isPublic);

@@ -22,7 +22,7 @@
     <string name="please_wait">Lütfen bekleyiniz</string>
     <string name="initializing">Başlatılıyor</string>
     <string name="stopping">Durduruluyor</string>
-    <string name="public_chkbox">Genel</string>
+    <string name="public_chkbox">Herkese açık</string>
     <string name="stream_registration_failed">Yayın kayıt edilemedi. Lütfen bağlantınızı kontrol ediniz ve tekrar deneyiniz</string>
 	<string name="terms_of_service_title">Kullanım Sözleşmesi</string>
     <string name="terms_of_service">
