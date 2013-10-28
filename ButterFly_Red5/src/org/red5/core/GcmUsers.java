@@ -25,8 +25,8 @@ public class GcmUsers implements java.io.Serializable {
 		this.email = email;
 	}
 
-	@Id
-	@Column(name = "gcm_reg_id", unique = true, nullable = false)
+	
+	@Column(name = "gcm_reg_id",  nullable = false)
 	public String getGcmRegId() {
 		return this.gcmRegId;
 	}
@@ -35,7 +35,8 @@ public class GcmUsers implements java.io.Serializable {
 		this.gcmRegId = gcmRegId;
 	}
 
-	@Column(name = "email", nullable = false, length = 45)
+	@Id
+	@Column(name = "email", unique = true,nullable = false, length = 45)
 	public String getEmail() {
 		return this.email;
 	}

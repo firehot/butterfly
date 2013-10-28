@@ -136,7 +136,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 			{
 				GcmUsers gcmUsers =  (GcmUsers) results.get(0);
 				gcmUsers.setGcmRegId(register_id);
-				getEntityManager().refresh(gcmUsers);
 			}
 			else
 			{
