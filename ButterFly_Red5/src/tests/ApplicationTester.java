@@ -28,25 +28,25 @@ public class ApplicationTester {
 
 	@Test
 	public void testRegisterStream() {
-		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", true);
+		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", null, null, true, null);
 		assertEquals(registerLiveStream, true);
 
-		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", true);
+		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", null, null, true, null);
 		assertEquals(registerLiveStream, false);
 
 
-		registerLiveStream = butterflyApp.registerLiveStream("publishedName"+11, "publishUrl", true);
+		registerLiveStream = butterflyApp.registerLiveStream("publishedName"+11, "publishUrl", null, null, true, null);
 		//should return false because url is key
 		assertEquals(registerLiveStream, false);
 
-		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl" + 11, true);
+		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl" + 11, null, null, true, null);
 		//should return true because url is changed
 		assertEquals(registerLiveStream, true);
 	}
 
 	@Test
 	public void testRemoveStream() {
-		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", true);
+		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", null, null, true, null);
 		assertEquals(registerLiveStream, true);
 
 		registerLiveStream = butterflyApp.removeStream("publishUrl");
@@ -121,11 +121,11 @@ public class ApplicationTester {
 //		fail("to correct this test check mail is received at " + mailString);
 //	}
 	
-	@Test
-	public void testSendNotificationOrMail()
-	{
-		butterflyApp.sendNotificationsOrMail("ahmetmermerkaya@gmail.com","mail;videourl","en");
-	}
+//	@Test
+//	public void testSendNotificationOrMail()
+//	{
+//		butterflyApp.sendNotificationsOrMail("ahmetmermerkaya@gmail.com","mail;videourl","en");
+//	}
 
 
 

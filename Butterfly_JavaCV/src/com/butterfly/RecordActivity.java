@@ -440,7 +440,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 				amfConnection.connect(params[0]);
 				result = (Boolean) amfConnection.call("registerLiveStream",
-						params[1], params[2], isPublic);
+						params[1], params[2], mailsToBeNotified, possibleMail,
+						isPublic, Locale.getDefault().getISO3Language());
 
 			} catch (ClientStatusException e) {
 				e.printStackTrace();
@@ -460,11 +461,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 				startRecording();
 				Log.w(LOG_TAG, "Start Button Pushed");
 				btnRecorderControl.setText(R.string.stop);
-				if (mailsToBeNotified != null) {
-					new SendNotificationTask().execute(httpGatewayURL,
-							mailsToBeNotified, this.possibleMail + ";"
-									+ streamURL);
-				}
 			} else {
 				Toast.makeText(getApplicationContext(),
 						getString(R.string.stream_registration_failed),
@@ -476,32 +472,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 			}
 			super.onPostExecute(result);
 
-		}
-	}
-
-	public class SendNotificationTask extends AsyncTask<String, Void, Boolean> {
-
-		@Override
-		protected Boolean doInBackground(String... params) {
-			Boolean result = false;
-			AMFConnection amfConnection = new AMFConnection();
-			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
-			try {
-				System.out.println(params[0]);
-				amfConnection.connect(params[0]);
-				result = (Boolean) amfConnection.call(
-						"sendNotificationsOrMail", params[1], params[2], Locale
-								.getDefault().getISO3Language());
-
-			} catch (ClientStatusException e) {
-				e.printStackTrace();
-			} catch (ServerStatusException e) {
-
-				e.printStackTrace();
-			}
-			amfConnection.close();
-
-			return result;
 		}
 	}
 

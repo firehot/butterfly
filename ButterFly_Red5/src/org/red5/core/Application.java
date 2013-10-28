@@ -76,10 +76,10 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 
 	}
-	
+
 	public Application() {
-        messagesTR = ResourceBundle.getBundle("resources/LanguageBundle", new Locale("tr"));
-        messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
+		messagesTR = ResourceBundle.getBundle("resources/LanguageBundle", new Locale("tr"));
+		messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
 
 	}
 
@@ -114,12 +114,13 @@ public class Application extends MultiThreadedApplicationAdapter {
 	}
 
 
-	public boolean registerLiveStream(String streamName, String url, boolean isPublic) {
+	public boolean registerLiveStream(String streamName, String url, String mailsToBeNotified, String broadcasterMail, boolean isPublic, String deviceLanguage) {
 		boolean result = false;
 		if (registeredStreams.containsKey(url) == false) {
 			if (isPublic == true) {
 				registeredStreams.put(url, new Stream(streamName,  url, System.currentTimeMillis()));
 			}
+			sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url, deviceLanguage);
 			// return true even if stream is not public
 			result = true;
 		}
@@ -131,7 +132,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		boolean result;
 		try {
 			beginTransaction();
-			
+
 			Query query = getEntityManager().createQuery("FROM GcmUsers where email= :email");
 			query.setParameter("email", mail);
 			List results = query.getResultList();
@@ -158,37 +159,50 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 	}
 
-	public void sendNotificationsOrMail(String mails, String userMessage, String deviceLanguage) {
+	/**
+	 * 
+	 * @param mails,
+	 * The mail address to be notified that a video stream is shared with them
+	 * @param broadcasterMail
+	 * The mail address of broadcaster
+	 * @param streamURL
+	 * published name of the stream in Red5
+	 * @param deviceLanguage
+	 * language of the device. According to this parameter, notification mail language is selected
+	 */
+	private void sendNotificationsOrMail(String mails, String broadcasterMail, String streamURL, String deviceLanguage) {
 
 		ResourceBundle messages = messagesEN;
-		if (deviceLanguage.equals("tur")) {
+		if (deviceLanguage != null && deviceLanguage.equals("tur")) {
 			messages = messagesTR;
 		}
-		
-        String subject = messages.getString("mail_notification_subject");
-        String message = messages.getString("mail_notification_message");
-		
+
+		String subject = messages.getString("mail_notification_subject");
+		String message = messages.getString("mail_notification_message");
+
 		String result = null;
-		
-		
-	    ArrayList<String> mailListNotifiedByMail = new ArrayList<String>(); // This List will be used for mails, which are not available on the database
+
+
+		ArrayList<String> mailListNotifiedByMail = new ArrayList<String>(); // This List will be used for mails, which are not available on the database
 		ArrayList<String> registerIdList = new ArrayList<String>();// This List will be used for registerIds, which are available on the database
-		String [] splits = mails.split(",");
-		
-		for(int i = 0; i<splits.length; i++){
-			result = getRegistrationId(splits[i]);
-			if (result == null){
-				mailListNotifiedByMail.add(splits[i]); // using as a parameter for sendMail() function
-			}			
-			else {	
-				registerIdList.add(result); // using as a parameter for sendNotification() function
+		if (mails != null) {
+			String [] splits = mails.split(",");
+
+			for(int i = 0; i<splits.length; i++){
+				result = getRegistrationId(splits[i]);
+				if (result == null){
+					mailListNotifiedByMail.add(splits[i]); // using as a parameter for sendMail() function
+				}			
+				else {	
+					registerIdList.add(result); // using as a parameter for sendNotification() function
+				}
 			}
+
+			if(!mailListNotifiedByMail.isEmpty())
+				sendMail(mailListNotifiedByMail, subject, message);
+			if(!registerIdList.isEmpty())
+				sendNotification(registerIdList, broadcasterMail, streamURL);
 		}
-			
-		if(!mailListNotifiedByMail.isEmpty())
-			sendMail(mailListNotifiedByMail, subject, message);
-		if(!registerIdList.isEmpty())
-			sendNotification(registerIdList, userMessage);
 	}
 
 
@@ -227,7 +241,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		return result;
 	}
 
-	
+
 	public int getUserCount(String mail){
 
 		int result = 0;
@@ -314,14 +328,14 @@ public class Application extends MultiThreadedApplicationAdapter {
 		{
 			javax.mail.Message message = new MimeMessage(session);
 			message.setFrom(new InternetAddress(username));
-			
+
 			for (int i = 0; i < email.size(); i++) {
 				message.setRecipients(javax.mail.Message.RecipientType.TO, InternetAddress.parse(email.get(i)));
 				message.setSubject(subject);
 				message.setText(messagex);
 				Transport.send(message);
 			}
-			
+
 			resultx = true;
 			System.out.println("Done");
 		} catch (MessagingException e) 
@@ -332,7 +346,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 	}
 
-	private boolean sendNotification(ArrayList<String> androidTargets, String userMessage)
+	private boolean sendNotification(ArrayList<String> androidTargets, String broadcasterMail, String streamURL)
 	{
 		boolean resx = false;
 
@@ -354,7 +368,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		// key when
 		// it goes back on-line.
 		.collapseKey("1").timeToLive(30).delayWhileIdle(true)
-		.addData("notification", userMessage).build();
+		.addData("URL", streamURL).addData("broadcaster", broadcasterMail).build();
 
 
 		try {

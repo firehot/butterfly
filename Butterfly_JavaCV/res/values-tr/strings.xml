@@ -9,6 +9,8 @@
 	<string name="broadcast_live">Canlı Yayın</string>
 	<string name="write_name_of_stream">Lütfen yayının ismini giriniz</string>
 	<string name="connectivityProblem">Bağlantı Hatası</string>
+	<string name="live_stream_warning">Canlı Yayın Uyarısı</string>
+    <string name="stream_shared_with_you">sizinle bir canlı yayın paylaştı. İzlemek için tıklayınız!</string>
 	<string name="noLiveStream">Şu anda canlı yayın bulunmamaktadır</string>
 	<string name="write_contact_name_or_email_addr">isim veya email adresi giriniz</string>
 	<string name="next">ileri</string>
