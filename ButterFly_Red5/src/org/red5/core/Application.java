@@ -47,8 +47,10 @@ import org.red5.server.api.Red5;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
 
+import com.google.android.gcm.server.Constants;
 import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.MulticastResult;
+import com.google.android.gcm.server.Result;
 import com.google.android.gcm.server.Sender;
 
 /**
@@ -68,6 +70,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		public String streamName;
 		public String streamUrl;
 		public Long registerTime;
+
 		public Stream(String streamName, String streamUrl, Long registerTime) {
 			super();
 			this.streamName = streamName;
@@ -78,11 +81,11 @@ public class Application extends MultiThreadedApplicationAdapter {
 	}
 
 	public Application() {
-		messagesTR = ResourceBundle.getBundle("resources/LanguageBundle", new Locale("tr"));
+		messagesTR = ResourceBundle.getBundle("resources/LanguageBundle",
+				new Locale("tr"));
 		messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
 
 	}
-
 
 	/** {@inheritDoc} */
 	@Override
@@ -102,8 +105,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 		target = Red5.getConnectionLocal().getScope();
 
-		Set<String> streamNames =
-				getBroadcastStreamNames(target);
+		Set<String> streamNames = getBroadcastStreamNames(target);
 		for (String name : streamNames) {
 			if (registeredStreams.containsKey(name)) {
 				Stream stream = registeredStreams.get(name);
@@ -113,45 +115,104 @@ public class Application extends MultiThreadedApplicationAdapter {
 		return streams;
 	}
 
-
-	public boolean registerLiveStream(String streamName, String url, String mailsToBeNotified, String broadcasterMail, boolean isPublic, String deviceLanguage) {
+	public boolean registerLiveStream(String streamName, String url,
+			String mailsToBeNotified, String broadcasterMail, boolean isPublic,
+			String deviceLanguage) {
 		boolean result = false;
 		if (registeredStreams.containsKey(url) == false) {
 			if (isPublic == true) {
-				registeredStreams.put(url, new Stream(streamName,  url, System.currentTimeMillis()));
+				registeredStreams
+						.put(url,
+								new Stream(streamName, url, System
+										.currentTimeMillis()));
 			}
-			sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url, deviceLanguage);
+			sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url,
+					deviceLanguage);
 			// return true even if stream is not public
 			result = true;
 		}
 		return result;
 	}
 
-	public boolean registerUser(String register_id, String mail) 
-	{
+	public boolean registerUser(String register_id, String mail) {
 		boolean result;
 		try {
 			beginTransaction();
 
-			Query query = getEntityManager().createQuery("FROM GcmUsers where email= :email");
+			Query query = getEntityManager().createQuery(
+					"FROM GcmUsers where email= :email");
 			query.setParameter("email", mail);
 			List results = query.getResultList();
-			if(results.size() > 0)
-			{
-				GcmUsers gcmUsers =  (GcmUsers) results.get(0);
-				gcmUsers.setGcmRegId(register_id);
-			}
-			else
-			{
-				GcmUsers gcmUsers = new GcmUsers(register_id, mail);
+			if (results.size() > 0) {
+				GcmUsers gcmUsers = (GcmUsers) results.get(0);
+				RegIDs regid = new RegIDs(register_id);
+				gcmUsers.addRegID(regid);
+			} else {
+				GcmUsers gcmUsers = new GcmUsers(mail);
+				RegIDs regid = new RegIDs(register_id);
+				gcmUsers.addRegID(regid);
 				getEntityManager().persist(gcmUsers);
 			}
 
 			commit();
 			closeEntityManager();
 			result = true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = false;
 		}
-		catch (Exception e) {
+		return result;
+
+	}
+
+	/**
+	 * @param register_id
+	 *            new register id
+	 * @param mail
+	 *            user mail
+	 * @param oldRegID
+	 *            old register id
+	 * @return true if the user is updated succesfully , false if fails
+	 */
+	public boolean updateUser(String register_id, String mail, String oldRegID) {
+		boolean result;
+		try {
+			beginTransaction();
+
+			Query query = getEntityManager().createQuery(
+					"FROM GcmUsers where email= :email");
+			query.setParameter("email", mail);
+			List results = query.getResultList();
+
+			// if user is found
+			if (results.size() > 0) {
+				GcmUsers gcmUsers = (GcmUsers) results.get(0);
+
+				// if reg id doesnt exist for the user
+				if (gcmUsers.getRegIDs().size() == 0) {
+					RegIDs regid = new RegIDs(register_id);
+					gcmUsers.addRegID(regid);
+				} else {
+					// update the reg id of the user using the old reg id
+					for (RegIDs regid : gcmUsers.getRegIDs()) {
+						if (regid.getGcmRegId().equals(oldRegID)) {
+							regid.setGcmRegId(register_id);
+						}
+					}
+				}
+
+			} else {
+				// user doesnt exist, create user and add reg id
+				GcmUsers gcmUsers = new GcmUsers(mail);
+				RegIDs regid = new RegIDs(register_id);
+				gcmUsers.addRegID(regid);
+				getEntityManager().persist(gcmUsers);
+			}
+
+			commit();
+			closeEntityManager();
+			result = true;
+		} catch (Exception e) {
 			e.printStackTrace();
 			result = false;
 		}
@@ -161,16 +222,19 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 	/**
 	 * 
-	 * @param mails,
-	 * The mail address to be notified that a video stream is shared with them
+	 * @param mails
+	 *            , The mail address to be notified that a video stream is
+	 *            shared with them
 	 * @param broadcasterMail
-	 * The mail address of broadcaster
+	 *            The mail address of broadcaster
 	 * @param streamURL
-	 * published name of the stream in Red5
+	 *            published name of the stream in Red5
 	 * @param deviceLanguage
-	 * language of the device. According to this parameter, notification mail language is selected
+	 *            language of the device. According to this parameter,
+	 *            notification mail language is selected
 	 */
-	private void sendNotificationsOrMail(String mails, String broadcasterMail, String streamURL, String deviceLanguage) {
+	private void sendNotificationsOrMail(String mails, String broadcasterMail,
+			String streamURL, String deviceLanguage) {
 
 		ResourceBundle messages = messagesEN;
 		if (deviceLanguage != null && deviceLanguage.equals("tur")) {
@@ -180,85 +244,100 @@ public class Application extends MultiThreadedApplicationAdapter {
 		String subject = messages.getString("mail_notification_subject");
 		String message = messages.getString("mail_notification_message");
 
-		String result = null;
+		GcmUsers result = null;
 
-
-		ArrayList<String> mailListNotifiedByMail = new ArrayList<String>(); // This List will be used for mails, which are not available on the database
-		ArrayList<String> registerIdList = new ArrayList<String>();// This List will be used for registerIds, which are available on the database
+		ArrayList<String> mailListNotifiedByMail = new ArrayList<String>(); // This
+																			// List
+																			// will
+																			// be
+																			// used
+																			// for
+																			// mails,
+																			// which
+																			// are
+																			// not
+																			// available
+																			// on
+																			// the
+																			// database
+		ArrayList<GcmUsers> userList = new ArrayList<GcmUsers>();// This List
+																	// will be
+																	// used for
+																	// registerIds,
+																	// which are
+																	// available
+																	// on the
+																	// database
 		if (mails != null) {
-			String [] splits = mails.split(",");
+			String[] splits = mails.split(",");
 
-			for(int i = 0; i<splits.length; i++){
-				result = getRegistrationId(splits[i]);
-				if (result == null){
-					mailListNotifiedByMail.add(splits[i]); // using as a parameter for sendMail() function
-				}			
-				else {	
-					registerIdList.add(result); // using as a parameter for sendNotification() function
+			for (int i = 0; i < splits.length; i++) {
+				result = getRegistrationIdList(splits[i]);
+				if (result == null) {
+					mailListNotifiedByMail.add(splits[i]); // using as a
+															// parameter for
+															// sendMail()
+															// function
+				} else {
+					userList.add(result); // using as a parameter for
+											// sendNotification() function
 				}
 			}
 
-			if(!mailListNotifiedByMail.isEmpty())
+			if (!mailListNotifiedByMail.isEmpty())
 				sendMail(mailListNotifiedByMail, subject, message);
-			if(!registerIdList.isEmpty())
-				sendNotification(registerIdList, broadcasterMail, streamURL);
+			if (userList.size() > 0)
+				sendNotification(userList, broadcasterMail, streamURL);
 		}
 	}
 
-
 	/**
 	 * @param mail
-	 * @return
-	 * registration id of mail in the table
-	 * if mail is not exist, 0 returns
-	 * else return GcmRegId of mail
+	 * @return user with reg ids of mail in the table if mail is not exist, null
+	 *         returns else return GcmUsers of mail
 	 */
-	public String getRegistrationId(String mail){
+	public GcmUsers getRegistrationIdList(String mail) {
 
-		String result = null;
-		try{
+		GcmUsers result = null;
+		try {
 			beginTransaction();
-			Query query = getEntityManager().createQuery("FROM GcmUsers where email= :email");
+			Query query = getEntityManager().createQuery(
+					"FROM GcmUsers where email= :email");
 			query.setParameter("email", mail);
 			List results = query.getResultList();
-			if(results.size() > 0)
-			{
-				GcmUsers gcmUsers =  (GcmUsers) results.get(0);
-				result = gcmUsers.getGcmRegId();
+			if (results.size() > 0) {
+				GcmUsers gcmUsers = (GcmUsers) results.get(0);
+				result = gcmUsers;
 			}
 
 			commit();
 			closeEntityManager();
 
-		}
-		catch (NoResultException e) {
+		} catch (NoResultException e) {
 			e.printStackTrace();
-		}
-		catch (Exception e){
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 		return result;
 	}
 
-
-	public int getUserCount(String mail){
+	public int getUserCount(String mail) {
 
 		int result = 0;
-		try{
+		try {
 			beginTransaction();
-			Query query = getEntityManager().createQuery("FROM GcmUsers where email= :email");
+			Query query = getEntityManager().createQuery(
+					"FROM GcmUsers where email= :email");
 			query.setParameter("email", mail);
 			List results = query.getResultList();
 			result = results.size();
 			commit();
 			closeEntityManager();
 
-		}
-		catch (NoResultException e) {
+		} catch (NoResultException e) {
 			e.printStackTrace();
-		}
-		catch (Exception e){
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
@@ -268,7 +347,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	@Override
 	public void streamBroadcastClose(IBroadcastStream stream) {
 		String streamUrl = stream.getPublishedName();
-		//getPublishedName means streamurl to us
+		// getPublishedName means streamurl to us
 		removeStream(streamUrl);
 		super.streamBroadcastClose(stream);
 	}
@@ -284,14 +363,14 @@ public class Application extends MultiThreadedApplicationAdapter {
 		return result;
 	}
 
-
 	private void beginTransaction() {
 		getEntityManager().getTransaction().begin();
 	}
 
 	private EntityManager getEntityManager() {
 		if (entityManager == null) {
-			EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("ButterFly_Red5");
+			EntityManagerFactory entityManagerFactory = Persistence
+					.createEntityManagerFactory("ButterFly_Red5");
 			entityManager = entityManagerFactory.createEntityManager();
 		}
 		return entityManager;
@@ -306,8 +385,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 		entityManager = null;
 	}
 
-	public boolean sendMail(ArrayList<String> email,String subject,String messagex)
-	{
+	public boolean sendMail(ArrayList<String> email, String subject,
+			String messagex) {
 		boolean resultx = false;
 		final String username = "butterfyproject@gmail.com";
 		final String password = "123456Abc";
@@ -319,18 +398,18 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 		Session session = Session.getInstance(props,
 				new javax.mail.Authenticator() {
-			protected PasswordAuthentication getPasswordAuthentication() {
-				return new PasswordAuthentication(username, password);
-			}
-		});
+					protected PasswordAuthentication getPasswordAuthentication() {
+						return new PasswordAuthentication(username, password);
+					}
+				});
 
-		try 
-		{
+		try {
 			javax.mail.Message message = new MimeMessage(session);
 			message.setFrom(new InternetAddress(username));
 
 			for (int i = 0; i < email.size(); i++) {
-				message.setRecipients(javax.mail.Message.RecipientType.TO, InternetAddress.parse(email.get(i)));
+				message.setRecipients(javax.mail.Message.RecipientType.TO,
+						InternetAddress.parse(email.get(i)));
 				message.setSubject(subject);
 				message.setText(messagex);
 				Transport.send(message);
@@ -338,61 +417,81 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 			resultx = true;
 			System.out.println("Done");
-		} catch (MessagingException e) 
-		{
+		} catch (MessagingException e) {
 			resultx = false;
 		}
 		return resultx;
 
 	}
 
-	private boolean sendNotification(ArrayList<String> androidTargets, String broadcasterMail, String streamURL)
-	{
+	private boolean sendNotification(ArrayList<GcmUsers> androidTargets,
+			String broadcasterMail, String streamURL) {
 		boolean resx = false;
 
 		// Instance of com.android.gcm.server.Sender, that does the
 		// transmission of a Message to the Google Cloud Messaging service.
 		Sender sender = new Sender(SENDER_ID);
 
-
 		// This Message object will hold the data that is being transmitted
 		// to the Android client devices. For this demo, it is a simple text
 		// string, but could certainly be a JSON object.
 		Message message = new Message.Builder()
 
-
-		// If multiple messages are sent using the same .collapseKey()
-		// the android target device, if it was offline during earlier
-		// message
-		// transmissions, will only receive the latest message for that
-		// key when
-		// it goes back on-line.
-		.collapseKey("1").timeToLive(30).delayWhileIdle(true)
-		.addData("URL", streamURL).addData("broadcaster", broadcasterMail).build();
-
+				// If multiple messages are sent using the same .collapseKey()
+				// the android target device, if it was offline during earlier
+				// message
+				// transmissions, will only receive the latest message for that
+				// key when
+				// it goes back on-line.
+				.collapseKey("1").timeToLive(30).delayWhileIdle(true)
+				.addData("URL", streamURL)
+				.addData("broadcaster", broadcasterMail).build();
 
 		try {
 			// use this for multicast messages. The second parameter
 			// of sender.send() will need to be an array of register ids.
-			MulticastResult result = sender.send(message, androidTargets, 1);
+			List<String> targetRegIDList = GcmUsers
+					.fetchRegIDListbyUsers(androidTargets);
+			MulticastResult result = sender.send(message, targetRegIDList, 1);
 
-
-			if (result.getResults() != null) {
+			List<Result> resultList = result.getResults();
+			if (resultList != null) {
 				int canonicalRegId = result.getCanonicalIds();
-				if (canonicalRegId != 0) {
+				for (int i = 0; i < resultList.size(); i++) {
+					Result innerResult = resultList.get(i);
+					if (innerResult.getMessageId() != null) {
+						if (canonicalRegId != 0) {
 
+							String canoID = innerResult
+									.getCanonicalRegistrationId();
+							String oldRegID = targetRegIDList.get(i);
+							GcmUsers user = GcmUsers.fetchUserByRegID(oldRegID,
+									androidTargets);
+							updateUser(canoID, user.getEmail(), oldRegID);
+						}
 
+					}
+					else
+					{
+						String error = innerResult.getErrorCodeName();
+						 if (error.equals(Constants.ERROR_NOT_REGISTERED)) {
+						   // application has been removed from device - unregister database
+							 String oldRegID = targetRegIDList.get(i);
+							 GcmUsers user = GcmUsers.fetchUserByRegID(oldRegID,
+										androidTargets);
+							 deleteUser(user);
+						 }
+					}
 				}
+
 			} else {
 				int error = result.getFailure();
 				System.out.println("Broadcast failure: " + error);
 			}
 
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 
 		// We'll pass the CollapseKey and Message values back to index.jsp, only
 		// so
@@ -400,7 +499,23 @@ public class Application extends MultiThreadedApplicationAdapter {
 		System.out.println("OK");
 		return resx;
 	}
+	
+	public boolean deleteUser(GcmUsers user)
+	{
+		boolean result;
+		try {
+			beginTransaction();
+
+			getEntityManager().remove(user);
+
+			commit();
+			closeEntityManager();
+			result = true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = false;
+		}
+		return result;
+	}
 
 }
-
-
