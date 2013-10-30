@@ -4,6 +4,7 @@
 	xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
 	<persistence-unit name="ButterFly_Red5">
 		<class>org.red5.core.GcmUsers</class>
+		<class>org.red5.core.RegIDs</class>
 		<properties>
 			<property name="hibernate.connection.username" value="root" />
 			<property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/test" />

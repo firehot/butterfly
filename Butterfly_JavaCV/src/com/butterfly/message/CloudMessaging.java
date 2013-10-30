@@ -50,6 +50,10 @@ public class CloudMessaging {
 		if (regid.isEmpty()) {
 			registerInBackground();
 		}
+		else if(isAppUpdated(this.context))
+		{
+			updateRegIDInBackground(regid);
+		}
 	}
 
 	private String getRegistrationId(Context context) {
@@ -60,6 +64,14 @@ public class CloudMessaging {
 
 			return "";
 		}
+		
+		return registrationId;
+	}
+	
+	private boolean isAppUpdated(Context context) {
+		final SharedPreferences prefs = getGCMPreferences(context,
+				activity.getClass());
+		
 		// Check if app was updated; if so, it must clear the registration ID
 		// since the existing regID is not guaranteed to work with the new
 		// app version.
@@ -68,9 +80,9 @@ public class CloudMessaging {
 		int currentVersion = getAppVersion(context);
 		if (registeredVersion != currentVersion) {
 
-			return "";
+			return true;
 		}
-		return registrationId;
+		return false;
 	}
 
 	/**
@@ -106,6 +118,11 @@ public class CloudMessaging {
 		new RegisterTask().execute(null,null);
 	}
 	
+	private void updateRegIDInBackground(String oldRegID)
+	{
+		new UpdateRegIDTask().execute(oldRegID);
+	}
+	
 	private void sendRegistrationIdToBackend() 
 	{
 		String possibleMail = getPossibleMail(this.activity);
@@ -116,6 +133,15 @@ public class CloudMessaging {
 		}
 	}
 
+	private void updateRegistrationId(String oldRegID) 
+	{
+		String possibleMail = getPossibleMail(this.activity);
+		if(possibleMail != null)
+		{
+			Log.e("butterfly", possibleMail);	
+			updateUser(backendServer, regid, possibleMail,oldRegID);
+		}
+	}
 	public static String getPossibleMail(Activity activity) {
 		Pattern emailPattern = Patterns.EMAIL_ADDRESS; // API level 8+
 		Account[] accounts = AccountManager.get(activity).getAccounts();
@@ -155,6 +181,61 @@ public class CloudMessaging {
 		return isRegistered;
 	}
 	
+	protected Boolean updateUser(String backendServer, String registerId, String mail,String oldRegID) {
+		Boolean result = false;
+		AMFConnection amfConnection = new AMFConnection();
+		amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
+		try {
+			System.out.println(registerId);
+			amfConnection.connect(backendServer);
+			result = (Boolean) amfConnection
+					.call("updateUser",registerId, mail,oldRegID);
+
+		} catch (ClientStatusException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServerStatusException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		amfConnection.close();
+
+		return result;
+	}
+	
+	private class UpdateRegIDTask extends AsyncTask<String, Void, String> {
+	     protected String doInBackground(String... params) {
+
+	            try {
+	                if (gcm == null) {
+	                    gcm = GoogleCloudMessaging.getInstance(context);
+	                }
+	                regid = gcm.register(SENDER_ID);
+
+
+	                // You should send the registration ID to your server over HTTP,
+	                // so it can use GCM/HTTP or CCS to send messages to your app.
+	                // The request to your server should be authenticated if your app
+	                // is using accounts.
+	                updateRegistrationId(params[0]);
+
+	                // For this demo: we don't need to send it because the device
+	                // will send upstream messages to a server that echo back the
+	                // message using the 'from' address in the message.
+
+	                // Persist the regID - no need to register again.
+	                storeRegistrationId(context, regid);
+	            } catch (IOException ex) {
+	
+	                System.out.println("register hata:"+ex.getMessage());
+	            }
+	            return regid;
+	     }
+
+	     protected void onPostExecute(String regid) {
+	         
+	     }
+	 }
 	
 	private class RegisterTask extends AsyncTask<Void, Void, String> {
 	     protected String doInBackground(Void... params) {

@@ -2,9 +2,17 @@ package org.red5.core;
 // default package
 // Generated 21-Sep-2013 16:53:03 by Hibernate Tools 3.4.0.CR1
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 /**
@@ -14,28 +22,21 @@ import javax.persistence.Table;
 @Table(name = "gcm_users")
 public class GcmUsers implements java.io.Serializable {
 
-	private String gcmRegId;
+	private int id;
 	private String email;
+	public List<RegIDs> regIDs;
 
 	public GcmUsers() {
+		
+		regIDs = new ArrayList<RegIDs>();
 	}
 
-	public GcmUsers(String gcmRegId, String email) {
-		this.gcmRegId = gcmRegId;
+	public GcmUsers(String email) {
 		this.email = email;
+		regIDs = new ArrayList<RegIDs>();
 	}
 
-	
-	@Column(name = "gcm_reg_id",  nullable = false)
-	public String getGcmRegId() {
-		return this.gcmRegId;
-	}
 
-	public void setGcmRegId(String gcmRegId) {
-		this.gcmRegId = gcmRegId;
-	}
-
-	@Id
 	@Column(name = "email", unique = true,nullable = false, length = 45)
 	public String getEmail() {
 		return this.email;
@@ -44,5 +45,88 @@ public class GcmUsers implements java.io.Serializable {
 	public void setEmail(String email) {
 		this.email = email;
 	}
+	
+	
+	@Id
+	@GeneratedValue(strategy=GenerationType.AUTO)
+	@Column(name = "id")
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+
+	@OneToMany(fetch=FetchType.EAGER, cascade = CascadeType.ALL, mappedBy="user",orphanRemoval=true)
+	public List<RegIDs> getRegIDs() {
+		return regIDs;
+	}
+
+	public void setRegIDs(List<RegIDs> regIDs) {
+		this.regIDs = regIDs;
+	}
+	
+	public void addRegID(RegIDs regid)
+	{
+		this.regIDs.add(regid);
+		regid.setUser(this);
+	}
+	
+	public void removeID(RegIDs regid)
+	{
+		regIDs.remove(regid);
+	}
+	
+	public void clearRegIDS()
+	{
+		regIDs.clear();
+	}
+	
+	public List<String> fetchRegIDStrings()
+	{
+		if(regIDs.size() == 0)
+			return null;
+		else
+		{
+			List<String> regids = new ArrayList<String>();
+			
+			for (RegIDs regid : this.regIDs) {
+				regids.add(regid.getGcmRegId());
+			}
+			
+			return regids;
+		}
+	}
+	
+	public static GcmUsers fetchUserByRegID(String regID,List<GcmUsers> users)
+	{
+		
+		for (GcmUsers gcmUsers : users) {
+			
+			for (RegIDs regid : gcmUsers.getRegIDs()) {
+				if(regid.equals(regID))
+					return gcmUsers;
+			}
+		}
+		
+		return null;
+	}
+	
+	public static List<String> fetchRegIDListbyUsers(List<GcmUsers> users)
+	{
+		List<String> regIDList = new ArrayList<String>();
+		
+		for (GcmUsers gcmUsers : users) {
+			
+			List<String> tempList = gcmUsers.fetchRegIDStrings();
+			if(tempList != null)
+				regIDList.addAll(tempList);
+		}
+		
+		return regIDList;
+	}
+
 
 }

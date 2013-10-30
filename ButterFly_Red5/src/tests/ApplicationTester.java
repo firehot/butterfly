@@ -12,6 +12,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.red5.core.Application;
+import org.red5.core.GcmUsers;
 
 public class ApplicationTester {
 
@@ -73,8 +74,8 @@ public class ApplicationTester {
 		boolean result = butterflyApp.registerUser(String.valueOf(t), "mail1");
 		assertEquals(true, result);
 		
-		String registerId = butterflyApp.getRegistrationId("mail1");
-		assertEquals(registerId, String.valueOf(t));
+		GcmUsers registerId = butterflyApp.getRegistrationIdList("mail1");
+		assertEquals(registerId.fetchRegIDStrings().get(0), String.valueOf(t));
 		
 		count = butterflyApp.getUserCount("mail1");
 		assertEquals(initialCount+1, count);
@@ -83,8 +84,8 @@ public class ApplicationTester {
 		result = butterflyApp.registerUser(String.valueOf(t), "mail1");
 		assertEquals(true, result);
 		
-		registerId = butterflyApp.getRegistrationId("mail1");
-		assertEquals(registerId, String.valueOf(t));
+		registerId = butterflyApp.getRegistrationIdList("mail1");
+		assertEquals(registerId.fetchRegIDStrings().get(0), String.valueOf(t));
 		
 		count = butterflyApp.getUserCount("mail1");
 		assertEquals(initialCount+1, count);
@@ -99,11 +100,30 @@ public class ApplicationTester {
 		boolean result = butterflyApp.registerUser(String.valueOf(t), mail);
 		assertEquals(result, true);
 
-		String registerId = butterflyApp.getRegistrationId(mail);
+		GcmUsers registerId = butterflyApp.getRegistrationIdList(mail);
 
-		assertEquals(registerId, String.valueOf(t));
+		assertEquals(registerId.fetchRegIDStrings().get(0), String.valueOf(t));
 
-		registerId = butterflyApp.getRegistrationId("slkdjflasjf" + t);
+		registerId = butterflyApp.getRegistrationIdList("slkdjflasjf" + t);
+
+		assertEquals(registerId, null);
+	}
+	
+	@Test
+	public void testDeleteUser()
+	{
+		int t = (int) (Math.random()*1000);
+		String mail = "murat@mailc.com" + t;
+		boolean result = butterflyApp.registerUser(String.valueOf(t), mail);
+		assertEquals(result, true);
+
+		GcmUsers registerId = butterflyApp.getRegistrationIdList(mail);
+
+		assertEquals(registerId.fetchRegIDStrings().get(0), String.valueOf(t));
+
+		butterflyApp.deleteUser(registerId);
+		
+		registerId = butterflyApp.getRegistrationIdList(mail);
 
 		assertEquals(registerId, null);
 	}
