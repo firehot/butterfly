@@ -148,7 +148,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		BugSenseHandler.closeSession(this);
 
 		recording = false;
 		runAudioThread = false;
@@ -166,6 +165,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 			cameraDevice.release();
 			cameraDevice = null;
 		}
+		BugSenseHandler.closeSession(this);
+
 	}
 
 	private void initLayout() {
@@ -351,10 +352,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 			Boolean is_video_public = publicVideoCheckBox.isChecked();
 
 			if (name != null && name.length() > 0) {
-				m_ProgressDialog = ProgressDialog.show(this,
-						getString(R.string.please_wait),
-						getString(R.string.initializing), true);
-				m_ProgressDialog.setCancelable(true);
 				InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 				imm.hideSoftInputFromWindow(
 						streamNameEditText.getWindowToken(), 0);
@@ -420,6 +417,10 @@ public class RecordActivity extends Activity implements OnClickListener,
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
+			m_ProgressDialog = ProgressDialog.show(RecordActivity.this,
+					getString(R.string.please_wait),
+					getString(R.string.initializing), true);
+			m_ProgressDialog.setCancelable(true);
 		}
 
 		@Override
