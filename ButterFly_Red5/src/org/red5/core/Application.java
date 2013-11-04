@@ -20,6 +20,7 @@ package org.red5.core;
  */
 
 import java.io.Serializable;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -242,7 +243,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 
 		String subject = messages.getString("mail_notification_subject");
-		String message = messages.getString(broadcasterMail.toString()+"mail_notification_message");
+		String message = MessageFormat.format(messages.getString("mail_notification_message"),broadcasterMail);
 
 
 		GcmUsers result = null;
