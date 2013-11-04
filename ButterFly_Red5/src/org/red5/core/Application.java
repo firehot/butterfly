@@ -242,7 +242,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 
 		String subject = messages.getString("mail_notification_subject");
-		String message = messages.getString("mail_notification_message");
+		String message = messages.getString(broadcasterMail.toString()+"mail_notification_message");
+
 
 		GcmUsers result = null;
 
@@ -285,7 +286,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 			}
 
 			if (!mailListNotifiedByMail.isEmpty())
-				sendMail(mailListNotifiedByMail, subject, message);
+				sendMail(mailListNotifiedByMail, subject, message, broadcasterMail);
 			if (userList.size() > 0)
 				sendNotification(userList, broadcasterMail, streamURL);
 		}
@@ -386,7 +387,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	}
 
 	public boolean sendMail(ArrayList<String> email, String subject,
-			String messagex) {
+			String messagex, String broadcasterMail) {
 		boolean resultx = false;
 		final String username = "butterfyproject@gmail.com";
 		final String password = "123456Abc";
@@ -412,6 +413,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 						InternetAddress.parse(email.get(i)));
 				message.setSubject(subject);
 				message.setText(messagex);
+				//message.setText(broadcasterMail);
 				Transport.send(message);
 			}
 
