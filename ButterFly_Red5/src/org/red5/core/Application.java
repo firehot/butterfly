@@ -288,6 +288,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 			if (!mailListNotifiedByMail.isEmpty())
 				sendMail(mailListNotifiedByMail, subject, message, broadcasterMail);
+			
 			if (userList.size() > 0)
 				sendNotification(userList, broadcasterMail, streamURL);
 		}
