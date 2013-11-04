@@ -7,9 +7,9 @@
 		<class>org.red5.core.RegIDs</class>
 		<properties>
 			<property name="hibernate.connection.username" value="root" />
-			<property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/Butterflydb" />
+			<property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/butterflydb" />
 			<property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver" />
-			<property name="hibernate.default_schema" value="Butterflydb"/>
+			<property name="hibernate.default_schema" value="butterflydb"/>
 			<property name="hibernate.connection.password" value=""/>
 		</properties>
 
