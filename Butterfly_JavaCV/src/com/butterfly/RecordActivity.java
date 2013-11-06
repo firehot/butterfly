@@ -4,6 +4,7 @@ import static com.googlecode.javacv.cpp.avcodec.AV_CODEC_ID_H264;
 
 import java.nio.Buffer;
 import java.nio.ShortBuffer;
+import java.util.List;
 import java.util.Locale;
 
 import android.app.Activity;
@@ -12,6 +13,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.hardware.Camera;
+import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -210,7 +212,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 	private void createRecorder() {
 		// if recorder is created , dont create it again
 		if (recorder == null) {
-			Size previewSize = cameraDevice.getParameters().getPreviewSize();
+			Size previewSize = getOptimumPreviewSize();
 			recorder = new FFmpegFrameRecorder(ffmpeg_link, previewSize.width,
 					previewSize.height, 1);
 		}
@@ -220,6 +222,33 @@ public class RecordActivity extends Activity implements OnClickListener,
 		recorder.setVideoQuality(36);
 		// Set in the surface changed method
 		recorder.setFrameRate(frameRate);
+	}
+
+	private Size getOptimumPreviewSize() {
+
+		
+		Parameters params = cameraDevice.getParameters();
+		Size optimumSize = params.getPreviewSize();
+		List<Size> previewSizes = params.getSupportedVideoSizes();
+
+		double smallestPreviewSize = optimumSize.height*optimumSize.width; // We should be smaller than
+													// this...
+
+		double smallestWidth = 480; // Let's not get smaller than this...
+
+		for (Size previewSize : previewSizes) {
+
+			if ((previewSize.height * previewSize.width) < smallestPreviewSize
+					&& previewSize.width >= smallestWidth) {
+
+				optimumSize = previewSize;
+
+			}
+
+		}
+
+		return optimumSize;
+
 	}
 
 	public void startRecording() {
