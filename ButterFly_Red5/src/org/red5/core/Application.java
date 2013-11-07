@@ -397,7 +397,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		props.put("mail.smtp.auth", "true");
 		props.put("mail.smtp.starttls.enable", "true");
 		props.put("mail.smtp.host", "mail.butterflytv.net");
-		props.put("mail.smtp.port", "465");
+		props.put("mail.smtp.port", "26");
 		System.out.println("Done1");
 		Session session = Session.getInstance(props,
 				new javax.mail.Authenticator() {
