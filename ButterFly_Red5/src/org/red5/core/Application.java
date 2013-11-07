@@ -391,13 +391,13 @@ public class Application extends MultiThreadedApplicationAdapter {
 	public boolean sendMail(ArrayList<String> email, String subject,
 			String messagex, String broadcasterMail) {
 		boolean resultx = false;
-		final String username = "butterfyproject@gmail.com";
-		final String password = "123456Abc";
+		final String username = "notification@butterflytv.net";
+		final String password = "Nybn~Dx-E5-$";
 		Properties props = new Properties();
 		props.put("mail.smtp.auth", "true");
 		props.put("mail.smtp.starttls.enable", "true");
-		props.put("mail.smtp.host", "smtp.gmail.com");
-		props.put("mail.smtp.port", "587");
+		props.put("mail.smtp.host", "mail.butterflytv.net ");
+		props.put("mail.smtp.port", "26 ");
 
 		Session session = Session.getInstance(props,
 				new javax.mail.Authenticator() {
