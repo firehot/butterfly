@@ -396,9 +396,9 @@ public class Application extends MultiThreadedApplicationAdapter {
 		Properties props = new Properties();
 		props.put("mail.smtp.auth", "true");
 		props.put("mail.smtp.starttls.enable", "true");
-		props.put("mail.smtp.host", "mail.butterflytv.net ");
-		props.put("mail.smtp.port", "26 ");
-
+		props.put("mail.smtp.host", "mail.butterflytv.net");
+		props.put("mail.smtp.port", "465");
+		System.out.println("Done1");
 		Session session = Session.getInstance(props,
 				new javax.mail.Authenticator() {
 					protected PasswordAuthentication getPasswordAuthentication() {
@@ -409,20 +409,24 @@ public class Application extends MultiThreadedApplicationAdapter {
 		try {
 			javax.mail.Message message = new MimeMessage(session);
 			message.setFrom(new InternetAddress(username));
-
+			System.out.println("Done2");
 			for (int i = 0; i < email.size(); i++) {
+				System.out.println("Done3");
 				message.setRecipients(javax.mail.Message.RecipientType.TO,
 						InternetAddress.parse(email.get(i)));
 				message.setSubject(subject);
 				message.setText(messagex);
 				//message.setText(broadcasterMail);
+				System.out.println("Done4");
 				Transport.send(message);
+				System.out.println("Done5");
 			}
 
 			resultx = true;
 			System.out.println("Done");
 		} catch (MessagingException e) {
 			resultx = false;
+			System.out.println(e.getMessage());
 		}
 		return resultx;
 
