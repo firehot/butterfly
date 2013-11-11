@@ -118,15 +118,16 @@ public class RecordActivity extends Activity implements OnClickListener,
 				CLASS_LABEL);
 		mWakeLock.acquire();
 
-		initLayout();
-
-		streamNameEditText = (EditText) findViewById(R.id.stream_name);
-		publicVideoCheckBox = (CheckBox) findViewById(R.id.check_public);
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
+
+		initLayout();
+
+		streamNameEditText = (EditText) findViewById(R.id.stream_name);
+		publicVideoCheckBox = (CheckBox) findViewById(R.id.check_public);
 
 		if (mWakeLock == null) {
 			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -145,6 +146,12 @@ public class RecordActivity extends Activity implements OnClickListener,
 			mWakeLock.release();
 			mWakeLock = null;
 		}
+
+		if (cameraView != null) {
+			cameraView.stopPreview();
+			cameraDevice.release();
+			cameraDevice = null;
+		}
 	}
 
 	@Override
@@ -160,12 +167,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 				e.printStackTrace();
 			}
 			recorder = null;
-		}
-
-		if (cameraView != null) {
-			cameraView.stopPreview();
-			cameraDevice.release();
-			cameraDevice = null;
 		}
 		BugSenseHandler.closeSession(this);
 
@@ -226,34 +227,35 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 	private Size getOptimumPreviewSize() {
 
-		
 		Parameters params = cameraDevice.getParameters();
 		Size optimumSize = params.getPreviewSize();
 		List<Size> previewSizes = params.getSupportedVideoSizes();
 
-		double smallestPreviewSize = optimumSize.height*optimumSize.width; // We should be smaller than
-													// this...
+		double smallestPreviewSize = optimumSize.height * optimumSize.width; // We
+		// should
+		// be
+		// smaller
+		// than
+		// this...
 
 		double smallestWidth = 480; // Let's not get smaller than this...
 
 		for (Size previewSize : previewSizes) {
-
 			if ((previewSize.height * previewSize.width) < smallestPreviewSize
 					&& previewSize.width >= smallestWidth) {
-
 				optimumSize = previewSize;
-
 			}
-
 		}
 
 		return optimumSize;
 
 	}
 
-	public void startRecording() {
+	public boolean startRecording() {
 
 		previewSize = cameraDevice.getParameters().getPreviewSize();
+
+		recording = false;
 
 		try {
 			if (recorder == null)
@@ -267,6 +269,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 		} catch (FFmpegFrameRecorder.Exception e) {
 			e.printStackTrace();
 		}
+		return recording;
 	}
 
 	public void stopRecording() {
@@ -455,31 +458,38 @@ public class RecordActivity extends Activity implements OnClickListener,
 		@Override
 		protected Boolean doInBackground(String... params) {
 			Boolean result = false;
-			this.possibleMail = params[3];
 
-			boolean isPublic = false;
-			if (params[4].contentEquals("true")) {
-				isPublic = true;
+			boolean recordingStarted = startRecording();
+			if (recordingStarted == true) {
+				this.possibleMail = params[3];
+
+				boolean isPublic = false;
+				if (params[4].contentEquals("true")) {
+					isPublic = true;
+				}
+
+				AMFConnection amfConnection = new AMFConnection();
+				amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
+				try {
+					System.out.println(params[0]);
+					System.out.println(params[4]);
+
+					amfConnection.connect(params[0]);
+					result = (Boolean) amfConnection.call("registerLiveStream",
+							params[1], params[2], mailsToBeNotified,
+							possibleMail, isPublic, Locale.getDefault()
+									.getISO3Language());
+
+				} catch (ClientStatusException e) {
+					e.printStackTrace();
+				} catch (ServerStatusException e) {
+
+					e.printStackTrace();
+				}
+				amfConnection.close();
+			} else {
+				stopRecording();
 			}
-
-			AMFConnection amfConnection = new AMFConnection();
-			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
-			try {
-				System.out.println(params[0]);
-				System.out.println(params[4]);
-
-				amfConnection.connect(params[0]);
-				result = (Boolean) amfConnection.call("registerLiveStream",
-						params[1], params[2], mailsToBeNotified, possibleMail,
-						isPublic, Locale.getDefault().getISO3Language());
-
-			} catch (ClientStatusException e) {
-				e.printStackTrace();
-			} catch (ServerStatusException e) {
-
-				e.printStackTrace();
-			}
-			amfConnection.close();
 
 			return result;
 		}
@@ -488,7 +498,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 		protected void onPostExecute(Boolean result) {
 			m_ProgressDialog.dismiss();
 			if (result == true) {
-				startRecording();
 				Log.w(LOG_TAG, "Start Button Pushed");
 				btnRecorderControl.setText(R.string.stop);
 			} else {
@@ -497,8 +506,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 						Toast.LENGTH_LONG).show();
 				streamNameEditText.setVisibility(View.VISIBLE);
 				publicVideoCheckBox.setVisibility(View.VISIBLE);
-				// Toast.makeText(getApplicationContext(),
-				// "Debug: register failed", Toast.LENGTH_LONG).show();
 			}
 			super.onPostExecute(result);
 

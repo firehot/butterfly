@@ -29,6 +29,8 @@
     <string name="please_wait">Please Wait</string>
     <string name="initializing">Initializing</string>
     <string name="stopping">Stopping</string>
+    <string name="loading">Loading...</string>
+    <string name="buffer">Buffer</string>
     <string name="public_chkbox">Public</string>
     <string name="stream_registration_failed">Stream registration failed. Check your connectivity and try again</string>
     <string name="terms_of_service_title">Terms and Privacy</string>
