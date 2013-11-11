@@ -238,11 +238,11 @@ public class RecordActivity extends Activity implements OnClickListener,
 		// than
 		// this...
 
-		double smallestWidth = 480; // Let's not get smaller than this...
+		double smallestWidth = 176; // Let's not get smaller than this...
 
 		for (Size previewSize : previewSizes) {
 			if ((previewSize.height * previewSize.width) < smallestPreviewSize
-					&& previewSize.width >= smallestWidth) {
+					&& previewSize.width == smallestWidth) {
 				optimumSize = previewSize;
 			}
 		}
