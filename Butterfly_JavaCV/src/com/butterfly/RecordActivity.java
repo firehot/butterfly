@@ -20,7 +20,6 @@ import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.PowerManager;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -51,8 +50,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 	private final static String CLASS_LABEL = "RecordActivity";
 	private final static String LOG_TAG = CLASS_LABEL;
-
-	private PowerManager.WakeLock mWakeLock;
 
 	private String ffmpeg_link;
 	// private String ffmpeg_link = "/mnt/sdcard/stream.flv";
@@ -93,6 +90,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 		super.onCreate(savedInstanceState);
 
 		BugSenseHandler.initAndStartSession(this, BugSense.API_KEY);
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
 		ffmpeg_link = getString(R.string.rtmp_url);
 
@@ -112,12 +110,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 		setContentView(R.layout.main);
 
 		httpGatewayURL = getString(R.string.http_gateway_url);
-
-		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-		mWakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,
-				CLASS_LABEL);
-		mWakeLock.acquire();
-
 	}
 
 	@Override
@@ -128,24 +120,12 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		streamNameEditText = (EditText) findViewById(R.id.stream_name);
 		publicVideoCheckBox = (CheckBox) findViewById(R.id.check_public);
-
-		if (mWakeLock == null) {
-			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-			mWakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,
-					CLASS_LABEL);
-			mWakeLock.acquire();
-		}
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
 		stopRecording();
-
-		if (mWakeLock != null) {
-			mWakeLock.release();
-			mWakeLock = null;
-		}
 
 		if (cameraView != null) {
 			cameraView.stopPreview();
