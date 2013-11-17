@@ -4,6 +4,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
@@ -97,11 +98,13 @@ public class StreamList extends ListActivity {
 		}
 
 		// Check device for Play Services APK.
-		if (checkPlayServices()) {
+		if (checkPlayServices(this)) {
 
 			CloudMessaging msg = new CloudMessaging(
 					this.getApplicationContext(), this, httpGatewayURL);
 		}
+		new GetStreamListTask().execute(httpGatewayURL);
+
 	}
 
 	private void showTermsOfUse(final SharedPreferences applicationPrefs) {
@@ -141,9 +144,8 @@ public class StreamList extends ListActivity {
 
 	@Override
 	protected void onResume() {
-		new GetStreamListTask().execute(httpGatewayURL);
 		super.onResume();
-		checkPlayServices();
+		checkPlayServices(this);
 	}
 
 	@Override
@@ -168,19 +170,19 @@ public class StreamList extends ListActivity {
 		return super.onOptionsItemSelected(item);
 	}
 
-	private boolean checkPlayServices() {
+	public static boolean checkPlayServices(Activity activity) {
 		int resultCode = GooglePlayServicesUtil
-				.isGooglePlayServicesAvailable(this);
+				.isGooglePlayServicesAvailable(activity);
 		if (resultCode != ConnectionResult.SUCCESS) {
 			if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-				GooglePlayServicesUtil.getErrorDialog(resultCode, this,
+				GooglePlayServicesUtil.getErrorDialog(resultCode, activity,
 						CloudMessaging.PLAY_SERVICES_RESOLUTION_REQUEST).show();
 			} else {
-
-				finish();
+				activity.finish();
 			}
 			return false;
 		}
+
 		return true;
 	}
 
