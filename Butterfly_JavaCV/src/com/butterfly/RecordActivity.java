@@ -535,9 +535,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		@Override
 		protected void onPostExecute(Void result) {
-
 			super.onPostExecute(result);
-
 			m_ProgressDialog.dismiss();
 		}
 

@@ -1,11 +1,16 @@
 package com.butterfly;
 
+import flex.messaging.io.MessageIOConstants;
+import flex.messaging.io.amf.client.AMFConnection;
+import flex.messaging.io.amf.client.exceptions.ClientStatusException;
+import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 import io.vov.vitamio.MediaPlayer;
 import io.vov.vitamio.MediaPlayer.OnBufferingUpdateListener;
 import io.vov.vitamio.MediaPlayer.OnErrorListener;
 import io.vov.vitamio.widget.VideoView;
 import android.app.Activity;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -41,10 +46,13 @@ public class ClientActivity extends Activity implements
 			return;
 
 		String rtmpUrl = getString(R.string.rtmp_url);
+		String httpUrl = getString(R.string.http_gateway_url);
 
 		Intent intent = getIntent();
 		String streamName = intent
 				.getStringExtra(StreamList.STREAM_PUBLISHED_NAME);
+
+		new CheckStreamExistTask().execute(httpUrl, streamName);
 
 		setContentView(R.layout.activity_client);
 
@@ -90,21 +98,6 @@ public class ClientActivity extends Activity implements
 
 						}
 					});
-
-			// videoView.setOnInfoListener(new OnInfoListener() {
-			//
-			// @Override
-			// public boolean onInfo(MediaPlayer arg0, int what, int extra) {
-			// if (what == MediaPlayer.MEDIA_INFO_BUFFERING_START) {
-			// videoView.start();
-			// } else if (what == MediaPlayer.MEDIA_INFO_BUFFERING_END
-			// && videoView.isPlaying() == false) {
-			// videoView.start();
-			// }
-			//
-			// return false;
-			// }
-			// });
 
 			videoView.setOnErrorListener(new OnErrorListener() {
 
@@ -156,9 +149,7 @@ public class ClientActivity extends Activity implements
 
 	@Override
 	protected void onDestroy() {
-		// TODO Auto-generated method stub
 		super.onDestroy();
-
 		BugSenseHandler.closeSession(this);
 	}
 
@@ -166,6 +157,41 @@ public class ClientActivity extends Activity implements
 	public void onCompletion(MediaPlayer mediaPlayer) {
 		videoView.stopPlayback();
 		this.finish();
+	}
+
+	public class CheckStreamExistTask extends AsyncTask<String, Void, Boolean> {
+
+		@Override
+		protected Boolean doInBackground(String... params) {
+			Boolean result = false;
+
+			AMFConnection amfConnection = new AMFConnection();
+			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
+			try {
+				amfConnection.connect(params[0]);
+				result = (Boolean) amfConnection.call("isLiveStreamExist",
+						params[1]);
+
+			} catch (ClientStatusException e) {
+				e.printStackTrace();
+			} catch (ServerStatusException e) {
+
+				e.printStackTrace();
+			}
+			amfConnection.close();
+
+			return result;
+		}
+
+		@Override
+		protected void onPostExecute(Boolean result) {
+			super.onPostExecute(result);
+			if (result == false) {
+				loadingView.setText(R.string.missed_the_stream);
+				videoView.stopPlayback();
+			}
+
+		}
 	}
 
 }

@@ -13,7 +13,7 @@
     <string name="stream_shared_with_you">sizinle bir canlı yayın paylaştı. İzlemek için tıklayınız!</string>
 	<string name="noLiveStream">Şu anda canlı yayın bulunmamaktadır</string>
 	<string name="write_contact_name_or_email_addr">isim veya email adresi giriniz</string>
-	<string name="next">ileri</string>
+	<string name="next">İleri</string>
 	<string name="start">Başlat</string>
 	<string name="stop">Durdur</string>
 	<string name="delete">Sil</string>
@@ -28,6 +28,9 @@
     <string name="public_chkbox">Herkese açık</string>
     <string name="stream_registration_failed">Yayın kayıt edilemedi. Lütfen bağlantınızı kontrol ediniz ve tekrar deneyiniz</string>
 	<string name="terms_of_service_title">Şartlar ve Gizlilik</string>
+	<string name="shareStream">Yayınını paylaş</string>
+	<string name="chooseContactAndShare">Tanıdıklarını seçin ve İleri\'ye basın</string>
+	<string name="missed_the_stream">Bu url\'e sahip canlı yayın şu anda bulunmamaktadır. Kaçırmış olmalısınız. Sonraki yayın için lütfen daha hızlı olun</string>
     <string name="terms_of_service">
 Butterfly, canlı ve kayıt edilmiş video ve ses verisinin paylaşılmasını sağlar.\n
 Şartlar

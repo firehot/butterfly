@@ -22,7 +22,7 @@ public class ApplicationRemoteBlackBoxTester {
 	
 	private static final String REG_ID2 = "21118723424242423109823jshfsjafhsksdsagagf8374sfdasfasfasf2";
 	private static final String REG_ID = "21118723109823jshfsjafhskf83742";
-	private String serverURL = "http://localhost:5080/ButterFly_Red5/gateway";
+	private String serverURL = "http://ec2-54-200-137-96.us-west-2.compute.amazonaws.com:5080/ButterFly_Red5/gateway";
 	private AMFConnection amfConnection;
 
 	@Before

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
   	tools:ignore="MissingTranslation" >
 
-    <string name="app_name">ButterFly</string>
+    <string name="app_name">Butterfly TV</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
     <string name="live_stream_warning">Live Stream</string>
@@ -31,9 +31,12 @@
     <string name="stopping">Stopping</string>
     <string name="loading">Loading...</string>
     <string name="buffer">Buffer</string>
+    <string name="chooseContactAndShare">Choose contacts and press Next</string>
     <string name="public_chkbox">Public</string>
     <string name="stream_registration_failed">Stream registration failed. Check your connectivity and try again</string>
     <string name="terms_of_service_title">Terms and Privacy</string>
+     <string name="shareStream">Share broadcast</string>
+     <string name="missed_the_stream">There is no live stream with this url right now. You should have missed it. Please be quick for the next time </string>
     <string name="terms_of_service">
 Butterfly, provides sharing of live and recorded video and audio content\n
 Terms
@@ -136,5 +139,6 @@ Changes\n
 Our Privacy Policy may change from time to time. We will not reduce your rights under this Privacy Policy without your explicit consent. Updated privacy policy is published here.\n
 October 30, 2013
 </string>
+   
 
 </resources>

@@ -115,6 +115,17 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 		return streams;
 	}
+	
+	public boolean isLiveStreamExist(String url)
+	{
+		IScope target = Red5.getConnectionLocal().getScope();
+		Set<String> streamNames = getBroadcastStreamNames(target);
+		boolean result = false;
+		if (streamNames.contains(url)) {
+			result = true;
+		}
+		return result;
+	}
 
 	public boolean registerLiveStream(String streamName, String url,
 			String mailsToBeNotified, String broadcasterMail, boolean isPublic,

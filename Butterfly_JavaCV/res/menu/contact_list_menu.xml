@@ -1,6 +1,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
     <item android:id="@+id/action_contact_list_done"
-          android:icon="@drawable/ic_action_done"
+          android:icon="@drawable/ic_navigation_next_item"
           android:title="@string/next"
           android:showAsAction="always|withText" />
 

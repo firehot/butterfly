@@ -64,6 +64,9 @@ public class ContactsList extends Activity {
 
 		setContentView(R.layout.contact_list);
 
+		getActionBar().setTitle(R.string.shareStream);
+		getActionBar().setSubtitle(R.string.chooseContactAndShare);
+
 		textView = (AutoCompleteTextView) findViewById(R.id.autoCompleteTextView);
 		selectedContactList = (ListView) findViewById(R.id.selectedContactList);
 		selectedContactAdapter = new ContactAdapter(getApplicationContext(),
