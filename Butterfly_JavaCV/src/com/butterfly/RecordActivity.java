@@ -10,7 +10,10 @@ import java.util.Locale;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
@@ -20,6 +23,7 @@ import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -30,12 +34,14 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.debug.BugSense;
 import com.butterfly.listener.OnPreviewListener;
 import com.butterfly.message.CloudMessaging;
+import com.butterfly.message.GcmIntentService;
 import com.butterfly.recorder.FFmpegFrameRecorder;
 import com.butterfly.view.CameraView;
 import com.googlecode.javacpp.BytePointer;
@@ -85,6 +91,26 @@ public class RecordActivity extends Activity implements OnClickListener,
 	private Size previewSize;
 	private BytePointer bytePointer;
 
+	BroadcastReceiver viewerCountReceiver = new BroadcastReceiver() {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+
+			int viewCount = Integer.parseInt(intent.getExtras().getString(
+					GcmIntentService.VIEWER_COUNT));
+			if (viewCount == 0) {
+				viewerCountView.setVisibility(View.INVISIBLE);
+			} else {
+				viewerCountView.setText(getResources().getQuantityString(
+						R.plurals.viewers_count, viewCount, viewCount));
+				viewerCountView.setVisibility(View.VISIBLE);
+			}
+
+		}
+	};
+	private LocalBroadcastManager localBroadcastManager;
+	private TextView viewerCountView;
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -107,9 +133,12 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
-		setContentView(R.layout.main);
+		setContentView(R.layout.activity_record);
 
 		httpGatewayURL = getString(R.string.http_gateway_url);
+		localBroadcastManager = LocalBroadcastManager
+				.getInstance(getApplicationContext());
+
 	}
 
 	@Override
@@ -158,6 +187,10 @@ public class RecordActivity extends Activity implements OnClickListener,
 		btnRecorderControl = (Button) findViewById(R.id.recorder_control);
 		btnRecorderControl.setText(R.string.start);
 		btnRecorderControl.setOnClickListener(this);
+
+		viewerCountView = (TextView) findViewById(R.id.viewerCountView);
+
+		viewerCountView.setVisibility(View.INVISIBLE);
 
 		cameraView = (CameraView) findViewById(R.id.cam);
 		cameraDevice = Camera.open(0);
@@ -236,6 +269,10 @@ public class RecordActivity extends Activity implements OnClickListener,
 		previewSize = cameraDevice.getParameters().getPreviewSize();
 
 		recording = false;
+		IntentFilter intentFilter = new IntentFilter(
+				GcmIntentService.ACTION_VIEWER_COUNT_UPDATED);
+		localBroadcastManager.registerReceiver(viewerCountReceiver,
+				intentFilter);
 
 		try {
 			if (recorder == null)
@@ -254,6 +291,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 	public void stopRecording() {
 
+		localBroadcastManager.unregisterReceiver(viewerCountReceiver);
 		runAudioThread = false;
 
 		if (recorder != null && recording) {

@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources
-    
-    xmlns:tools="http://schemas.android.com/tools"
-  	tools:ignore="MissingTranslation" >
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
 
     <string name="app_name">Butterfly TV</string>
     <string name="action_settings">Settings</string>
@@ -35,10 +32,13 @@
     <string name="public_chkbox">Public</string>
     <string name="stream_registration_failed">Stream registration failed. Check your connectivity and try again</string>
     <string name="terms_of_service_title">Terms and Privacy</string>
-     <string name="shareStream">Share broadcast</string>
-     <string name="missed_the_stream">There is no live stream with this url right now. You should have missed it. Please be quick for the next time </string>
-    <string name="terms_of_service">
-Butterfly, provides sharing of live and recorded video and audio content\n
+    <string name="shareStream">Share broadcast</string>
+    <string name="missed_the_stream">There is no live stream with this url right now. You should have missed it. Please be quick for the next time </string>
+    <plurals name="viewers_count">
+        <item quantity="one">%d\nViewer</item>
+        <item quantity="other">%d\nViewers</item>
+    </plurals>
+    <string name="terms_of_service">Butterfly, provides sharing of live and recorded video and audio content\n
 Terms
 \n
 If you use Butterfly, it means you agree the terms below.\n
@@ -137,8 +137,6 @@ We regularly review our compliance with our Privacy Policy. We also adhere to se
 
 Changes\n
 Our Privacy Policy may change from time to time. We will not reduce your rights under this Privacy Policy without your explicit consent. Updated privacy policy is published here.\n
-October 30, 2013
-</string>
-   
+October 30, 2013</string>
 
 </resources>

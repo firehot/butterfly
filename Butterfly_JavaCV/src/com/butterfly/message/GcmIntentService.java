@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
+import android.support.v4.content.LocalBroadcastManager;
 
 import com.butterfly.ClientActivity;
 import com.butterfly.R;
@@ -15,6 +16,8 @@ import com.butterfly.StreamList;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 public class GcmIntentService extends IntentService {
+	public static final String VIEWER_COUNT = "viewerCount";
+	public static final String ACTION_VIEWER_COUNT_UPDATED = "VIEWER_COUNT_UPDATED";
 	public static final int NOTIFICATION_ID = 1;
 	private NotificationManager mNotificationManager;
 	NotificationCompat.Builder builder;
@@ -26,34 +29,45 @@ public class GcmIntentService extends IntentService {
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		Bundle extras = intent.getExtras();
-		String streamURL = intent.getStringExtra("URL");
-		String broadcaster = intent.getStringExtra("broadcaster");
-		GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(this);
-		// The getMessageType() intent parameter must be the intent you received
-		// in your BroadcastReceiver.
-		String messageType = gcm.getMessageType(intent);
+		if (extras.containsKey(VIEWER_COUNT)) {
+			String viewerCount = extras.getString(VIEWER_COUNT);
+			Intent i = new Intent();
+			i.setAction(ACTION_VIEWER_COUNT_UPDATED);
+			i.putExtra(VIEWER_COUNT, viewerCount);
+			LocalBroadcastManager.getInstance(getApplicationContext())
+					.sendBroadcast(i);
+		} else {
+			String streamURL = intent.getStringExtra("URL");
+			String broadcaster = intent.getStringExtra("broadcaster");
+			GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(this);
+			// The getMessageType() intent parameter must be the intent you
+			// received
+			// in your BroadcastReceiver.
+			String messageType = gcm.getMessageType(intent);
 
-		if (!extras.isEmpty()) { // has effect of unparcelling Bundle
-			/*
-			 * Filter messages based on message type. Since it is likely that
-			 * GCM will be extended in the future with new message types, just
-			 * ignore any message types you're not interested in, or that you
-			 * don't recognize.
-			 */
-			if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR
-					.equals(messageType)) {
-				sendNotification(null, null, "Send error: " + extras.toString());
-			} else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED
-					.equals(messageType)) {
-				sendNotification(null, null, "Deleted messages on server: "
-						+ extras.toString());
-				// If it's a regular GCM message, do some work.
-			} else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE
-					.equals(messageType)) {
+			if (!extras.isEmpty()) { // has effect of unparcelling Bundle
+				/*
+				 * Filter messages based on message type. Since it is likely
+				 * that GCM will be extended in the future with new message
+				 * types, just ignore any message types you're not interested
+				 * in, or that you don't recognize.
+				 */
+				if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR
+						.equals(messageType)) {
+					sendNotification(null, null,
+							"Send error: " + extras.toString());
+				} else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED
+						.equals(messageType)) {
+					sendNotification(null, null, "Deleted messages on server: "
+							+ extras.toString());
+					// If it's a regular GCM message, do some work.
+				} else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE
+						.equals(messageType)) {
 
-				// Post notification of received message.
-				sendNotification(streamURL, broadcaster, null);
+					// Post notification of received message.
+					sendNotification(streamURL, broadcaster, null);
 
+				}
 			}
 		}
 		// Release the wake lock provided by the WakefulBroadcastReceiver.

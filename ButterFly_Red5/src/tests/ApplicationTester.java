@@ -12,6 +12,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.red5.core.Application;
+import org.red5.core.Application.Stream;
 import org.red5.core.GcmUsers;
 
 public class ApplicationTester {
@@ -126,6 +127,33 @@ public class ApplicationTester {
 		registerId = butterflyApp.getRegistrationIdList(mail);
 
 		assertEquals(registerId, null);
+	}
+	
+	@Test
+	public void testStreamViewer() {
+		Stream stream = new Stream("streamName", "streamUrl", (long)12121);
+		assertEquals(0, stream.getViewerCount());
+		
+		stream.addViewer("test");
+		assertEquals(1, stream.getViewerCount());
+		
+		stream.removeViewer("test");
+		assertEquals(0, stream.getViewerCount());
+		
+		stream.addViewer("test2");
+		stream.addViewer("test3");
+		stream.addViewer("test4");
+		
+		assertEquals(3, stream.getViewerCount());
+		
+		stream.removeViewer("test5");
+		
+		assertEquals(3, stream.getViewerCount());
+		
+		assertTrue(stream.containsViewer("test2"));
+		
+		assertTrue(!stream.containsViewer("test2121212"));
+		
 	}
 	
 //	@Test

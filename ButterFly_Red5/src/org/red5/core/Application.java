@@ -23,9 +23,11 @@ import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -47,6 +49,8 @@ import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
+import org.red5.server.api.stream.IPlayItem;
+import org.red5.server.api.stream.ISubscriberStream;
 
 import com.google.android.gcm.server.Constants;
 import com.google.android.gcm.server.Message;
@@ -67,16 +71,44 @@ public class Application extends MultiThreadedApplicationAdapter {
 	private ResourceBundle messagesTR;
 	private ResourceBundle messagesEN;
 
-	public class Stream implements Serializable {
+	public static class Stream implements Serializable {
 		public String streamName;
 		public String streamUrl;
 		public Long registerTime;
+		public ArrayList<String> viewerStreamNames = new ArrayList<String>();
+		private String broadcasterGCMId;
+		private GcmUsers gcmIdList;
 
 		public Stream(String streamName, String streamUrl, Long registerTime) {
 			super();
 			this.streamName = streamName;
 			this.streamUrl = streamUrl;
 			this.registerTime = registerTime;
+			
+		}
+		
+		public void addViewer(String streamName) {
+			viewerStreamNames.add(streamName);
+		}
+		
+		public boolean containsViewer(String streamName) {
+			return viewerStreamNames.contains(streamName);
+		}
+		
+		public void removeViewer(String streamName) {
+			viewerStreamNames.remove(streamName);
+		}
+		
+		public int getViewerCount() {
+			return viewerStreamNames.size();
+		}
+
+		public void setGCMUser(GcmUsers registrationIdList) {
+			this.gcmIdList = registrationIdList;
+		}
+		
+		public GcmUsers getBroadcasterGCMUsers(){
+			return gcmIdList;
 		}
 
 	}
@@ -103,6 +135,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	public HashMap<String, String> getLiveStreams() {
 		HashMap<String, String> streams = new HashMap<String, String>();
 		IScope target = null;
+		//
 
 		target = Red5.getConnectionLocal().getScope();
 
@@ -133,10 +166,11 @@ public class Application extends MultiThreadedApplicationAdapter {
 		boolean result = false;
 		if (registeredStreams.containsKey(url) == false) {
 			if (isPublic == true) {
-				registeredStreams
-						.put(url,
-								new Stream(streamName, url, System
-										.currentTimeMillis()));
+				Stream stream = new Stream(streamName, url, System
+						.currentTimeMillis());
+				stream.setGCMUser(getRegistrationIdList(broadcasterMail));
+
+				registeredStreams.put(url,stream);
 			}
 			sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url,
 					deviceLanguage);
@@ -536,5 +570,62 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 		return result;
 	}
+	
+	@Override
+	public void streamPlayItemPlay(ISubscriberStream subscriberStream, IPlayItem item, boolean isLive) {
+		super.streamPlayItemPlay(subscriberStream, item, isLive);
+		
+		String name = item.getName();
+		if (registeredStreams.containsKey(name)) {
+			Stream stream = registeredStreams.get(name);
+			stream.addViewer(subscriberStream.getName());
+			System.out.println("Application.streamPlayItemPlay() -- viewerCount " + stream.getViewerCount());
+			notifyUserAboutViewerCount(stream.getViewerCount(), stream.getBroadcasterGCMUsers());
+		}
+
+	}
+	
+	private void notifyUserAboutViewerCount(int viewerCount, GcmUsers broadcasterGCMUsers) {
+
+		Sender sender = new Sender(SENDER_ID);
+
+		Message message = new Message.Builder()
+				.collapseKey("1").timeToLive(30).delayWhileIdle(true)
+				.addData("viewerCount", String.valueOf(viewerCount))
+				.build();
+
+		try {
+			MulticastResult result = sender.send(message, broadcasterGCMUsers.fetchRegIDStrings(), 1);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		
+	}
+
+	@Override
+	public void streamSubscriberClose(ISubscriberStream subcriberStream) {
+		super.streamSubscriberClose(subcriberStream);
+		
+		Set<Entry<String, Stream>> entrySet = registeredStreams.entrySet();
+		for (Iterator iterator = entrySet.iterator(); iterator.hasNext();) {
+			Entry<String, Stream> entry = (Entry<String, Stream>) iterator.next();
+			Stream value = entry.getValue();
+			System.out.println("Application.streamSubscriberClose() -- before if ");
+			if (value.containsViewer(subcriberStream.getName()))  {
+				System.out.println("Application.streamSubscriberClose() -- after if");
+				value.removeViewer(subcriberStream.getName());
+				System.out.println("Application.streamSubscriberClose() -- viewer count " + value.getViewerCount());
+				notifyUserAboutViewerCount(value.getViewerCount(), value.getBroadcasterGCMUsers());
+				break;
+			}
+			
+		}
+
+		System.out.println("------Application.streamSubscriberClose() " + subcriberStream.getName());
+	}
+
+	
 
 }

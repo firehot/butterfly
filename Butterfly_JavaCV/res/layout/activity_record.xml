@@ -9,6 +9,18 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         class="com.butterfly.view.CameraView" />
+    
+    <TextView android:id="@+id/viewerCountView"
+        	android:layout_width="wrap_content"
+        	android:layout_height="wrap_content"
+        	android:padding="10dip"
+        	style="?android:attr/textAppearanceMediumInverse"
+        	android:layout_gravity="top|right"
+        	android:layout_marginRight="6dip"
+        	android:background="@android:color/background_dark"
+        	android:textColor="@android:color/background_light"
+        	android:gravity="center"
+        	/>
 
     <LinearLayout
         android:layout_width="wrap_content"
