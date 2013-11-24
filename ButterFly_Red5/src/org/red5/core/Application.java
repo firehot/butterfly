@@ -44,6 +44,8 @@ import javax.persistence.NoResultException;
 import javax.persistence.Persistence;
 import javax.persistence.Query;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
@@ -132,21 +134,25 @@ public class Application extends MultiThreadedApplicationAdapter {
 		super.disconnect(conn, scope);
 	}
 
-	public HashMap<String, String> getLiveStreams() {
-		HashMap<String, String> streams = new HashMap<String, String>();
-		IScope target = null;
-		//
+	public String getLiveStreams() {
+		IScope target = Red5.getConnectionLocal().getScope();
 
-		target = Red5.getConnectionLocal().getScope();
-
+		JSONArray jsonArray = new JSONArray();
+		JSONObject jsonObject;
 		Set<String> streamNames = getBroadcastStreamNames(target);
 		for (String name : streamNames) {
 			if (registeredStreams.containsKey(name)) {
 				Stream stream = registeredStreams.get(name);
-				streams.put(stream.streamUrl, stream.streamName);
+				jsonObject = new JSONObject();
+				jsonObject.put("url", stream.streamUrl);
+				jsonObject.put("name", stream.streamName);
+				jsonObject.put("viewerCount", stream.getViewerCount());
+				jsonArray.add(jsonObject);
+				//streams.put(stream.streamUrl, stream.streamName);
 			}
 		}
-		return streams;
+		
+		return jsonArray.toString();
 	}
 	
 	public boolean isLiveStreamExist(String url)
@@ -407,6 +413,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 			if (object != null) {
 				result = true;
 			}
+			object = null;
 		}
 		return result;
 	}

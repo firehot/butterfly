@@ -1,9 +1,8 @@
 package com.butterfly;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Set;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -18,10 +17,10 @@ import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import com.bugsense.trace.BugSenseHandler;
+import com.butterfly.adapter.StreamListAdapter;
 import com.butterfly.debug.BugSense;
 import com.butterfly.message.CloudMessaging;
 import com.google.android.gms.common.ConnectionResult;
@@ -38,17 +37,19 @@ public class StreamList extends ListActivity {
 	private static final String APP_SHARED_PREFERENCES = "applicationDetails";
 	public static final String STREAM_PUBLISHED_NAME = "stream-name";
 	String httpGatewayURL;
-	private ArrayAdapter<Stream> adapter;
+	private StreamListAdapter adapter;
 	public static CloudMessaging msg;
 
-	public class Stream {
+	public static class Stream {
 		public String name;
 		public String url;
+		public int viewerCount;
 
-		public Stream(String name, String url) {
+		public Stream(String name, String url, int viewerCount) {
 			super();
 			this.name = name;
 			this.url = url;
+			this.viewerCount = viewerCount;
 		}
 
 		@Override
@@ -82,8 +83,7 @@ public class StreamList extends ListActivity {
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		httpGatewayURL = getString(R.string.http_gateway_url);
 
-		adapter = new ArrayAdapter<Stream>(StreamList.this,
-				android.R.layout.simple_list_item_1);
+		adapter = new StreamListAdapter(StreamList.this);
 		setListAdapter(adapter);
 
 		getListView().setOnItemClickListener(itemClickListener);
@@ -102,7 +102,6 @@ public class StreamList extends ListActivity {
 			CloudMessaging msg = new CloudMessaging(
 					this.getApplicationContext(), this, httpGatewayURL);
 		}
-
 	}
 
 	private void showTermsOfUse(final SharedPreferences applicationPrefs) {
@@ -185,8 +184,7 @@ public class StreamList extends ListActivity {
 		return true;
 	}
 
-	public class GetStreamListTask extends
-			AsyncTask<String, Void, HashMap<String, String>> {
+	public class GetStreamListTask extends AsyncTask<String, Void, String> {
 
 		@Override
 		protected void onPreExecute() {
@@ -195,22 +193,17 @@ public class StreamList extends ListActivity {
 		}
 
 		@Override
-		protected HashMap<String, String> doInBackground(String... params) {
-			HashMap<String, String> streams = null;
+		protected String doInBackground(String... params) {
+			String streams = null;
 			AMFConnection amfConnection = new AMFConnection();
 			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
 			try {
 				System.out.println(params[0]);
 				amfConnection.connect(params[0]);
-				streams = (HashMap<String, String>) amfConnection
-						.call("getLiveStreams");
-				System.out.println("result count -> " + streams.size());
-
+				streams = (String) amfConnection.call("getLiveStreams");
 			} catch (ClientStatusException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (ServerStatusException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			amfConnection.close();
@@ -219,27 +212,43 @@ public class StreamList extends ListActivity {
 		}
 
 		@Override
-		protected void onPostExecute(HashMap<String, String> streams) {
+		protected void onPostExecute(String streams) {
 			adapter.clear();
 
 			if (streams != null) {
-				if (streams.size() > 0) {
+				// JSONObject jsonObject = new JSONObject(streams);
+				JSONArray jsonArray;
+				try {
+					jsonArray = new JSONArray(streams);
+					int length = jsonArray.length();
+					if (length > 0) {
 
-					Set<Entry<String, String>> entrySet = streams.entrySet();
+						JSONObject jsonObject;
 
-					for (Iterator iterator = entrySet.iterator(); iterator
-							.hasNext();) {
-						Entry<String, String> entry = (Entry<String, String>) iterator
-								.next();
-						adapter.add(new Stream(entry.getValue(), entry.getKey()));
+						for (int i = 0; i < length; i++) {
+							jsonObject = (JSONObject) jsonArray.get(i);
+							adapter.add(new Stream(
+									jsonObject.getString("name"), jsonObject
+											.getString("url"), Integer
+											.parseInt(jsonObject
+													.getString("viewerCount"))));
+
+						}
+
+						adapter.notifyDataSetChanged();
+					} else {
+						Toast.makeText(getApplicationContext(),
+								getString(R.string.noLiveStream),
+								Toast.LENGTH_LONG).show();
 					}
 
-					adapter.notifyDataSetChanged();
-				} else {
+				} catch (JSONException e) {
+					e.printStackTrace();
 					Toast.makeText(getApplicationContext(),
-							getString(R.string.noLiveStream), Toast.LENGTH_LONG)
-							.show();
+							getString(R.string.connectivityProblem),
+							Toast.LENGTH_LONG).show();
 				}
+
 			} else {
 				Toast.makeText(getApplicationContext(),
 						getString(R.string.connectivityProblem),
@@ -249,7 +258,6 @@ public class StreamList extends ListActivity {
 			setProgressBarIndeterminateVisibility(false);
 			super.onPostExecute(streams);
 		}
-
 	}
 
 }

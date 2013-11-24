@@ -292,6 +292,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 	public void stopRecording() {
 
 		localBroadcastManager.unregisterReceiver(viewerCountReceiver);
+		viewerCountView.setVisibility(View.INVISIBLE);
 		runAudioThread = false;
 
 		if (recorder != null && recording) {
