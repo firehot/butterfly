@@ -61,7 +61,7 @@ import com.google.android.gcm.server.Result;
 import com.google.android.gcm.server.Sender;
 
 /**
- * Sample application that uses the client manager.
+ * Sample application that uses the client manager.murat
  * 
  * @author The Red5 Project (red5@osflash.org)
  */
