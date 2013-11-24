@@ -32,7 +32,7 @@
 	<string name="chooseContactAndShare">Tanıdıklarını seçin ve İleri\'ye basın</string>
 	<string name="missed_the_stream">Bu url\'e sahip canlı yayın şu anda bulunmamaktadır. Kaçırmış olmalısınız. Sonraki yayın için lütfen daha hızlı olun</string>
      <plurals name="viewers_count">
-        <item quantity="other">%d\izleyici</item>
+        <item quantity="other">%d İzleyici</item>
     </plurals>
     <string name="terms_of_service">
 Butterfly, canlı ve kayıt edilmiş video ve ses verisinin paylaşılmasını sağlar.\n
