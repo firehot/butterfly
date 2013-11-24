@@ -105,6 +105,8 @@ public class StreamList extends ListActivity {
 		}
 		new GetStreamListTask().execute(httpGatewayURL);
 
+		new GetStreamListTask().execute(httpGatewayURL);
+
 	}
 
 	private void showTermsOfUse(final SharedPreferences applicationPrefs) {
