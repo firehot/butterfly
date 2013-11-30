@@ -151,6 +151,9 @@ public class Application extends MultiThreadedApplicationAdapter {
 				jsonObject.put("url", stream.streamUrl);
 				jsonObject.put("name", stream.streamName);
 				jsonObject.put("viewerCount", stream.getViewerCount());
+				jsonObject.put("latitude", stream.latitude);
+				jsonObject.put("longitude", stream.longtitude);
+				jsonObject.put("altitude", stream.altitude);
 				jsonArray.add(jsonObject);
 				//streams.put(stream.streamUrl, stream.streamName);
 			}
