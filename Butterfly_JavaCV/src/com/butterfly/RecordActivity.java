@@ -18,6 +18,7 @@ import android.content.pm.ActivityInfo;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
+import android.location.Location;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -43,7 +44,9 @@ import com.butterfly.listener.OnPreviewListener;
 import com.butterfly.message.CloudMessaging;
 import com.butterfly.message.GcmIntentService;
 import com.butterfly.recorder.FFmpegFrameRecorder;
+import com.butterfly.utils.LocationProvider;
 import com.butterfly.view.CameraView;
+import com.google.android.gms.location.LocationListener;
 import com.googlecode.javacpp.BytePointer;
 
 import flex.messaging.io.MessageIOConstants;
@@ -52,7 +55,7 @@ import flex.messaging.io.amf.client.exceptions.ClientStatusException;
 import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
 public class RecordActivity extends Activity implements OnClickListener,
-		OnPreviewListener {
+OnPreviewListener {
 
 	private final static String CLASS_LABEL = "RecordActivity";
 	private final static String LOG_TAG = CLASS_LABEL;
@@ -110,6 +113,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 	};
 	private LocalBroadcastManager localBroadcastManager;
 	private TextView viewerCountView;
+	private LocationProvider locationProvider;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -138,6 +142,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 		httpGatewayURL = getString(R.string.http_gateway_url);
 		localBroadcastManager = LocalBroadcastManager
 				.getInstance(getApplicationContext());
+		locationProvider = new LocationProvider(this);
 
 	}
 
@@ -179,6 +184,20 @@ public class RecordActivity extends Activity implements OnClickListener,
 		}
 		BugSenseHandler.closeSession(this);
 
+	}
+
+	private void getLocation()
+	{
+		
+		locationProvider.getLocation(new LocationListener() {
+			
+			@Override
+			public void onLocationChanged(Location location) {
+				new RegisterLocationForStreamTask(httpGatewayURL, RecordActivity.this.streamURL).
+					execute(location.getLongitude(), location.getLatitude(), location.getAltitude());
+				
+			}
+		});
 	}
 
 	private void initLayout() {
@@ -327,7 +346,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 		@Override
 		public void run() {
 			android.os.Process
-					.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+			.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 
 			// Audio
 			int bufferSize;
@@ -497,7 +516,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 					result = (Boolean) amfConnection.call("registerLiveStream",
 							params[1], params[2], mailsToBeNotified,
 							possibleMail, isPublic, Locale.getDefault()
-									.getISO3Language());
+							.getISO3Language());
 
 				} catch (ClientStatusException e) {
 					e.printStackTrace();
@@ -526,13 +545,52 @@ public class RecordActivity extends Activity implements OnClickListener,
 				streamNameEditText.setVisibility(View.VISIBLE);
 				publicVideoCheckBox.setVisibility(View.VISIBLE);
 			}
+			
+			RecordActivity.this.getLocation();
 			super.onPostExecute(result);
 
 		}
 	}
 
+	public class RegisterLocationForStreamTask extends AsyncTask<Double, Void, Boolean>
+	{
+		String httpGateway;
+		private String streamURL;
+		
+		public RegisterLocationForStreamTask(String httpGateway, String url) {
+			this.httpGateway = httpGateway;
+			this.streamURL = url;
+		}
+
+		@Override
+		protected Boolean doInBackground(Double... params) {
+			Boolean result = false;
+
+			AMFConnection amfConnection = new AMFConnection();
+			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
+			try {
+				System.out.println(params[0]);
+				System.out.println(params[1]);
+				System.out.println(params[2]);
+
+				amfConnection.connect(this.httpGateway);
+				result = (Boolean) amfConnection.call("registerLocationForStream",
+						this.streamURL, params[0], params[1], params[2]);
+
+			} catch (ClientStatusException e) {
+				e.printStackTrace();
+			} catch (ServerStatusException e) {
+
+				e.printStackTrace();
+			}
+			amfConnection.close();
+			return result;
+		}
+
+	}
+
 	public class StopRecordingTask extends
-			AsyncTask<FFmpegFrameRecorder, Void, Void> {
+	AsyncTask<FFmpegFrameRecorder, Void, Void> {
 
 		@Override
 		protected void onPreExecute() {
