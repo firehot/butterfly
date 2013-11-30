@@ -45,12 +45,18 @@ public class StreamList extends ListActivity {
 		public String name;
 		public String url;
 		public int viewerCount;
+		public double latitude;
+		public double longitude;
+		public double altitude;
 
-		public Stream(String name, String url, int viewerCount) {
+		public Stream(String name, String url, int viewerCount, double latitude, double longitude, double altitude) {
 			super();
 			this.name = name;
 			this.url = url;
 			this.viewerCount = viewerCount;
+			this.latitude = latitude;
+			this.longitude = longitude;
+			this.altitude = altitude;
 		}
 
 		@Override
@@ -235,7 +241,11 @@ public class StreamList extends ListActivity {
 									jsonObject.getString("name"), jsonObject
 											.getString("url"), Integer
 											.parseInt(jsonObject
-													.getString("viewerCount"))));
+													.getString("viewerCount")),
+													Double .parseDouble(jsonObject.getString("latitude")),
+													Double .parseDouble(jsonObject.getString("longitude")),
+													Double .parseDouble(jsonObject.getString("altitude"))
+													));
 
 						}
 
