@@ -68,7 +68,7 @@ import com.google.android.gcm.server.Sender;
 public class Application extends MultiThreadedApplicationAdapter {
 
 	private static final String SENDER_ID = "AIzaSyCFmHIbJO0qCtPo6klp7Ade3qjeGLgtZWw";
-	Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
+	private Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
 	private EntityManager entityManager;
 	private ResourceBundle messagesTR;
 	private ResourceBundle messagesEN;
@@ -80,6 +80,10 @@ public class Application extends MultiThreadedApplicationAdapter {
 		public ArrayList<String> viewerStreamNames = new ArrayList<String>();
 		private String broadcasterGCMId;
 		private GcmUsers gcmIdList;
+		public double altitude;
+		public double longtitude;
+		public double latitude;
+		
 
 		public Stream(String streamName, String streamUrl, Long registerTime) {
 			super();
@@ -141,8 +145,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 		JSONObject jsonObject;
 		Set<String> streamNames = getBroadcastStreamNames(target);
 		for (String name : streamNames) {
-			if (registeredStreams.containsKey(name)) {
-				Stream stream = registeredStreams.get(name);
+			if (getRegisteredStreams().containsKey(name)) {
+				Stream stream = getRegisteredStreams().get(name);
 				jsonObject = new JSONObject();
 				jsonObject.put("url", stream.streamUrl);
 				jsonObject.put("name", stream.streamName);
@@ -170,13 +174,13 @@ public class Application extends MultiThreadedApplicationAdapter {
 			String mailsToBeNotified, String broadcasterMail, boolean isPublic,
 			String deviceLanguage) {
 		boolean result = false;
-		if (registeredStreams.containsKey(url) == false) {
+		if (getRegisteredStreams().containsKey(url) == false) {
 			if (isPublic == true) {
 				Stream stream = new Stream(streamName, url, System
 						.currentTimeMillis());
 				stream.setGCMUser(getRegistrationIdList(broadcasterMail));
 
-				registeredStreams.put(url,stream);
+				getRegisteredStreams().put(url,stream);
 			}
 			sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url,
 					deviceLanguage);
@@ -186,6 +190,21 @@ public class Application extends MultiThreadedApplicationAdapter {
 		return result;
 	}
 
+	public boolean  registerLocationForStream(String url, double longitude, double latitude, double altitude) {
+		boolean result = false;
+		if (getRegisteredStreams().containsKey(url) == true) {
+				Stream stream = getRegisteredStreams().get(url);
+				stream.latitude = latitude;
+				stream.longtitude = longitude;
+				stream.altitude = altitude;
+				result = true;
+		}
+		return result;
+	}
+		
+	
+	
+	
 	public boolean registerUser(String register_id, String mail) {
 		boolean result;
 		try {
@@ -408,8 +427,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 	public boolean removeStream(String streamUrl) {
 		boolean result = false;
-		if (registeredStreams.containsKey(streamUrl)) {
-			Object object = registeredStreams.remove(streamUrl);
+		if (getRegisteredStreams().containsKey(streamUrl)) {
+			Object object = getRegisteredStreams().remove(streamUrl);
 			if (object != null) {
 				result = true;
 			}
@@ -583,8 +602,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 		super.streamPlayItemPlay(subscriberStream, item, isLive);
 		
 		String name = item.getName();
-		if (registeredStreams.containsKey(name)) {
-			Stream stream = registeredStreams.get(name);
+		if (getRegisteredStreams().containsKey(name)) {
+			Stream stream = getRegisteredStreams().get(name);
 			stream.addViewer(subscriberStream.getName());
 			System.out.println("Application.streamPlayItemPlay() -- viewerCount " + stream.getViewerCount());
 			notifyUserAboutViewerCount(stream.getViewerCount(), stream.getBroadcasterGCMUsers());
@@ -615,7 +634,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	public void streamSubscriberClose(ISubscriberStream subcriberStream) {
 		super.streamSubscriberClose(subcriberStream);
 		
-		Set<Entry<String, Stream>> entrySet = registeredStreams.entrySet();
+		Set<Entry<String, Stream>> entrySet = getRegisteredStreams().entrySet();
 		for (Iterator iterator = entrySet.iterator(); iterator.hasNext();) {
 			Entry<String, Stream> entry = (Entry<String, Stream>) iterator.next();
 			Stream value = entry.getValue();
@@ -633,6 +652,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		System.out.println("------Application.streamSubscriberClose() " + subcriberStream.getName());
 	}
 
-	
-
+	public Map<String, Stream> getRegisteredStreams() {
+		return registeredStreams;
+	}
 }
