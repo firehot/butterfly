@@ -59,4 +59,14 @@ public class RegIDs implements java.io.Serializable {
 		this.id = id;
 	}
 	
+	@Override
+	public boolean equals(Object obj) {
+
+		if(obj != null && obj instanceof RegIDs)
+		{
+			return ((RegIDs)obj).gcmRegId.equals(this.gcmRegId);
+		}
+		else return false;
+	}
+	
 }

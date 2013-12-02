@@ -12,6 +12,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.red5.core.Application;
+import org.red5.core.RegIDs;
 import org.red5.core.Application.Stream;
 import org.red5.core.GcmUsers;
 
@@ -110,6 +111,7 @@ public class ApplicationTester {
 		assertEquals(registerId, null);
 	}
 	
+	
 	@Test
 	public void testDeleteUser()
 	{
@@ -154,6 +156,17 @@ public class ApplicationTester {
 		
 		assertTrue(!stream.containsViewer("test2121212"));
 		
+	}
+	
+	@Test
+	public void testRegisterMultipleUser()
+	{
+		GcmUsers gcmUsers = new GcmUsers("mail@mail.com");
+		RegIDs regid = new RegIDs("regid");
+		gcmUsers.addRegID(regid);
+		assertEquals(1,gcmUsers.getRegIDs().size());
+		gcmUsers.addRegID(regid);
+		assertEquals(1,gcmUsers.getRegIDs().size());
 	}
 	
 //	@Test

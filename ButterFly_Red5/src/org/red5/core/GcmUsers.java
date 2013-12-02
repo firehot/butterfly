@@ -70,8 +70,11 @@ public class GcmUsers implements java.io.Serializable {
 	
 	public void addRegID(RegIDs regid)
 	{
-		this.regIDs.add(regid);
-		regid.setUser(this);
+		if(!this.regIDs.contains(regid))
+		{
+			this.regIDs.add(regid);
+			regid.setUser(this);
+		}
 	}
 	
 	public void removeID(RegIDs regid)
