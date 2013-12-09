@@ -158,6 +158,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		if (cameraView != null) {
 			cameraView.stopPreview();
+			cameraDevice.setPreviewCallback(null);
 			cameraDevice.release();
 			cameraDevice = null;
 		}
