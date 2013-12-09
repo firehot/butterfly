@@ -266,7 +266,10 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 	public boolean startRecording() {
 
-		previewSize = cameraDevice.getParameters().getPreviewSize();
+		if(cameraDevice != null && cameraDevice.getParameters() != null)
+			previewSize = cameraDevice.getParameters().getPreviewSize();
+		else
+			return false;
 
 		recording = false;
 		IntentFilter intentFilter = new IntentFilter(
