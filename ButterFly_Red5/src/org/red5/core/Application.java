@@ -636,6 +636,10 @@ public class Application extends MultiThreadedApplicationAdapter {
 	@Override
 	public void FCUnpublish(String streamName) {
 		
+		IScope target = Red5.getConnectionLocal().getScope();
+		IBroadcastStream stream = getBroadcastStream(target, streamName);
+		String streamUrl = stream.getPublishedName();
+		removeStream(streamUrl);
 		System.out.println(streamName + " unpublished...");
 		super.FCUnpublish(streamName);
 	}
