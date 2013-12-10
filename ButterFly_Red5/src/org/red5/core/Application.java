@@ -632,6 +632,13 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 		System.out.println("------Application.streamSubscriberClose() " + subcriberStream.getName());
 	}
+	
+	@Override
+	public void FCUnpublish(String streamName) {
+		
+		System.out.println(streamName + " unpublished...");
+		super.FCUnpublish(streamName);
+	}
 
 	
 
