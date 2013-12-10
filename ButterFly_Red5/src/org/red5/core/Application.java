@@ -120,6 +120,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 				new Locale("tr"));
 		messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
 
+		setGhostConnsCleanupPeriod(5);
+		this.scheduleGhostConnectionsCleanup();
 	}
 
 	/** {@inheritDoc} */
@@ -633,17 +635,4 @@ public class Application extends MultiThreadedApplicationAdapter {
 		System.out.println("------Application.streamSubscriberClose() " + subcriberStream.getName());
 	}
 	
-	@Override
-	public void FCUnpublish(String streamName) {
-		
-		IScope target = Red5.getConnectionLocal().getScope();
-		IBroadcastStream stream = getBroadcastStream(target, streamName);
-		String streamUrl = stream.getPublishedName();
-		removeStream(streamUrl);
-		System.out.println(streamName + " unpublished...");
-		super.FCUnpublish(streamName);
-	}
-
-	
-
 }
