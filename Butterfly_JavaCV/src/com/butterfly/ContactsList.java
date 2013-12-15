@@ -1,13 +1,24 @@
 package com.butterfly;
 
+import java.io.FileDescriptor;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.Data;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,9 +28,11 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.FilterQueryProvider;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.SimpleCursorAdapter.CursorToStringConverter;
+import android.widget.SimpleCursorAdapter.ViewBinder;
 import android.widget.TextView;
 
 import com.bugsense.trace.BugSenseHandler;
@@ -33,7 +46,7 @@ public class ContactsList extends Activity {
 
 	private ListView selectedContactList;
 
-	private ContactAdapter selectedContactAdapter;
+	private SelectedContactAdapter selectedContactAdapter;
 
 	private AutoCompleteTextView textView;
 
@@ -69,14 +82,15 @@ public class ContactsList extends Activity {
 
 		textView = (AutoCompleteTextView) findViewById(R.id.autoCompleteTextView);
 		selectedContactList = (ListView) findViewById(R.id.selectedContactList);
-		selectedContactAdapter = new ContactAdapter(getApplicationContext(),
+		selectedContactAdapter = new SelectedContactAdapter(getApplicationContext(),
 				R.layout.contact_list_item);
 		selectedContactList.setAdapter(selectedContactAdapter);
 
-		mAdapter = new SimpleCursorAdapter(this,
-				android.R.layout.simple_list_item_2, null, new String[] {
-						displayName, Email.ADDRESS }, new int[] {
-						android.R.id.text1, android.R.id.text2 }, 0);
+		mAdapter = new FilterContactListAdapter(this,
+				R.layout.contact_filter_list_item, null, new String[] {
+				displayName, Email.ADDRESS, Data.PHOTO_THUMBNAIL_URI }, new int[] {
+				R.id.display_name, R.id.email_address, R.id.photo_uri}, 0);
+
 
 		textView.setAdapter(mAdapter);
 
@@ -136,17 +150,17 @@ public class ContactsList extends Activity {
 		String[] selectArgs = null;
 
 		String select = /*
-						 * Searches for an email address that matches the search
-						 * string
-						 */
-		"(" + Email.ADDRESS + " NOTNULL " + " AND " +
-		/*
-		 * Searches for a MIME type that matches the value of the constant
-		 * Email.CONTENT_ITEM_TYPE. Note the single quotes surrounding
-		 * Email.CONTENT_ITEM_TYPE.
+		 * Searches for an email address that matches the search
+		 * string
 		 */
-		Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "'" + " AND "
-				+ displayName + " NOTNULL" + ") ";
+				"(" + Email.ADDRESS + " NOTNULL " + " AND " +
+				/*
+				 * Searches for a MIME type that matches the value of the constant
+				 * Email.CONTENT_ITEM_TYPE. Note the single quotes surrounding
+				 * Email.CONTENT_ITEM_TYPE.
+				 */
+				 Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "'" + " AND "
+				 + displayName + " NOTNULL" + ") ";
 
 		if (constraint != null) {
 			select += " AND (" + Email.ADDRESS + " LIKE ? " + " OR "
@@ -168,18 +182,19 @@ public class ContactsList extends Activity {
 
 	// These are the Contacts rows that we will retrieve.
 	static final String[] CONTACTS_SUMMARY_PROJECTION = new String[] {
-			Data._ID,
-			// The primary display name
-			displayName,
-			// The contact's _ID, to construct a content URI
-			Data.CONTACT_ID,
-			// The contact's LOOKUP_KEY, to construct a content URI
-			Data.LOOKUP_KEY, Email.ADDRESS,
+		Data._ID,
+		// The primary display name
+		displayName,
+		// The contact's _ID, to construct a content URI
+		Data.CONTACT_ID,
+		// The contact's LOOKUP_KEY, to construct a content URI
+		Data.LOOKUP_KEY, Email.ADDRESS,
+		Data.PHOTO_THUMBNAIL_URI,
 
-	/*
-	 * Contacts._ID, Contacts.DISPLAY_NAME, Contacts.CONTACT_STATUS,
-	 * Contacts.CONTACT_PRESENCE, Contacts.PHOTO_ID, Contacts.LOOKUP_KEY,
-	 */};
+		/*
+		 * Contacts._ID, Contacts.DISPLAY_NAME, Contacts.CONTACT_STATUS,
+		 * Contacts.CONTACT_PRESENCE, Contacts.PHOTO_ID, Contacts.LOOKUP_KEY,
+		 */};
 
 	@Override
 	protected void onDestroy() {
@@ -231,11 +246,11 @@ public class ContactsList extends Activity {
 
 	}
 
-	public class ContactAdapter extends ArrayAdapter<Contact> {
+	public class SelectedContactAdapter extends ArrayAdapter<Contact> {
 
 		private int view;
 
-		public ContactAdapter(Context context, int resource) {
+		public SelectedContactAdapter(Context context, int resource) {
 			super(context, resource);
 			this.view = resource;
 		}
@@ -260,6 +275,54 @@ public class ContactsList extends Activity {
 
 		public class ViewHolder {
 			TextView tv;
+		}
+
+	}
+
+	public static class FilterContactListAdapter extends SimpleCursorAdapter {
+
+
+		private LayoutInflater layoutInflater;
+
+		public FilterContactListAdapter(Context context, int layout, Cursor c,
+				String[] from, int[] to, int flag) {
+			super(context, layout, c, from, to, flag);
+			layoutInflater = LayoutInflater.from(context);
+
+		}
+
+		static class ViewHolder {
+			TextView displayNameView;
+			TextView emailView;
+			ImageView photoView;
+		}
+
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+
+			ViewHolder holder;
+			if (convertView == null) {
+				convertView = layoutInflater.inflate(R.layout.contact_filter_list_item  , null);
+				holder = new ViewHolder();
+				holder.displayNameView = (TextView) convertView.findViewById(R.id.display_name);
+				holder.emailView = (TextView) convertView.findViewById(R.id.email_address);
+				holder.photoView = (ImageView) convertView.findViewById(R.id.photo_uri);
+				convertView.setTag(holder);
+			} else {
+				holder = (ViewHolder) convertView.getTag();
+			}
+			getCursor().moveToPosition(position);
+
+			holder.displayNameView.setText(getCursor().getString(getCursor().getColumnIndex(displayName)));
+			holder.emailView.setText(getCursor().getString(getCursor().getColumnIndex(Email.ADDRESS)));
+			String photoUri = getCursor().getString(getCursor().getColumnIndex(Data.PHOTO_THUMBNAIL_URI));
+			if (photoUri != null) {
+				holder.photoView.setImageURI(Uri.parse(photoUri));
+			}
+			else {
+				holder.photoView.setImageResource(R.drawable.ic_action_user);
+			}
+			return convertView;
 		}
 
 	}
