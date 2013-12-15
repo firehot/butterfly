@@ -2,6 +2,11 @@ package com.butterfly;
 
 import static com.googlecode.javacv.cpp.avcodec.AV_CODEC_ID_H264;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.nio.Buffer;
 import java.nio.ShortBuffer;
 import java.util.List;
@@ -17,10 +22,13 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
+import android.hardware.Camera.PreviewCallback;
 import android.hardware.Camera.Size;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
@@ -39,7 +47,6 @@ import android.widget.Toast;
 
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.debug.BugSense;
-import com.butterfly.listener.OnPreviewListener;
 import com.butterfly.message.CloudMessaging;
 import com.butterfly.message.GcmIntentService;
 import com.butterfly.recorder.FFmpegFrameRecorder;
@@ -52,7 +59,7 @@ import flex.messaging.io.amf.client.exceptions.ClientStatusException;
 import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
 public class RecordActivity extends Activity implements OnClickListener,
-		OnPreviewListener {
+PreviewCallback {
 
 	private final static String CLASS_LABEL = "RecordActivity";
 	private final static String LOG_TAG = CLASS_LABEL;
@@ -86,7 +93,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 	private EditText streamNameEditText;
 	private CheckBox publicVideoCheckBox;
 
-	private ProgressDialog m_ProgressDialog;
+	private ProgressDialog mProgressDialog;
 	private String mailsToBeNotified;
 	private Size previewSize;
 	private BytePointer bytePointer;
@@ -110,6 +117,9 @@ public class RecordActivity extends Activity implements OnClickListener,
 	};
 	private LocalBroadcastManager localBroadcastManager;
 	private TextView viewerCountView;
+	private String streamName;
+	private boolean is_video_public;
+	private NetworkInfo activeNetwork;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -138,6 +148,11 @@ public class RecordActivity extends Activity implements OnClickListener,
 		httpGatewayURL = getString(R.string.http_gateway_url);
 		localBroadcastManager = LocalBroadcastManager
 				.getInstance(getApplicationContext());
+
+		ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+
+		activeNetwork = cm.getActiveNetworkInfo();
+
 
 	}
 
@@ -194,9 +209,79 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		cameraView = (CameraView) findViewById(R.id.cam);
 		cameraDevice = Camera.open(0);
+		Parameters parameters = cameraDevice.getParameters();
+		List<Size> sizes = parameters.getSupportedPreviewSizes();
+		parameters.setPreviewSize(sizes.get(0).width, sizes.get(0).height);
+		cameraDevice.setParameters(parameters);
 		cameraView.setCamera(cameraDevice);
 
 		Log.i(LOG_TAG, "cameara preview start: OK");
+	}
+
+	public boolean setCameraPreviewSize(int bandwidth) 
+	{
+		boolean result = false;
+		Parameters parameters = cameraDevice.getParameters();
+		List<Size> supportedPreviewSizes = parameters.getSupportedPreviewSizes();
+		int likelyWidth = 0, likelyHeight = 0;
+
+		int type = activeNetwork.getType();
+		if ((type == ConnectivityManager.TYPE_MOBILE 
+			  || type == ConnectivityManager.TYPE_MOBILE_HIPRI
+			 ) && bandwidth >= 35) 
+		{
+			likelyWidth = 176;
+			likelyHeight = 144;
+		}
+		else if (bandwidth >= 115) { //640x480
+			likelyWidth = 640;
+			likelyHeight = 480;
+		}
+		else if (bandwidth >= 75) { //352x288
+			likelyWidth = 352;
+			likelyHeight = 288;
+		}
+		else if (bandwidth >= 35) { //176x144
+			likelyWidth = 176;
+			likelyHeight = 144;
+		}
+		
+		
+
+		if (likelyWidth != 0 && likelyHeight != 0) {
+			Size size = findPreviewSize(supportedPreviewSizes, likelyWidth, likelyHeight);
+			parameters.setPreviewSize(size.width, size.height);
+			if (cameraView.isPreviewOn()) {
+				cameraDevice.stopPreview();
+				cameraDevice.setParameters(parameters);
+				cameraDevice.startPreview();
+			}
+			else {
+				cameraDevice.setParameters(parameters);
+			}
+			result = true;
+		}
+		return result;
+	}
+
+	private Size findPreviewSize(List<Size> previewSizes, int width, int height) {
+		int diff = Integer.MAX_VALUE;
+		Size bestSize = previewSizes.get(0);
+
+		for (Size size : previewSizes) {
+			if (size.width <= width && size.height <= height) {
+				int width2 = (int) Math.pow(width - size.width, 2);
+				int height2 = (int) Math.pow(height - size.height, 2);
+				int sizeDiff = (int)Math.sqrt(width2 + height2);
+				if (sizeDiff < diff) {
+					diff = sizeDiff;
+					bestSize = size;
+				}
+			}
+		}
+
+		return bestSize;
+
 	}
 
 	// ---------------------------------------
@@ -226,43 +311,18 @@ public class RecordActivity extends Activity implements OnClickListener,
 	private void createRecorder() {
 		// if recorder is created , dont create it again
 		if (recorder == null) {
-			Size previewSize = getOptimumPreviewSize();
+			Size previewSize = cameraDevice.getParameters().getPreviewSize();
 			recorder = new FFmpegFrameRecorder(ffmpeg_link, previewSize.width,
 					previewSize.height, 1);
 		}
 		recorder.setFormat("flv");
 		recorder.setSampleRate(sampleAudioRateInHz);
 		recorder.setVideoCodec(AV_CODEC_ID_H264);
-		recorder.setVideoQuality(36);
+		recorder.setVideoQuality(23);
 		// Set in the surface changed method
 		recorder.setFrameRate(frameRate);
 	}
 
-	private Size getOptimumPreviewSize() {
-
-		Parameters params = cameraDevice.getParameters();
-		Size optimumSize = params.getPreviewSize();
-		List<Size> previewSizes = params.getSupportedVideoSizes();
-
-		double smallestPreviewSize = optimumSize.height * optimumSize.width; // We
-		// should
-		// be
-		// smaller
-		// than
-		// this...
-
-		double smallestWidth = 176; // Let's not get smaller than this...
-
-		for (Size previewSize : previewSizes) {
-			if ((previewSize.height * previewSize.width) < smallestPreviewSize
-					&& previewSize.width == smallestWidth) {
-				optimumSize = previewSize;
-			}
-		}
-
-		return optimumSize;
-
-	}
 
 	public boolean startRecording() {
 
@@ -278,6 +338,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 			if (recorder == null)
 				createRecorder();
 
+			cameraDevice.setPreviewCallback(this);
 			recorder.start();
 			startTime = System.currentTimeMillis();
 
@@ -291,13 +352,13 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 	public void stopRecording() {
 
-		localBroadcastManager.unregisterReceiver(viewerCountReceiver);
 		viewerCountView.setVisibility(View.INVISIBLE);
 		runAudioThread = false;
 
 		if (recorder != null && recording) {
 			StopRecordingTask stopTask = new StopRecordingTask();
 			stopTask.execute(recorder);
+			recorder = null;
 		}
 
 		recording = false;
@@ -327,7 +388,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 		@Override
 		public void run() {
 			android.os.Process
-					.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+			.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 
 			// Audio
 			int bufferSize;
@@ -397,22 +458,19 @@ public class RecordActivity extends Activity implements OnClickListener,
 	public void onClick(View v) {
 		if (!recording) {
 
-			String name = streamNameEditText.getText().toString();
+			streamName = streamNameEditText.getText().toString();
 
 			// Check the video is public or not
-			Boolean is_video_public = publicVideoCheckBox.isChecked();
+			is_video_public = publicVideoCheckBox.isChecked();
 
-			if (name != null && name.length() > 0) {
+			if (streamName != null && streamName.length() > 0) {
 				InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 				imm.hideSoftInputFromWindow(
 						streamNameEditText.getWindowToken(), 0);
-				streamNameEditText.setVisibility(View.GONE);
-				publicVideoCheckBox.setVisibility(View.GONE);
-				initRecorder();
 
-				new RegisterStreamTask().execute(httpGatewayURL, name,
-						streamURL, CloudMessaging.getPossibleMail(this),
-						is_video_public.toString());
+				new CheckBandwidthTask().execute(getString(R.string.server_addr));
+
+
 			} else {
 				AlertDialog.Builder builder = new AlertDialog.Builder(this);
 				// builder.setPositiveButton(R.string.ok, this);
@@ -423,42 +481,13 @@ public class RecordActivity extends Activity implements OnClickListener,
 		} else {
 			// This will trigger the audio recording loop to stop and then set
 			// isRecorderStart = false;
-			m_ProgressDialog = ProgressDialog.show(this,
-					getString(R.string.please_wait),
-					getString(R.string.stopping), true);
-			stopRecording();
-			runAudioThread = false;
-			Log.w(LOG_TAG, "Stop Button Pushed");
 			btnRecorderControl.setText(R.string.start);
 			streamNameEditText.setVisibility(View.VISIBLE);
 			publicVideoCheckBox.setVisibility(View.VISIBLE);
-
+			stopRecording();
+			runAudioThread = false;
+			Log.w(LOG_TAG, "Stop Button Pushed");
 		}
-	}
-
-	@Override
-	public void onPreviewChanged(byte[] data) {
-
-		if (/* bytePointer != null && */recording) {
-			// yuvIplimage.getByteBuffer().put(data);
-			if (bytePointer == null) {
-				bytePointer = new BytePointer(data.length);
-			}
-			bytePointer.put(data);
-
-			try {
-				long t = 1000 * (System.currentTimeMillis() - startTime);
-				if (t > recorder.getTimestamp()) {
-					recorder.setTimestamp(t);
-				}
-				recorder.record(bytePointer, previewSize.width,
-						previewSize.height);
-			} catch (FFmpegFrameRecorder.Exception e) {
-
-				e.printStackTrace();
-			}
-		}
-
 	}
 
 	public class RegisterStreamTask extends AsyncTask<String, Void, Boolean> {
@@ -468,10 +497,17 @@ public class RecordActivity extends Activity implements OnClickListener,
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
-			m_ProgressDialog = ProgressDialog.show(RecordActivity.this,
-					getString(R.string.please_wait),
-					getString(R.string.initializing), true);
-			m_ProgressDialog.setCancelable(true);
+
+			if (mProgressDialog == null) {
+				mProgressDialog = ProgressDialog.show(RecordActivity.this,
+						null,
+						getString(R.string.initializing), true);
+				mProgressDialog.setCancelable(true);
+			}
+			else {
+				mProgressDialog.setMessage(getString(R.string.initializing));
+			}
+
 		}
 
 		@Override
@@ -482,22 +518,16 @@ public class RecordActivity extends Activity implements OnClickListener,
 			if (recordingStarted == true) {
 				this.possibleMail = params[3];
 
-				boolean isPublic = false;
-				if (params[4].contentEquals("true")) {
-					isPublic = true;
-				}
-
 				AMFConnection amfConnection = new AMFConnection();
 				amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
 				try {
 					System.out.println(params[0]);
-					System.out.println(params[4]);
 
 					amfConnection.connect(params[0]);
 					result = (Boolean) amfConnection.call("registerLiveStream",
 							params[1], params[2], mailsToBeNotified,
-							possibleMail, isPublic, Locale.getDefault()
-									.getISO3Language());
+							possibleMail, is_video_public, Locale.getDefault()
+							.getISO3Language());
 
 				} catch (ClientStatusException e) {
 					e.printStackTrace();
@@ -515,9 +545,11 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		@Override
 		protected void onPostExecute(Boolean result) {
-			m_ProgressDialog.dismiss();
+			mProgressDialog.dismiss();
 			if (result == true) {
 				Log.w(LOG_TAG, "Start Button Pushed");
+				streamNameEditText.setVisibility(View.GONE);
+				publicVideoCheckBox.setVisibility(View.GONE);
 				btnRecorderControl.setText(R.string.stop);
 			} else {
 				Toast.makeText(getApplicationContext(),
@@ -532,30 +564,146 @@ public class RecordActivity extends Activity implements OnClickListener,
 	}
 
 	public class StopRecordingTask extends
-			AsyncTask<FFmpegFrameRecorder, Void, Void> {
+	AsyncTask<FFmpegFrameRecorder, Void, Void> {
+
+		@Override
+		protected Void doInBackground(FFmpegFrameRecorder... params) {
+			try {
+				localBroadcastManager.unregisterReceiver(viewerCountReceiver);
+				cameraDevice.setPreviewCallback(null);
+				params[0].stop();
+			} catch (Exception e) {
+			}
+			return null;
+		}
+	}
+
+	public class CheckBandwidthTask extends AsyncTask<String, Integer, Integer> {
 
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
+			mProgressDialog = ProgressDialog.show(RecordActivity.this,
+					null,
+					getString(R.string.checking_bandwidth), true);
+			mProgressDialog.setCancelable(true);
 		}
 
 		@Override
-		protected Void doInBackground(FFmpegFrameRecorder... params) {
-
+		protected Integer doInBackground(String... params) {
+			int bandwidth = 0;
+			Socket socket = null;
+			OutputStream outputStream = null;
+			InputStream istr = null;
 			try {
-				params[0].stop();
+				socket = new Socket(params[0], 53000);
 
-			} catch (Exception e) {
+				outputStream = socket.getOutputStream();
+				istr = socket.getInputStream();
+				byte[] data0 = new byte[1024];
+				int time0 = sendData(outputStream, istr, data0);
 
+				byte[] data1 = new byte[160 * 1024];
+				int time1 = sendData(outputStream, istr, data1);
+
+				int dataSize = data1.length  - data0.length;
+				int timeDiff = time1 - time0;
+
+				bandwidth = (int) (dataSize / timeDiff);
+
+				if ((bandwidth > 75) && 
+						(activeNetwork.getType() == ConnectivityManager.TYPE_WIFI ||
+						activeNetwork.getType() == ConnectivityManager.TYPE_ETHERNET)) {
+
+					byte[] data3 = new byte[480 * 1024];
+					int time3 = sendData(outputStream, istr, data3);
+
+					dataSize = data3.length - data0.length;
+					timeDiff = time3 - time0;
+
+					bandwidth = (int) (dataSize / timeDiff);
+					if (bandwidth < 0) {
+						bandwidth = 115;
+					}
+				}
+
+
+				outputStream.write("\n".getBytes());
+				outputStream.flush();
+
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			finally {
+				try {
+					istr.close();
+					outputStream.close();
+					socket.close();
+				}
+				catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 
-			return null;
+			return bandwidth;
+		}
+
+		private int sendData(OutputStream ostream, InputStream istream, byte[] data) {
+			int timeDiff = 0;
+			try {
+				long time = System.currentTimeMillis();
+				ostream.write(data);
+				ostream.write("\r".getBytes());
+				ostream.flush();
+				byte[] incomingData = new byte[10];
+				istream.read(incomingData, 0, incomingData.length);
+				timeDiff = (int)(System.currentTimeMillis() - time);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return timeDiff;
 		}
 
 		@Override
-		protected void onPostExecute(Void result) {
+		protected void onPostExecute(Integer result) {
 			super.onPostExecute(result);
-			m_ProgressDialog.dismiss();
+			Toast.makeText(getApplicationContext(), "bandwidth -> " + result + "KB", Toast.LENGTH_LONG).show();
+			if (setCameraPreviewSize(result) == true) {
+
+				initRecorder();
+				new RegisterStreamTask().execute(httpGatewayURL, streamName,
+						streamURL, CloudMessaging.getPossibleMail(RecordActivity.this));
+			}
+			else {
+				mProgressDialog.dismiss();
+				Toast.makeText(getApplicationContext(), getString(R.string.insufficient_bandwidth) , Toast.LENGTH_LONG).show();
+			}
+
+		}
+	}
+
+	@Override
+	public void onPreviewFrame(byte[] data, Camera arg1) {
+		if (recording) {
+
+			if (bytePointer == null) {
+				bytePointer = new BytePointer(data.length);
+			}
+			bytePointer.put(data);
+
+			try {
+				long t = 1000 * (System.currentTimeMillis() - startTime);
+				if (t > recorder.getTimestamp()) {
+					recorder.setTimestamp(t);
+				}
+				recorder.record(bytePointer, previewSize.width,
+						previewSize.height);
+			} catch (FFmpegFrameRecorder.Exception e) {
+
+				e.printStackTrace();
+			}
 		}
 
 	}

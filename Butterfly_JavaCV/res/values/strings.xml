@@ -9,6 +9,7 @@
     <string name="title_activity_stream_list">StreamList</string>
     <string name="refresh">Refresh</string>
     <string name="broadcast_live">Broadcast Live</string>
+    <string name="server_addr">ec2-54-200-137-96.us-west-2.compute.amazonaws.com</string>
     <string name="http_gateway_url">http://ec2-54-200-137-96.us-west-2.compute.amazonaws.com:5080/ButterFly_Red5/gateway</string>
     <string name="rtmp_url">rtmp://ec2-54-200-137-96.us-west-2.compute.amazonaws.com/ButterFly_Red5/</string>
     <string name="write_name_of_stream">Please write the name of the stream</string>
@@ -33,6 +34,7 @@
     <string name="stream_registration_failed">Stream registration failed. Check your connectivity and try again</string>
     <string name="terms_of_service_title">Terms and Privacy</string>
     <string name="shareStream">Share broadcast</string>
+    <string name="insufficient_bandwidth">Internet speed is not high enough for broadcasting</string>
     <string name="missed_the_stream">There is no live stream with this url right now. You should have missed it. Please be quick for the next time </string>
     <plurals name="viewers_count">
         <item quantity="one">%d Viewer</item>
@@ -138,5 +140,6 @@ We regularly review our compliance with our Privacy Policy. We also adhere to se
 Changes\n
 Our Privacy Policy may change from time to time. We will not reduce your rights under this Privacy Policy without your explicit consent. Updated privacy policy is published here.\n
 October 30, 2013</string>
+    <string name="checking_bandwidth">Checking internet speed...</string>
 
 </resources>

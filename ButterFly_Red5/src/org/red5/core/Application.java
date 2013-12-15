@@ -72,6 +72,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	private EntityManager entityManager;
 	private ResourceBundle messagesTR;
 	private ResourceBundle messagesEN;
+	private BandwidthServer bandwidthServer;
 
 	public static class Stream implements Serializable {
 		public String streamName;
@@ -119,9 +120,16 @@ public class Application extends MultiThreadedApplicationAdapter {
 		messagesTR = ResourceBundle.getBundle("resources/LanguageBundle",
 				new Locale("tr"));
 		messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
-
+		bandwidthServer = new BandwidthServer();
 	}
 
+	@Override
+	public void appStop(IScope arg0) {
+		super.appStop(arg0);
+		getBandwidthServer().close();
+	}
+
+	
 	/** {@inheritDoc} */
 	@Override
 	public boolean connect(IConnection conn, IScope scope, Object[] params) {
@@ -133,6 +141,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	public void disconnect(IConnection conn, IScope scope) {
 		super.disconnect(conn, scope);
 	}
+	
 
 	public String getLiveStreams() {
 		IScope target = Red5.getConnectionLocal().getScope();
@@ -619,20 +628,35 @@ public class Application extends MultiThreadedApplicationAdapter {
 		for (Iterator iterator = entrySet.iterator(); iterator.hasNext();) {
 			Entry<String, Stream> entry = (Entry<String, Stream>) iterator.next();
 			Stream value = entry.getValue();
-			System.out.println("Application.streamSubscriberClose() -- before if ");
 			if (value.containsViewer(subcriberStream.getName()))  {
-				System.out.println("Application.streamSubscriberClose() -- after if");
 				value.removeViewer(subcriberStream.getName());
-				System.out.println("Application.streamSubscriberClose() -- viewer count " + value.getViewerCount());
 				notifyUserAboutViewerCount(value.getViewerCount(), value.getBroadcasterGCMUsers());
 				break;
 			}
 			
 		}
-
-		System.out.println("------Application.streamSubscriberClose() " + subcriberStream.getName());
+	}
+	
+	public int checkClientBandwidth(long startTime, int length, byte[] data) {
+		System.out.println(" start time --> " + startTime);
+		long currentTimeMillis = System.currentTimeMillis();
+		System.out.println(" end time -->" + currentTimeMillis);
+		
+		long diff = currentTimeMillis - startTime;
+		
+		System.out.println("diff -> " + diff + " data length ->" + data.length);
+		
+		if (length == data.length) {
+			int bandwidth = data.length/(int)diff;
+			return bandwidth;
+			
+		}
+		return 0;
+		
 	}
 
-	
+	public BandwidthServer getBandwidthServer() {
+		return bandwidthServer;
+	}
 
 }

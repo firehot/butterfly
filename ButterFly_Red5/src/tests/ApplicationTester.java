@@ -3,6 +3,11 @@ package tests;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,10 +27,16 @@ public class ApplicationTester {
 	@Before
 	public void before() {
 		butterflyApp = new Application();
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@After
 	public void after() {
+		butterflyApp.getBandwidthServer().close();
 		butterflyApp = null;
 	}
 
@@ -189,6 +200,59 @@ public class ApplicationTester {
 //	}
 
 
+	@Test
+	public void testcheckClientBandwidht() {
+		byte[] data = new byte[20480];
+		long currentTimeMillis = System.currentTimeMillis();
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		int checkClientBandwidth = butterflyApp.checkClientBandwidth(currentTimeMillis, data.length, data);
+	
+		System.out.println(" check client bandwidth -> " + checkClientBandwidth);
+	
+	}
+	
+	@Test
+	public void testBandwidthServer() {
+		try {
+			Thread.sleep(100);
+			Socket socket = new Socket("127.0.0.1", 53000);
+			socket.setTcpNoDelay(true);
+			
+			OutputStream outputStream = socket.getOutputStream();
+			byte[] data = new byte[2048000];
+			String time = String.valueOf(System.currentTimeMillis()) + ";";
+			outputStream.write(time.getBytes(), 0, time.getBytes().length);
+			outputStream.write(data, 0, data.length);
+			outputStream.write("\n".getBytes());			
+			outputStream.flush();
+			
+			InputStream istr = socket.getInputStream();
+			int length = 0;
+			while ((length = istr.read(data, 0, data.length)) > 0) {
+				String bandwidth = new String(data, 0, length);
+				System.out.println("**************** bandwidth -> " + bandwidth);
+				if (data[length-1] == '\n') {
+					break;
+				}
+			}
+			
+			istr.close();
+			outputStream.close();
+			socket.close();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+	}
 
 	
 

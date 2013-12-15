@@ -5,43 +5,37 @@ import java.util.List;
 
 import android.content.Context;
 import android.hardware.Camera;
-import android.hardware.Camera.PreviewCallback;
 import android.hardware.Camera.Size;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.butterfly.listener.OnPreviewListener;
-
 //---------------------------------------------
 // camera thread, gets and encodes video data
 //---------------------------------------------
-public class CameraView extends ViewGroup implements SurfaceHolder.Callback,
-		PreviewCallback {
+public class CameraView extends ViewGroup implements SurfaceHolder.Callback {
 
 	private SurfaceHolder mHolder;
 	private Camera mCamera;
 	private boolean isPreviewOn = false;
-	OnPreviewListener previewListener;
 	Size mPreviewSize;
 	List<Size> mSupportedPreviewSizes;
 	SurfaceView mSurfaceView;
 
-	public CameraView(Context context, Camera camera) {
-		super(context);
-		Log.w("camera", "camera view");
-		mSurfaceView = new SurfaceView(context);
-		addView(mSurfaceView);
-		mCamera = camera;
-		mHolder = mSurfaceView.getHolder();
-		mHolder.addCallback(CameraView.this);
-		mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-		mCamera.setPreviewCallback(CameraView.this);
-		this.previewListener = (OnPreviewListener) context;
-	}
+//	public CameraView(Context context, Camera camera) {
+//		super(context);
+//		Log.w("camera", "camera view");
+//		mSurfaceView = new SurfaceView(context);
+//		addView(mSurfaceView);
+//		mCamera = camera;
+//		mHolder = mSurfaceView.getHolder();
+//		mHolder.addCallback(CameraView.this);
+//		mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+//		mCamera.setPreviewCallback(CameraView.this);
+//		this.previewListener = (OnPreviewListener) context;
+//	}
 
 	public CameraView(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -52,7 +46,7 @@ public class CameraView extends ViewGroup implements SurfaceHolder.Callback,
 		mHolder.addCallback(this);
 		// deprecated setting, but required on Android versions prior to 3.0
 		mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-		this.previewListener = (OnPreviewListener) context;
+//		this.previewListener = (OnPreviewListener) context;
 	}
 
 	@Override
@@ -69,19 +63,19 @@ public class CameraView extends ViewGroup implements SurfaceHolder.Callback,
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
 			int height) {
 		stopPreview();
-		Camera.Parameters camParams = mCamera.getParameters();
+	//	Camera.Parameters camParams = mCamera.getParameters();
 		// camParams.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
-		camParams.setPreviewSize(mSupportedPreviewSizes.get(0).width,
-				mSupportedPreviewSizes.get(0).height);
-		requestLayout();
-		mCamera.setParameters(camParams);
+//		camParams.setPreviewSize(mSupportedPreviewSizes.get(0).width,
+//				mSupportedPreviewSizes.get(0).height);
+//		requestLayout();
+	//	mCamera.setParameters(camParams);
 
 		startPreview();
 	}
 
 	public void setCamera(Camera camera) {
 		mCamera = camera;
-		mCamera.setPreviewCallback(CameraView.this);
+		//mCamera.setPreviewCallback(CameraView.this);
 		if (mCamera != null) {
 			mSupportedPreviewSizes = mCamera.getParameters()
 					.getSupportedPreviewSizes();
@@ -98,6 +92,10 @@ public class CameraView extends ViewGroup implements SurfaceHolder.Callback,
 			// The camera has probably just been released, ignore.
 		}
 	}
+	
+	public boolean isPreviewOn() {
+		return isPreviewOn;
+	}
 
 	public void startPreview() {
 		if (!isPreviewOn && mCamera != null) {
@@ -111,11 +109,6 @@ public class CameraView extends ViewGroup implements SurfaceHolder.Callback,
 			isPreviewOn = false;
 			mCamera.stopPreview();
 		}
-	}
-
-	@Override
-	public void onPreviewFrame(byte[] data, Camera camera) {
-		this.previewListener.onPreviewChanged(data);
 	}
 
 	@Override
