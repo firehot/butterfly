@@ -121,12 +121,16 @@ public class Application extends MultiThreadedApplicationAdapter {
 				new Locale("tr"));
 		messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
 		bandwidthServer = new BandwidthServer();
+		
+		setGhostConnsCleanupPeriod(5);
+		this.scheduleGhostConnectionsCleanup();
 	}
 
 	@Override
 	public void appStop(IScope arg0) {
 		super.appStop(arg0);
 		getBandwidthServer().close();
+		
 	}
 
 	
@@ -658,5 +662,4 @@ public class Application extends MultiThreadedApplicationAdapter {
 	public BandwidthServer getBandwidthServer() {
 		return bandwidthServer;
 	}
-
 }

@@ -173,6 +173,7 @@ PreviewCallback {
 
 		if (cameraView != null) {
 			cameraView.stopPreview();
+			cameraDevice.setPreviewCallback(null);
 			cameraDevice.release();
 			cameraDevice = null;
 		}
@@ -326,7 +327,10 @@ PreviewCallback {
 
 	public boolean startRecording() {
 
-		previewSize = cameraDevice.getParameters().getPreviewSize();
+		if(cameraDevice != null && cameraDevice.getParameters() != null)
+			previewSize = cameraDevice.getParameters().getPreviewSize();
+		else
+			return false;
 
 		recording = false;
 		IntentFilter intentFilter = new IntentFilter(
