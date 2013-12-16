@@ -27,6 +27,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.BaseAdapter;
 import android.widget.FilterQueryProvider;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -56,11 +57,13 @@ public class ContactsList extends Activity {
 	public class Contact {
 		public String displayName;
 		public String email;
+		public String photoUri;
 
-		public Contact(String displayName, String email) {
+		public Contact(String displayName, String email, String photoUri) {
 			super();
 			this.displayName = displayName;
 			this.email = email;
+			this.photoUri = photoUri;
 		}
 
 		@Override
@@ -86,10 +89,10 @@ public class ContactsList extends Activity {
 				R.layout.contact_list_item);
 		selectedContactList.setAdapter(selectedContactAdapter);
 
-		mAdapter = new FilterContactListAdapter(this,
-				R.layout.contact_filter_list_item, null, new String[] {
+		mAdapter = new FilteredContactListAdapter(this,
+				R.layout.contact_list_item, null, new String[] {
 				displayName, Email.ADDRESS, Data.PHOTO_THUMBNAIL_URI }, new int[] {
-				R.id.display_name, R.id.email_address, R.id.photo_uri}, 0);
+				R.id.display_name, R.id.email_address, R.id.photo_uri}, 0, true);
 
 
 		textView.setAdapter(mAdapter);
@@ -128,6 +131,8 @@ public class ContactsList extends Activity {
 				String mail = cursor.getString(cursor
 						.getColumnIndex(Email.ADDRESS));
 
+				String photoUri = cursor.getString(cursor.getColumnIndex(Data.PHOTO_THUMBNAIL_URI));
+
 				boolean found = false;
 				for (int i = 0; i < count; i++) {
 					if (selectedContactAdapter.getItem(i).email.equals(mail)) {
@@ -136,7 +141,7 @@ public class ContactsList extends Activity {
 					}
 				}
 				if (found == false) {
-					selectedContactAdapter.add(new Contact(name, mail));
+					selectedContactAdapter.add(new Contact(name, mail, photoUri));
 					selectedContactAdapter.notifyDataSetChanged();
 				}
 				textView.setText("");
@@ -246,71 +251,70 @@ public class ContactsList extends Activity {
 
 	}
 
-	public class SelectedContactAdapter extends ArrayAdapter<Contact> {
+	static class ViewHolder {
+		TextView displayNameView;
+		TextView emailView;
+		ImageView photoView;
+		ImageView deleteView;
+	}
 
-		private int view;
+	public class SelectedContactAdapter extends ArrayAdapter<Contact> {
 
 		public SelectedContactAdapter(Context context, int resource) {
 			super(context, resource);
-			this.view = resource;
 		}
 
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
-
-			if (convertView == null) {
-				convertView = getLayoutInflater().inflate(view, null);
-				TextView tv = (TextView) (convertView
-						.findViewById(R.id.contact_display_name));
-				ViewHolder viewHolder = new ViewHolder();
-				viewHolder.tv = tv;
-				convertView.setTag(viewHolder);
-			}
-
-			ViewHolder viewHolder = (ViewHolder) convertView.getTag();
-			viewHolder.tv.setText(getItem(position).toString());
-
-			return convertView;
-		}
-
-		public class ViewHolder {
-			TextView tv;
-		}
-
-	}
-
-	public static class FilterContactListAdapter extends SimpleCursorAdapter {
-
-
-		private LayoutInflater layoutInflater;
-
-		public FilterContactListAdapter(Context context, int layout, Cursor c,
-				String[] from, int[] to, int flag) {
-			super(context, layout, c, from, to, flag);
-			layoutInflater = LayoutInflater.from(context);
-
-		}
-
-		static class ViewHolder {
-			TextView displayNameView;
-			TextView emailView;
-			ImageView photoView;
-		}
-
-		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
-
 			ViewHolder holder;
 			if (convertView == null) {
-				convertView = layoutInflater.inflate(R.layout.contact_filter_list_item  , null);
+				convertView = getLayoutInflater().inflate(R.layout.contact_list_item  , null);
 				holder = new ViewHolder();
 				holder.displayNameView = (TextView) convertView.findViewById(R.id.display_name);
 				holder.emailView = (TextView) convertView.findViewById(R.id.email_address);
 				holder.photoView = (ImageView) convertView.findViewById(R.id.photo_uri);
+				holder.deleteView = (ImageView) convertView.findViewById(R.id.remove_contact);
 				convertView.setTag(holder);
 			} else {
 				holder = (ViewHolder) convertView.getTag();
 			}
+			Contact item = getItem(position);
+			holder.displayNameView.setText(item.displayName);
+			holder.emailView.setText(item.email);
+			if (item.photoUri != null) {
+				holder.photoView.setImageURI(Uri.parse(item.photoUri));
+			}
+			else {
+				holder.photoView.setImageResource(R.drawable.ic_action_user);
+			}
+			return convertView;
+		}
+	}
+
+	public class FilteredContactListAdapter extends SimpleCursorAdapter {
+
+		public FilteredContactListAdapter(Context context, int layout, Cursor c,
+				String[] from, int[] to, int flag, boolean isSearching) {
+			super(context, layout, c, from, to, flag);
+		}
+
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+
+			//			ViewHolder holder = getViewHolder(convertView);
+			ViewHolder holder;
+			if (convertView == null) {
+				convertView = getLayoutInflater().inflate(R.layout.contact_list_item  , null);
+				holder = new ViewHolder();
+				holder.displayNameView = (TextView) convertView.findViewById(R.id.display_name);
+				holder.emailView = (TextView) convertView.findViewById(R.id.email_address);
+				holder.photoView = (ImageView) convertView.findViewById(R.id.photo_uri);
+				holder.deleteView = (ImageView) convertView.findViewById(R.id.remove_contact);
+				convertView.setTag(holder);
+			} else {
+				holder = (ViewHolder) convertView.getTag();
+			}
+
 			getCursor().moveToPosition(position);
 
 			holder.displayNameView.setText(getCursor().getString(getCursor().getColumnIndex(displayName)));
@@ -322,6 +326,7 @@ public class ContactsList extends Activity {
 			else {
 				holder.photoView.setImageResource(R.drawable.ic_action_user);
 			}
+			holder.deleteView.setVisibility(View.GONE);
 			return convertView;
 		}
 
