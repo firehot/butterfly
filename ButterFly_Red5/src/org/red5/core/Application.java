@@ -68,7 +68,8 @@ import com.google.android.gcm.server.Sender;
  * 
  * @author The Red5 Project (red5@osflash.org)
  */
-public class Application extends MultiThreadedApplicationAdapter implements IStreamListener {
+public class Application extends MultiThreadedApplicationAdapter implements
+		IStreamListener {
 
 	private static final String SENDER_ID = "AIzaSyCFmHIbJO0qCtPo6klp7Ade3qjeGLgtZWw";
 	Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
@@ -91,21 +92,21 @@ public class Application extends MultiThreadedApplicationAdapter implements IStr
 			this.streamName = streamName;
 			this.streamUrl = streamUrl;
 			this.registerTime = registerTime;
-			
+
 		}
-		
+
 		public void addViewer(String streamName) {
 			viewerStreamNames.add(streamName);
 		}
-		
+
 		public boolean containsViewer(String streamName) {
 			return viewerStreamNames.contains(streamName);
 		}
-		
+
 		public void removeViewer(String streamName) {
 			viewerStreamNames.remove(streamName);
 		}
-		
+
 		public int getViewerCount() {
 			return viewerStreamNames.size();
 		}
@@ -113,8 +114,8 @@ public class Application extends MultiThreadedApplicationAdapter implements IStr
 		public void setGCMUser(GcmUsers registrationIdList) {
 			this.gcmIdList = registrationIdList;
 		}
-		
-		public GcmUsers getBroadcasterGCMUsers(){
+
+		public GcmUsers getBroadcasterGCMUsers() {
 			return gcmIdList;
 		}
 
@@ -132,10 +133,9 @@ public class Application extends MultiThreadedApplicationAdapter implements IStr
 	public void appStop(IScope arg0) {
 		super.appStop(arg0);
 		getBandwidthServer().close();
-		
+
 	}
 
-	
 	/** {@inheritDoc} */
 	@Override
 	public boolean connect(IConnection conn, IScope scope, Object[] params) {
@@ -147,7 +147,6 @@ public class Application extends MultiThreadedApplicationAdapter implements IStr
 	public void disconnect(IConnection conn, IScope scope) {
 		super.disconnect(conn, scope);
 	}
-	
 
 	public String getLiveStreams() {
 		IScope target = Red5.getConnectionLocal().getScope();
@@ -156,7 +155,7 @@ public class Application extends MultiThreadedApplicationAdapter implements IStr
 		JSONObject jsonObject;
 		Set<String> streamNames = getBroadcastStreamNames(target);
 		streamNames = removeGhostBroadcasters(streamNames);
-		
+
 		for (String name : streamNames) {
 			if (registeredStreams.containsKey(name)) {
 				Stream stream = registeredStreams.get(name);
@@ -165,15 +164,14 @@ public class Application extends MultiThreadedApplicationAdapter implements IStr
 				jsonObject.put("name", stream.streamName);
 				jsonObject.put("viewerCount", stream.getViewerCount());
 				jsonArray.add(jsonObject);
-				//streams.put(stream.streamUrl, stream.streamName);
+				// streams.put(stream.streamUrl, stream.streamName);
 			}
 		}
-		
+
 		return jsonArray.toString();
 	}
-	
-	public boolean isLiveStreamExist(String url)
-	{
+
+	public boolean isLiveStreamExist(String url) {
 		IScope target = Red5.getConnectionLocal().getScope();
 		Set<String> streamNames = getBroadcastStreamNames(target);
 		boolean result = false;
@@ -189,11 +187,11 @@ public class Application extends MultiThreadedApplicationAdapter implements IStr
 		boolean result = false;
 		if (registeredStreams.containsKey(url) == false) {
 			if (isPublic == true) {
-				Stream stream = new Stream(streamName, url, System
-						.currentTimeMillis());
+				Stream stream = new Stream(streamName, url,
+						System.currentTimeMillis());
 				stream.setGCMUser(getRegistrationIdList(broadcasterMail));
 
-				registeredStreams.put(url,stream);
+				registeredStreams.put(url, stream);
 			}
 			sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url,
 					deviceLanguage);
@@ -311,8 +309,9 @@ public class Application extends MultiThreadedApplicationAdapter implements IStr
 		}
 
 		String subject = messages.getString("mail_notification_subject");
-		String message = MessageFormat.format(messages.getString("mail_notification_message"),broadcasterMail);
-
+		String message = MessageFormat.format(
+				messages.getString("mail_notification_message"),
+				broadcasterMail);
 
 		GcmUsers result = null;
 
@@ -355,8 +354,9 @@ public class Application extends MultiThreadedApplicationAdapter implements IStr
 			}
 
 			if (!mailListNotifiedByMail.isEmpty())
-				sendMail(mailListNotifiedByMail, subject, message, broadcasterMail);
-			
+				sendMail(mailListNotifiedByMail, subject, message,
+						broadcasterMail);
+
 			if (userList.size() > 0)
 				sendNotification(userList, broadcasterMail, streamURL);
 		}
@@ -485,7 +485,7 @@ public class Application extends MultiThreadedApplicationAdapter implements IStr
 						InternetAddress.parse(email.get(i)));
 				message.setSubject(subject);
 				message.setText(messagex);
-				//message.setText(broadcasterMail);
+				// message.setText(broadcasterMail);
 				System.out.println("Done4");
 				Transport.send(message);
 				System.out.println("Done5");
@@ -547,17 +547,16 @@ public class Application extends MultiThreadedApplicationAdapter implements IStr
 							updateUser(canoID, user.getEmail(), oldRegID);
 						}
 
-					}
-					else
-					{
+					} else {
 						String error = innerResult.getErrorCodeName();
-						 if (error.equals(Constants.ERROR_NOT_REGISTERED)) {
-						   // application has been removed from device - unregister database
-							 String oldRegID = targetRegIDList.get(i);
-							 GcmUsers user = GcmUsers.fetchUserByRegID(oldRegID,
-										androidTargets);
-							 deleteUser(user);
-						 }
+						if (error.equals(Constants.ERROR_NOT_REGISTERED)) {
+							// application has been removed from device -
+							// unregister database
+							String oldRegID = targetRegIDList.get(i);
+							GcmUsers user = GcmUsers.fetchUserByRegID(oldRegID,
+									androidTargets);
+							deleteUser(user);
+						}
 					}
 				}
 
@@ -576,9 +575,8 @@ public class Application extends MultiThreadedApplicationAdapter implements IStr
 		System.out.println("OK");
 		return resx;
 	}
-	
-	public boolean deleteUser(GcmUsers user)
-	{
+
+	public boolean deleteUser(GcmUsers user) {
 		boolean result;
 		try {
 			beginTransaction();
@@ -594,73 +592,79 @@ public class Application extends MultiThreadedApplicationAdapter implements IStr
 		}
 		return result;
 	}
-	
+
 	@Override
-	public void streamPlayItemPlay(ISubscriberStream subscriberStream, IPlayItem item, boolean isLive) {
+	public void streamPlayItemPlay(ISubscriberStream subscriberStream,
+			IPlayItem item, boolean isLive) {
 		super.streamPlayItemPlay(subscriberStream, item, isLive);
-		
+
 		String name = item.getName();
 		if (registeredStreams.containsKey(name)) {
 			Stream stream = registeredStreams.get(name);
 			stream.addViewer(subscriberStream.getName());
-			System.out.println("Application.streamPlayItemPlay() -- viewerCount " + stream.getViewerCount());
-			notifyUserAboutViewerCount(stream.getViewerCount(), stream.getBroadcasterGCMUsers());
+			System.out
+					.println("Application.streamPlayItemPlay() -- viewerCount "
+							+ stream.getViewerCount());
+			notifyUserAboutViewerCount(stream.getViewerCount(),
+					stream.getBroadcasterGCMUsers());
 		}
 
 	}
-	
-	private void notifyUserAboutViewerCount(int viewerCount, GcmUsers broadcasterGCMUsers) {
+
+	private void notifyUserAboutViewerCount(int viewerCount,
+			GcmUsers broadcasterGCMUsers) {
 
 		Sender sender = new Sender(SENDER_ID);
 
-		Message message = new Message.Builder()
-				.collapseKey("1").timeToLive(30).delayWhileIdle(true)
-				.addData("viewerCount", String.valueOf(viewerCount))
-				.build();
+		Message message = new Message.Builder().collapseKey("1").timeToLive(30)
+				.delayWhileIdle(true)
+				.addData("viewerCount", String.valueOf(viewerCount)).build();
 
 		try {
-			MulticastResult result = sender.send(message, broadcasterGCMUsers.fetchRegIDStrings(), 1);
+			MulticastResult result = sender.send(message,
+					broadcasterGCMUsers.fetchRegIDStrings(), 1);
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-		
+
 	}
 
 	@Override
 	public void streamSubscriberClose(ISubscriberStream subcriberStream) {
 		super.streamSubscriberClose(subcriberStream);
-		
+
 		Set<Entry<String, Stream>> entrySet = registeredStreams.entrySet();
 		for (Iterator iterator = entrySet.iterator(); iterator.hasNext();) {
-			Entry<String, Stream> entry = (Entry<String, Stream>) iterator.next();
+			Entry<String, Stream> entry = (Entry<String, Stream>) iterator
+					.next();
 			Stream value = entry.getValue();
-			if (value.containsViewer(subcriberStream.getName()))  {
+			if (value.containsViewer(subcriberStream.getName())) {
 				value.removeViewer(subcriberStream.getName());
-				notifyUserAboutViewerCount(value.getViewerCount(), value.getBroadcasterGCMUsers());
+				notifyUserAboutViewerCount(value.getViewerCount(),
+						value.getBroadcasterGCMUsers());
 				break;
 			}
-			
+
 		}
 	}
-	
+
 	public int checkClientBandwidth(long startTime, int length, byte[] data) {
 		System.out.println(" start time --> " + startTime);
 		long currentTimeMillis = System.currentTimeMillis();
 		System.out.println(" end time -->" + currentTimeMillis);
-		
+
 		long diff = currentTimeMillis - startTime;
-		
+
 		System.out.println("diff -> " + diff + " data length ->" + data.length);
-		
+
 		if (length == data.length) {
-			int bandwidth = data.length/(int)diff;
+			int bandwidth = data.length / (int) diff;
 			return bandwidth;
-			
+
 		}
 		return 0;
-		
+
 	}
 
 	public BandwidthServer getBandwidthServer() {
@@ -676,32 +680,35 @@ public class Application extends MultiThreadedApplicationAdapter implements IStr
 			streamTemp.timeReceived = new Timestamp(date.getTime());
 		}
 	}
-	
-	/* en son alýnan paket zamaný ile mevcut zaman arasinda 5sn fark varsa bu stream silinir*/
+
+	/*
+	 * en son alýnan paket zamaný ile mevcut zaman arasinda 5sn fark varsa bu
+	 * stream silinir
+	 */
 	private Set<String> removeGhostBroadcasters(Set<String> streamNames) {
 		List<String> toBeRemoved = new ArrayList<String>();
-		
+
 		for (String name : streamNames) {
 
 			if (registeredStreams.containsKey(name)) {
-				
+
 				Stream stream = registeredStreams.get(name);
 				java.util.Date date = new java.util.Date();
 				Timestamp currentTime = new Timestamp(date.getTime());
-				
-				if (currentTime.getTime() - stream.timeReceived.getTime() > 5000) 
-				{
-					streamNames.add(name);
+
+				if (stream.timeReceived != null) {
+					if (currentTime.getTime() - stream.timeReceived.getTime() > 5000) {
+						streamNames.add(name);
+					}
 				}
 			}
 		}
-		
-		for(String name : toBeRemoved)
-		{
+
+		for (String name : toBeRemoved) {
 			registeredStreams.remove(name);
 			streamNames.remove(name);
 		}
-		
+
 		return streamNames;
 	}
 }
