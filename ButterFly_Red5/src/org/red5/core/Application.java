@@ -20,6 +20,7 @@ package org.red5.core;
  */
 
 import java.io.Serializable;
+import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,6 +53,8 @@ import org.red5.server.api.Red5;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.api.stream.IPlayItem;
+import org.red5.server.api.stream.IStreamListener;
+import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.api.stream.ISubscriberStream;
 
 import com.google.android.gcm.server.Constants;
@@ -65,7 +68,7 @@ import com.google.android.gcm.server.Sender;
  * 
  * @author The Red5 Project (red5@osflash.org)
  */
-public class Application extends MultiThreadedApplicationAdapter {
+public class Application extends MultiThreadedApplicationAdapter implements IStreamListener {
 
 	private static final String SENDER_ID = "AIzaSyCFmHIbJO0qCtPo6klp7Ade3qjeGLgtZWw";
 	Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
@@ -81,6 +84,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		public ArrayList<String> viewerStreamNames = new ArrayList<String>();
 		private String broadcasterGCMId;
 		private GcmUsers gcmIdList;
+		public Timestamp timeReceived;
 
 		public Stream(String streamName, String streamUrl, Long registerTime) {
 			super();
@@ -121,9 +125,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 				new Locale("tr"));
 		messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
 		bandwidthServer = new BandwidthServer();
-		
-		setGhostConnsCleanupPeriod(5);
-		this.scheduleGhostConnectionsCleanup();
+
 	}
 
 	@Override
@@ -153,6 +155,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 		JSONArray jsonArray = new JSONArray();
 		JSONObject jsonObject;
 		Set<String> streamNames = getBroadcastStreamNames(target);
+		streamNames = removeGhostBroadcasters(streamNames);
+		
 		for (String name : streamNames) {
 			if (registeredStreams.containsKey(name)) {
 				Stream stream = registeredStreams.get(name);
@@ -661,5 +665,43 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 	public BandwidthServer getBandwidthServer() {
 		return bandwidthServer;
+	}
+
+	@Override
+	public void packetReceived(IBroadcastStream stream, IStreamPacket packet) {
+		String streamUrl = stream.getPublishedName();
+		if (registeredStreams.containsKey(streamUrl)) {
+			Stream streamTemp = registeredStreams.get(streamUrl);
+			java.util.Date date = new java.util.Date();
+			streamTemp.timeReceived = new Timestamp(date.getTime());
+		}
+	}
+	
+	/* en son alýnan paket zamaný ile mevcut zaman arasinda 5sn fark varsa bu stream silinir*/
+	private Set<String> removeGhostBroadcasters(Set<String> streamNames) {
+		List<String> toBeRemoved = new ArrayList<String>();
+		
+		for (String name : streamNames) {
+
+			if (registeredStreams.containsKey(name)) {
+				
+				Stream stream = registeredStreams.get(name);
+				java.util.Date date = new java.util.Date();
+				Timestamp currentTime = new Timestamp(date.getTime());
+				
+				if (currentTime.getTime() - stream.timeReceived.getTime() > 5000) 
+				{
+					streamNames.add(name);
+				}
+			}
+		}
+		
+		for(String name : toBeRemoved)
+		{
+			registeredStreams.remove(name);
+			streamNames.remove(name);
+		}
+		
+		return streamNames;
 	}
 }
