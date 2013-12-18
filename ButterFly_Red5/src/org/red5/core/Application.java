@@ -154,8 +154,9 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		JSONArray jsonArray = new JSONArray();
 		JSONObject jsonObject;
 		Set<String> streamNames = getBroadcastStreamNames(target);
+		System.out.println("getLiveStreams count 1"+ streamNames.size());
 		streamNames = removeGhostBroadcasters(streamNames);
-
+		System.out.println("getLiveStreams count 2"+ streamNames.size());
 		for (String name : streamNames) {
 			if (registeredStreams.containsKey(name)) {
 				Stream stream = registeredStreams.get(name);
@@ -674,10 +675,15 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	@Override
 	public void packetReceived(IBroadcastStream stream, IStreamPacket packet) {
 		String streamUrl = stream.getPublishedName();
+		
+		System.out.println("packetReceived "+ streamUrl);
+		
 		if (registeredStreams.containsKey(streamUrl)) {
+			System.out.println("packetReceived contains"+ streamUrl);
 			Stream streamTemp = registeredStreams.get(streamUrl);
 			java.util.Date date = new java.util.Date();
 			streamTemp.timeReceived = new Timestamp(date.getTime());
+			System.out.println("packetReceived time"+ streamUrl + streamTemp.timeReceived.toString());
 		}
 	}
 
