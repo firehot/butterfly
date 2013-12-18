@@ -423,7 +423,11 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		removeStream(streamUrl);
 		super.streamBroadcastClose(stream);
 	}
-
+	@Override
+	public void streamBroadcastStart(IBroadcastStream stream) {
+		stream.addStreamListener(this);
+		super.streamBroadcastStart(stream);
+	}
 	public boolean removeStream(String streamUrl) {
 		boolean result = false;
 		if (registeredStreams.containsKey(streamUrl)) {
