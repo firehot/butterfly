@@ -425,9 +425,19 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 	@Override
 	public void streamBroadcastStart(IBroadcastStream stream) {
+		System.out.println("streamBroadcastStart "+ stream.getPublishedName());
 		stream.addStreamListener(this);
 		super.streamBroadcastStart(stream);
 	}
+	
+
+	@Override
+	public void streamPublishStart(IBroadcastStream stream) {
+		System.out.println("streamPublishStart "+ stream.getPublishedName());
+		stream.addStreamListener(this);
+		super.streamPublishStart(stream);
+	}
+	
 	public boolean removeStream(String streamUrl) {
 		boolean result = false;
 		if (registeredStreams.containsKey(streamUrl)) {
