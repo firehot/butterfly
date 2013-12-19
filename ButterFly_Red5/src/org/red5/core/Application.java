@@ -720,14 +720,16 @@ public class Application extends MultiThreadedApplicationAdapter implements
 					System.out.println("timeReceived not null");
 					System.out.println("current :" +currentTime.getTime());
 					System.out.println("timeReceived :" +stream.timeReceived.getTime());
-					if (currentTime.getTime() - stream.timeReceived.getTime() > 5000) {
-						streamNames.add(name);
+					if ((currentTime.getTime() - stream.timeReceived.getTime()) > 5000) {
+						System.out.println("streamNames added to be removed " +name);
+						toBeRemoved.add(name);
 					}
 				}
 			}
 		}
 
 		for (String name : toBeRemoved) {
+			System.out.println("toBeRemoved " +name);
 			registeredStreams.remove(name);
 			streamNames.remove(name);
 		}
