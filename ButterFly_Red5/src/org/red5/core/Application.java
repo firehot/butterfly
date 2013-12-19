@@ -690,14 +690,14 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public void packetReceived(IBroadcastStream stream, IStreamPacket packet) {
 		String streamUrl = stream.getPublishedName();
 		
-		System.out.println("packetReceived "+ streamUrl);
+		//System.out.println("packetReceived "+ streamUrl);
 		
 		if (registeredStreams.containsKey(streamUrl)) {
-			System.out.println("packetReceived contains"+ streamUrl);
+			//System.out.println("packetReceived contains"+ streamUrl);
 			Stream streamTemp = registeredStreams.get(streamUrl);
 			java.util.Date date = new java.util.Date();
 			streamTemp.timeReceived = new Timestamp(date.getTime());
-			System.out.println("packetReceived time"+ streamUrl + streamTemp.timeReceived.toString());
+			//System.out.println("packetReceived time"+ streamUrl + streamTemp.timeReceived.toString());
 		}
 	}
 
