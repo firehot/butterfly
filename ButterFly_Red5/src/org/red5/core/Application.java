@@ -711,12 +711,15 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		for (String name : streamNames) {
 
 			if (registeredStreams.containsKey(name)) {
-
+				System.out.println("registeredStreams.containsKey");
 				Stream stream = registeredStreams.get(name);
 				java.util.Date date = new java.util.Date();
 				Timestamp currentTime = new Timestamp(date.getTime());
 
 				if (stream.timeReceived != null) {
+					System.out.println("timeReceived not null");
+					System.out.println("current :" +currentTime.getTime());
+					System.out.println("timeReceived :" +stream.timeReceived.getTime());
 					if (currentTime.getTime() - stream.timeReceived.getTime() > 5000) {
 						streamNames.add(name);
 					}
