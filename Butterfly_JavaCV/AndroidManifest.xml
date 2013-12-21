@@ -67,12 +67,6 @@
                 android:value="com.butterfly.StreamList" />
         </activity>
         <activity
-            android:name="com.butterfly.fragment.StreamListFragment"
-            android:label="@string/app_name" >
-            
-          
-        </activity>
-        <activity
             android:name="com.butterfly.ContactsList"
             android:configChanges="orientation|screenSize"
             android:label="@string/app_name" >
