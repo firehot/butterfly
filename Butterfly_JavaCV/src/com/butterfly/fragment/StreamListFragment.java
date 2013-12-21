@@ -1,28 +1,33 @@
-package com.butterfly;
+package com.butterfly.fragment;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.ListActivity;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.renderscript.Int2;
+import android.support.v4.app.ListFragment;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.AdapterView;
+import android.widget.ListView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Toast;
 
-import com.bugsense.trace.BugSenseHandler;
+import com.butterfly.ClientActivity;
+import com.butterfly.R;
+import com.butterfly.R.id;
+import com.butterfly.R.layout;
+import com.butterfly.R.string;
 import com.butterfly.adapter.StreamListAdapter;
-import com.butterfly.debug.BugSense;
 import com.butterfly.message.CloudMessaging;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -32,15 +37,14 @@ import flex.messaging.io.amf.client.AMFConnection;
 import flex.messaging.io.amf.client.exceptions.ClientStatusException;
 import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
-public class StreamList extends ListActivity {
+public class StreamListFragment extends ListFragment {
 
-	private static final String SHARED_PREFERENCE_FIRST_INSTALLATION = "firstInstallation";
-	private static final String APP_SHARED_PREFERENCES = "applicationDetails";
 	public static final String STREAM_PUBLISHED_NAME = "stream-name";
+	public static final String FRAGMENT_NAME = "STREAM LIST";
 	String httpGatewayURL;
 	private StreamListAdapter adapter;
 	public static CloudMessaging msg;
-
+	
 	public static class Stream {
 		public String name;
 		public String url;
@@ -71,10 +75,10 @@ public class StreamList extends ListActivity {
 		@Override
 		public void onItemClick(AdapterView<?> arg0, View view, int position,
 				long id) {
-			Toast.makeText(getApplicationContext(),
+			Toast.makeText(getActivity(),
 					adapter.getItem(position).name, Toast.LENGTH_SHORT).show();
 
-			Intent intent = new Intent(getApplicationContext(),
+			Intent intent = new Intent(getActivity().getApplicationContext(),
 					ClientActivity.class);
 			intent.putExtra(STREAM_PUBLISHED_NAME,
 					adapter.getItem(position).url);
@@ -82,102 +86,48 @@ public class StreamList extends ListActivity {
 
 		}
 	};
-
+	
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		BugSenseHandler.initAndStartSession(this, BugSense.API_KEY);
-		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
-		httpGatewayURL = getString(R.string.http_gateway_url);
-
-		adapter = new StreamListAdapter(StreamList.this);
-		setListAdapter(adapter);
-
-		getListView().setOnItemClickListener(itemClickListener);
-
-		final SharedPreferences applicationPrefs = getSharedPreferences(
-				APP_SHARED_PREFERENCES, MODE_PRIVATE);
-		Boolean firstInstallation = applicationPrefs.getBoolean(
-				SHARED_PREFERENCE_FIRST_INSTALLATION, false);
-		if (!firstInstallation) {
-			showTermsOfUse(applicationPrefs);
-		}
-
-		// Check device for Play Services APK.
-		if (checkPlayServices(this)) {
-
-			CloudMessaging msg = new CloudMessaging(
-					this.getApplicationContext(), this, httpGatewayURL);
-		}
-		new GetStreamListTask().execute(httpGatewayURL);
-
-		new GetStreamListTask().execute(httpGatewayURL);
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState){
+		
+		View v = inflater.inflate(R.layout.main, container, false);
+		return v;
 
 	}
+	
+	@Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+            super.onActivityCreated(savedInstanceState);
+    		httpGatewayURL = getString(R.string.http_gateway_url);
 
-	private void showTermsOfUse(final SharedPreferences applicationPrefs) {
-		AlertDialog.Builder myAlertDialog = new AlertDialog.Builder(this);
-		myAlertDialog.setTitle(R.string.terms_of_service_title);
-		myAlertDialog.setMessage(R.string.terms_of_service);
-		myAlertDialog.setPositiveButton(R.string.accept,
-				new DialogInterface.OnClickListener() {
+    		adapter = new StreamListAdapter(StreamListFragment.this.getActivity());
+    		
+    		StreamListFragment.this.setListAdapter(adapter);
+    		getListView().setOnItemClickListener(itemClickListener);
 
-					public void onClick(DialogInterface arg0, int arg1) {
-						// do something when the OK button is clicked
-						SharedPreferences.Editor mInstallationEditor = applicationPrefs
-								.edit();
-						mInstallationEditor.putBoolean(
-								SHARED_PREFERENCE_FIRST_INSTALLATION, true);
-						mInstallationEditor.commit();
-					}
-				});
-		myAlertDialog.setNegativeButton(R.string.cancel,
-				new DialogInterface.OnClickListener() {
+    		// Check device for Play Services APK.
+    		if (checkPlayServices(getActivity())) {
 
-					public void onClick(DialogInterface arg0, int arg1) {
-						// do something when the Cancel button is clicked
-						StreamList.this.finish();
-					}
-				});
-		myAlertDialog.show();
-	}
+    			CloudMessaging msg = new CloudMessaging(
+    					this.getActivity().getApplicationContext(), getActivity(), httpGatewayURL);
+    		}
+    		new GetStreamListTask().execute(httpGatewayURL);
+
+    		new GetStreamListTask().execute(httpGatewayURL);
+    }
 
 	@Override
-	protected void onDestroy() {
-		// TODO Auto-generated method stub
-		super.onDestroy();
-
-		BugSenseHandler.closeSession(this);
-	}
-
-	@Override
-	protected void onResume() {
+	public void onResume() {
 		super.onResume();
-		checkPlayServices(this);
+		checkPlayServices(this.getActivity());
 	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.activity_client, menu);
-		return true;
+	
+	public void refreshStreamList()
+	{
+		new GetStreamListTask().execute(httpGatewayURL);
 	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.broadcast_live:
-			Intent i = new Intent(getApplicationContext(), ContactsList.class);
-			startActivity(i);
-			return true;
-		case R.id.refresh:
-			new GetStreamListTask().execute(httpGatewayURL);
-			return true;
-		default:
-			break;
-		}
-		return super.onOptionsItemSelected(item);
-	}
-
+	
 	public static boolean checkPlayServices(Activity activity) {
 		int resultCode = GooglePlayServicesUtil
 				.isGooglePlayServicesAvailable(activity);
@@ -198,7 +148,7 @@ public class StreamList extends ListActivity {
 
 		@Override
 		protected void onPreExecute() {
-			setProgressBarIndeterminateVisibility(true);
+			getActivity().setProgressBarIndeterminateVisibility(true);
 			super.onPreExecute();
 		}
 
@@ -251,25 +201,25 @@ public class StreamList extends ListActivity {
 
 						adapter.notifyDataSetChanged();
 					} else {
-						Toast.makeText(getApplicationContext(),
+						Toast.makeText(getActivity().getApplicationContext(),
 								getString(R.string.noLiveStream),
 								Toast.LENGTH_LONG).show();
 					}
 
 				} catch (JSONException e) {
 					e.printStackTrace();
-					Toast.makeText(getApplicationContext(),
+					Toast.makeText(getActivity().getApplicationContext(),
 							getString(R.string.connectivityProblem),
 							Toast.LENGTH_LONG).show();
 				}
 
 			} else {
-				Toast.makeText(getApplicationContext(),
+				Toast.makeText(getActivity().getApplicationContext(),
 						getString(R.string.connectivityProblem),
 						Toast.LENGTH_LONG).show();
 
 			}
-			setProgressBarIndeterminateVisibility(false);
+			getActivity().setProgressBarIndeterminateVisibility(false);
 			super.onPostExecute(streams);
 		}
 	}

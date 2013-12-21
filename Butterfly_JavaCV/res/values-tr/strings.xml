@@ -4,6 +4,8 @@
     <string name="app_name">ButterFly</string>
     <string name="action_settings">Ayarlar</string>
     <string name="hello_world">Merhaba Dünya!</string>
+    <string name="map">Harita</string>
+    <string name="live_streams">Canlı Yayınlar</string>
     <string name="title_activity_stream_list">YayınListesi</string>
 	<string name="refresh">Yenile</string>
 	<string name="broadcast_live">Canlı Yayın</string>

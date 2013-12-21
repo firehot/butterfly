@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.debug.BugSense;
+import com.butterfly.fragment.StreamListFragment;
 
 public class ClientActivity extends Activity implements
 		io.vov.vitamio.MediaPlayer.OnCompletionListener {
@@ -50,7 +51,7 @@ public class ClientActivity extends Activity implements
 
 		Intent intent = getIntent();
 		String streamName = intent
-				.getStringExtra(StreamList.STREAM_PUBLISHED_NAME);
+				.getStringExtra(StreamListFragment.STREAM_PUBLISHED_NAME);
 
 		new CheckStreamExistTask().execute(httpUrl, streamName);
 

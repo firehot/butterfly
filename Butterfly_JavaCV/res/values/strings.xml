@@ -4,6 +4,8 @@
     <string name="app_name">Butterfly TV</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
+    <string name="map">Map</string>
+    <string name="live_streams">Live Streams</string>
     <string name="live_stream_warning">Live Stream</string>
     <string name="stream_shared_with_you">has shared a live stream with you. Click to watch!</string>
     <string name="title_activity_stream_list">StreamList</string>

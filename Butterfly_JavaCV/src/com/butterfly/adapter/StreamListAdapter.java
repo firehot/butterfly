@@ -8,7 +8,7 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import com.butterfly.R;
-import com.butterfly.StreamList.Stream;
+import com.butterfly.fragment.StreamListFragment.Stream;
 
 public class StreamListAdapter extends ArrayAdapter<Stream> {
 	private final Activity context;
