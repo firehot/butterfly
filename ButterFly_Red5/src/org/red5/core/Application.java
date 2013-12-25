@@ -425,7 +425,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 	@Override
 	public void streamBroadcastStart(IBroadcastStream stream) {
-		System.out.println("streamBroadcastStart "+ stream.getPublishedName());
+		
 		stream.addStreamListener(this);
 		super.streamBroadcastStart(stream);
 	}
@@ -433,7 +433,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 
 	@Override
 	public void streamPublishStart(IBroadcastStream stream) {
-		System.out.println("streamPublishStart "+ stream.getPublishedName());
+		
 		stream.addStreamListener(this);
 		super.streamPublishStart(stream);
 	}
@@ -690,14 +690,10 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public void packetReceived(IBroadcastStream stream, IStreamPacket packet) {
 		String streamUrl = stream.getPublishedName();
 		
-		//System.out.println("packetReceived "+ streamUrl);
-		
 		if (registeredStreams.containsKey(streamUrl)) {
-			//System.out.println("packetReceived contains"+ streamUrl);
 			Stream streamTemp = registeredStreams.get(streamUrl);
 			java.util.Date date = new java.util.Date();
 			streamTemp.timeReceived = new Timestamp(date.getTime());
-			//System.out.println("packetReceived time"+ streamUrl + streamTemp.timeReceived.toString());
 		}
 	}
 
@@ -711,19 +707,13 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		for (String name : streamNames) {
 
 			if (registeredStreams.containsKey(name)) {
-				System.out.println("registeredStreams.containsKey");
 				Stream stream = registeredStreams.get(name);
 				java.util.Date date = new java.util.Date();
 				Timestamp currentTime = new Timestamp(date.getTime());
 
 				if (stream.timeReceived != null) {
-					System.out.println("timeReceived not null");
-					System.out.println("current :" +currentTime.getTime());
-					System.out.println("timeReceived :" +stream.timeReceived.getTime());
 					long diff = currentTime.getTime() - stream.timeReceived.getTime();
-					System.out.println("diff :" +stream.timeReceived.getTime());
 					if ( diff > 5000) {
-						System.out.println("streamNames added to be removed " +name);
 						toBeRemoved.add(name);
 					}
 				}
@@ -731,7 +721,6 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		}
 
 		for (String name : toBeRemoved) {
-			System.out.println("toBeRemoved " +name);
 			registeredStreams.remove(name);
 			streamNames.remove(name);
 		}
