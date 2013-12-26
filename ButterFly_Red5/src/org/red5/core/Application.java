@@ -19,6 +19,10 @@ package org.red5.core;
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.text.MessageFormat;
@@ -33,6 +37,7 @@ import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
 
+import javax.imageio.ImageIO;
 import javax.mail.MessagingException;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
@@ -45,6 +50,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.Persistence;
 import javax.persistence.Query;
 
+import org.apache.mina.core.buffer.IoBuffer;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
@@ -87,13 +93,14 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		private String broadcasterGCMId;
 		private GcmUsers gcmIdList;
 		public Timestamp timeReceived;
+		public boolean imageReceived;
 
 		public Stream(String streamName, String streamUrl, Long registerTime) {
 			super();
 			this.streamName = streamName;
 			this.streamUrl = streamUrl;
 			this.registerTime = registerTime;
-
+			this.imageReceived = false;
 		}
 
 		public void addViewer(String streamName) {
@@ -155,9 +162,9 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		JSONArray jsonArray = new JSONArray();
 		JSONObject jsonObject;
 		Set<String> streamNames = getBroadcastStreamNames(target);
-		System.out.println("getLiveStreams count 1"+ streamNames.size());
+		System.out.println("getLiveStreams count 1" + streamNames.size());
 		streamNames = removeGhostBroadcasters(streamNames);
-		System.out.println("getLiveStreams count 2"+ streamNames.size());
+		System.out.println("getLiveStreams count 2" + streamNames.size());
 		for (String name : streamNames) {
 			if (registeredStreams.containsKey(name)) {
 				Stream stream = registeredStreams.get(name);
@@ -424,21 +431,21 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		removeStream(streamUrl);
 		super.streamBroadcastClose(stream);
 	}
+
 	@Override
 	public void streamBroadcastStart(IBroadcastStream stream) {
-		
+
 		stream.addStreamListener(this);
 		super.streamBroadcastStart(stream);
 	}
-	
 
 	@Override
 	public void streamPublishStart(IBroadcastStream stream) {
-		
+
 		stream.addStreamListener(this);
 		super.streamPublishStart(stream);
 	}
-	
+
 	public boolean removeStream(String streamUrl) {
 		boolean result = false;
 		if (registeredStreams.containsKey(streamUrl)) {
@@ -690,22 +697,24 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	@Override
 	public void packetReceived(IBroadcastStream stream, IStreamPacket packet) {
 		String streamUrl = stream.getPublishedName();
-		
+
 		if (registeredStreams.containsKey(streamUrl)) {
 			Stream streamTemp = registeredStreams.get(streamUrl);
 			java.util.Date date = new java.util.Date();
 			streamTemp.timeReceived = new Timestamp(date.getTime());
-		}
-		
-		if(packet.getDataType() == org.red5.io.IoConstants.TYPE_VIDEO)
-		{
-			VideoData data = (VideoData)packet;
-			if(data.getFrameType().equals(VideoData.FrameType.KEYFRAME))
-			{
-				System.out.println("frame type is keyframe");
+
+			if (packet.getDataType() == org.red5.io.IoConstants.TYPE_VIDEO) {
+				VideoData data = (VideoData) packet;
+				if (data.getFrameType().equals(VideoData.FrameType.KEYFRAME)) {
+					if (!streamTemp.imageReceived) {
+						System.out.println("image saved");
+						streamTemp.imageReceived = true;
+						writeImage(data.getData());
+					}
+				}
 			}
 		}
-		
+
 	}
 
 	/*
@@ -723,8 +732,9 @@ public class Application extends MultiThreadedApplicationAdapter implements
 				Timestamp currentTime = new Timestamp(date.getTime());
 
 				if (stream.timeReceived != null) {
-					long diff = currentTime.getTime() - stream.timeReceived.getTime();
-					if ( diff > 5000) {
+					long diff = currentTime.getTime()
+							- stream.timeReceived.getTime();
+					if (diff > 5000) {
 						toBeRemoved.add(name);
 					}
 				}
@@ -738,4 +748,35 @@ public class Application extends MultiThreadedApplicationAdapter implements
 
 		return streamNames;
 	}
+
+	private boolean writeImage(IoBuffer in) {
+
+		BufferedImage image = readImage(in);
+
+		try {
+			File outputfile = new File("/red5/saved.png");
+			ImageIO.write(image, "png", outputfile);
+		} catch (IOException e) {
+			System.out.println("image failed writeImage");
+			return false;
+		}
+
+		return true;
+	}
+
+	private BufferedImage readImage(IoBuffer in) {
+		try {
+
+			int length = in.getInt();
+			byte[] bytes = new byte[length];
+			in.get(bytes);
+			ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+			return ImageIO.read(bais);
+		} catch (IOException e) {
+			System.out.println("image failed readImage");
+			return null;
+		}
+
+	}
+
 }
