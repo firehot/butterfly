@@ -750,12 +750,14 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 
 	private boolean writeImage(IoBuffer in) {
-
+		System.out.println("writeImage 1");
 		BufferedImage image = readImage(in);
-
+		System.out.println("writeImage 2");
 		try {
-			File outputfile = new File("/red5/saved.png");
+			File outputfile = new File("/red5/images/saved.png");
+			System.out.println("writeImage 3");
 			ImageIO.write(image, "png", outputfile);
+			System.out.println("writeImage 4");
 		} catch (IOException e) {
 			System.out.println("image failed writeImage");
 			return false;
@@ -766,11 +768,12 @@ public class Application extends MultiThreadedApplicationAdapter implements
 
 	private BufferedImage readImage(IoBuffer in) {
 		try {
-
+			System.out.println("readImage 1");
 			int length = in.getInt();
 			byte[] bytes = new byte[length];
 			in.get(bytes);
 			ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+			System.out.println("readImage 2");
 			return ImageIO.read(bais);
 		} catch (IOException e) {
 			System.out.println("image failed readImage");
