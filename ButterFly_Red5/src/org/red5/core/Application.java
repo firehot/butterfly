@@ -718,7 +718,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 
 	/*
-	 * en son alýnan paket zamaný ile mevcut zaman arasinda 5sn fark varsa bu
+	 * en son alinan paket zamani ile mevcut zaman arasinda 5sn fark varsa bu
 	 * stream silinir
 	 */
 	private Set<String> removeGhostBroadcasters(Set<String> streamNames) {
