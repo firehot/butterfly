@@ -695,6 +695,9 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			java.util.Date date = new java.util.Date();
 			streamTemp.timeReceived = new Timestamp(date.getTime());
 		}
+		
+		System.out.println("received packet type: "+packet.getDataType());
+		System.out.println("type of interface: "+packet.getClass().getName());
 	}
 
 	/*
