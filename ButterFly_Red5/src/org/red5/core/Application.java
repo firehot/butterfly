@@ -56,6 +56,7 @@ import org.red5.server.api.stream.IPlayItem;
 import org.red5.server.api.stream.IStreamListener;
 import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.api.stream.ISubscriberStream;
+import org.red5.server.net.rtmp.event.VideoData;
 
 import com.google.android.gcm.server.Constants;
 import com.google.android.gcm.server.Message;
@@ -696,8 +697,15 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			streamTemp.timeReceived = new Timestamp(date.getTime());
 		}
 		
-		System.out.println("received packet type: "+packet.getDataType());
-		System.out.println("type of interface: "+packet.getClass().getName());
+		if(packet.getDataType() == org.red5.io.IoConstants.TYPE_VIDEO)
+		{
+			VideoData data = (VideoData)packet;
+			if(data.getFrameType().equals(VideoData.FrameType.KEYFRAME))
+			{
+				System.out.println("frame type is keyframe");
+			}
+		}
+		
 	}
 
 	/*
