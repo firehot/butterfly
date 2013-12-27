@@ -770,10 +770,13 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		try {
 			System.out.println("readImage 1");
 			int length = in.getInt();
-			byte[] bytes = new byte[length];
-			in.get(bytes);
-			ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
 			System.out.println("readImage 2");
+			byte[] bytes = new byte[length];
+			System.out.println("readImage 3");
+			in.get(bytes);
+			System.out.println("readImage 4");
+			ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+			System.out.println("readImage 5");
 			return ImageIO.read(bais);
 		} catch (IOException e) {
 			System.out.println("image failed readImage");
