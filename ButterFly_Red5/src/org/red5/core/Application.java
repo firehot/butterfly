@@ -769,15 +769,15 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	private BufferedImage readImage(IoBuffer in) {
 		try {
 			System.out.println("readImage 1");
-			int length = in.getInt();
-			System.out.println("readImage 2");
-			byte[] bytes = new byte[length];
-			System.out.println("readImage 3");
-			in.get(bytes);
-			System.out.println("readImage 4");
-			ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-			System.out.println("readImage 5");
-			return ImageIO.read(bais);
+//			int length = in.getInt();
+//			System.out.println("readImage 2");
+//			byte[] bytes = new byte[length];
+//			System.out.println("readImage 3");
+//			in.get(bytes);
+//			System.out.println("readImage 4");
+//			ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+//			System.out.println("readImage 5");
+			return ImageIO.read(in.asInputStream());
 		} catch (IOException e) {
 			System.out.println("image failed readImage");
 			return null;
