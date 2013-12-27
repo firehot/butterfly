@@ -782,6 +782,12 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			System.out.println("image failed readImage");
 			return null;
 		}
+		catch(Exception ex)
+		{
+			ex.printStackTrace();
+			System.out.println(ex.getMessage());
+			return null;
+		}
 
 	}
 
