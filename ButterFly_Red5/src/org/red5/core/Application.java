@@ -808,7 +808,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			ImageIO.write(img, "png", outputfile);
 			System.out.println("savePreview 4");
 		} catch (IOException e) {
-			System.out.println("savePreview failed"+e.getMessage());
+			System.out.println("savePreview failed 1"+e.getMessage());
 			e.printStackTrace();
 		}
 	}
