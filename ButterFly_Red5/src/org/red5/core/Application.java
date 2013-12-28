@@ -703,16 +703,16 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			java.util.Date date = new java.util.Date();
 			streamTemp.timeReceived = new Timestamp(date.getTime());
 
-			if (packet.getDataType() == org.red5.io.IoConstants.TYPE_VIDEO) {
-				VideoData data = (VideoData) packet;
-				if (data.getFrameType().equals(VideoData.FrameType.KEYFRAME)) {
-					if (!streamTemp.imageReceived) {
-						System.out.println("image saved");
-						streamTemp.imageReceived = true;
-						writeImage(data.getData());
-					}
-				}
-			}
+//			if (packet.getDataType() == org.red5.io.IoConstants.TYPE_VIDEO) {
+//				VideoData data = (VideoData) packet;
+//				if (data.getFrameType().equals(VideoData.FrameType.KEYFRAME)) {
+//					if (!streamTemp.imageReceived) {
+//						System.out.println("image saved");
+//						streamTemp.imageReceived = true;
+//						writeImage(data.getData());
+//					}
+//				}
+//			}
 		}
 
 	}
