@@ -800,6 +800,9 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public void savePreview(byte[] data,String streamURL)
 	{
 		try {
+			if(data == null)
+				System.out.println("savePreview data null");
+			System.out.println("savePreview data length "+data.length);
 			System.out.println("savePreview 1");
 			BufferedImage img = ImageIO.read(new ByteArrayInputStream(data));
 			System.out.println("savePreview 2");
