@@ -803,7 +803,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			System.out.println("savePreview 1");
 			BufferedImage img = ImageIO.read(new ByteArrayInputStream(data));
 			System.out.println("savePreview 2");
-			File outputfile = new File("/red5/images/"+streamURL+".png");
+			File outputfile = new File(streamURL+".png");
 			System.out.println("savePreview 3");
 			ImageIO.write(img, "png", outputfile);
 			System.out.println("savePreview 4");
