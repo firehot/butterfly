@@ -769,15 +769,15 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	private BufferedImage readImage(IoBuffer in) {
 		try {
 			System.out.println("readImage 1");
-//			int length = in.getInt();
-//			System.out.println("readImage 2");
-//			byte[] bytes = new byte[length];
-//			System.out.println("readImage 3");
-//			in.get(bytes);
-//			System.out.println("readImage 4");
-//			ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-//			System.out.println("readImage 5");
-			return ImageIO.read(in.asInputStream());
+			int length = in.getInt();
+			System.out.println("readImage 2");
+			byte[] bytes = new byte[length];
+			System.out.println("readImage 3");
+			in.get(bytes);
+			System.out.println("readImage 4");
+			ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+			System.out.println("readImage 5");
+			return ImageIO.read(bais);
 		} catch (IOException e) {
 			System.out.println("image failed readImage");
 			return null;
@@ -789,6 +789,28 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			return null;
 		}
 
+	}
+	
+	
+	/**
+	 * This methods gets image in byte array and saves as a file in the server
+	 * @param data
+	 * @param streamURL
+	 */
+	public void savePreview(byte[] data,String streamURL)
+	{
+		try {
+			System.out.println("savePreview 1");
+			BufferedImage img = ImageIO.read(new ByteArrayInputStream(data));
+			System.out.println("savePreview 2");
+			File outputfile = new File("/red5/images/"+streamURL+".png");
+			System.out.println("savePreview 3");
+			ImageIO.write(img, "png", outputfile);
+			System.out.println("savePreview 4");
+		} catch (IOException e) {
+			System.out.println("savePreview failed"+e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
 }
