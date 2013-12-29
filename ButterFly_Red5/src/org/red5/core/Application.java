@@ -452,6 +452,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 				result = true;
 			}
 			object = null;
+			File f = new File("webapps/ButterFly_Red5/"+streamUrl+".png");
+			f.delete();
 		}
 		return result;
 	}
@@ -742,6 +744,9 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		for (String name : toBeRemoved) {
 			registeredStreams.remove(name);
 			streamNames.remove(name);
+			File file = new File("webapps/ButterFly_Red5/"+name+".png");
+			file.delete();
+				
 		}
 
 		return streamNames;
@@ -799,7 +804,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	{
 		try {
 			BufferedImage img = ImageIO.read(new ByteArrayInputStream(data));
-			File outputfile = new File("webapps/ButterFly_Red5/images/"+streamURL+".png");
+			File outputfile = new File("webapps/ButterFly_Red5/"+streamURL+".png");
 			ImageIO.write(img, "png", outputfile);
 			
 			if (registeredStreams.containsKey(streamURL)) {

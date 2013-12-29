@@ -8,7 +8,9 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import com.butterfly.R;
+import com.butterfly.StreamList.GetStreamListTask;
 import com.butterfly.StreamList.Stream;
+import com.loopj.android.image.SmartImageView;
 
 public class StreamListAdapter extends ArrayAdapter<Stream> {
 	private final Activity context;
@@ -16,6 +18,7 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 	static class ViewHolder {
 		public TextView textStreamName;
 		public TextView textStreamViewerCount;
+		public SmartImageView imageView;
 	}
 
 	public StreamListAdapter(Activity context) {
@@ -34,12 +37,17 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 					.findViewById(R.id.stream_name);
 			viewHolder.textStreamViewerCount = (TextView) rowView
 					.findViewById(R.id.stream_viewer_count);
+			viewHolder.imageView = (SmartImageView) rowView
+					.findViewById(R.id.stream_image);
+
 			rowView.setTag(viewHolder);
 		}
 
 		ViewHolder holder = (ViewHolder) rowView.getTag();
 		Stream s = getItem(position);
 		holder.textStreamName.setText(s.name);
+		String image_url = this.context.getString(R.string.image_url)+s.url+".png";
+		holder.imageView.setImageUrl(image_url);
 
 		if (s.viewerCount > 0) {
 			holder.textStreamViewerCount.setText(context.getResources()

@@ -1,18 +1,22 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:padding="6dip"
-    >
+    android:orientation="horizontal"
+    android:padding="6dip" >
+
+    <com.loopj.android.image.SmartImageView
+        android:id="@+id/stream_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
     <TextView
         android:id="@+id/stream_name"
         style="?android:attr/textAppearanceMedium"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@android:color/white"
-        />
-    
+        android:textColor="@android:color/white" />
+
     <TextView
         android:id="@+id/stream_viewer_count"
         style="?android:attr/textAppearanceSmall"
@@ -20,10 +24,6 @@
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
-        android:textColor="@android:color/white"/>
-	
+        android:textColor="@android:color/white" />
 
-
-
-    
-</RelativeLayout>
+</LinearLayout>
