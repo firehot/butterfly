@@ -799,8 +799,13 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	{
 		try {
 			BufferedImage img = ImageIO.read(new ByteArrayInputStream(data));
-			File outputfile = new File("./images/"+streamURL+".png");
+			File outputfile = new File("webapps/ButterFly_Red5/images/"+streamURL+".png");
 			ImageIO.write(img, "png", outputfile);
+			
+			if (registeredStreams.containsKey(streamURL)) {
+				Stream stream = registeredStreams.get(streamURL);
+				
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
