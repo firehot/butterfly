@@ -50,6 +50,7 @@ import com.butterfly.debug.BugSense;
 import com.butterfly.message.CloudMessaging;
 import com.butterfly.message.GcmIntentService;
 import com.butterfly.recorder.FFmpegFrameRecorder;
+import com.butterfly.tasks.SendPreviewTask;
 import com.butterfly.view.CameraView;
 import com.googlecode.javacpp.BytePointer;
 
@@ -59,7 +60,7 @@ import flex.messaging.io.amf.client.exceptions.ClientStatusException;
 import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
 public class RecordActivity extends Activity implements OnClickListener,
-PreviewCallback {
+		PreviewCallback {
 
 	private final static String CLASS_LABEL = "RecordActivity";
 	private final static String LOG_TAG = CLASS_LABEL;
@@ -97,6 +98,7 @@ PreviewCallback {
 	private String mailsToBeNotified;
 	private Size previewSize;
 	private BytePointer bytePointer;
+	private boolean snapshotSent = false;
 
 	BroadcastReceiver viewerCountReceiver = new BroadcastReceiver() {
 
@@ -149,10 +151,9 @@ PreviewCallback {
 		localBroadcastManager = LocalBroadcastManager
 				.getInstance(getApplicationContext());
 
-		ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
 		activeNetwork = cm.getActiveNetworkInfo();
-
 
 	}
 
@@ -219,45 +220,38 @@ PreviewCallback {
 		Log.i(LOG_TAG, "cameara preview start: OK");
 	}
 
-	public boolean setCameraPreviewSize(int bandwidth) 
-	{
+	public boolean setCameraPreviewSize(int bandwidth) {
 		boolean result = false;
 		Parameters parameters = cameraDevice.getParameters();
-		List<Size> supportedPreviewSizes = parameters.getSupportedPreviewSizes();
+		List<Size> supportedPreviewSizes = parameters
+				.getSupportedPreviewSizes();
 		int likelyWidth = 0, likelyHeight = 0;
 
 		int type = activeNetwork.getType();
-		if ((type == ConnectivityManager.TYPE_MOBILE 
-			  || type == ConnectivityManager.TYPE_MOBILE_HIPRI
-			 ) && bandwidth >= 35) 
-		{
+		if ((type == ConnectivityManager.TYPE_MOBILE || type == ConnectivityManager.TYPE_MOBILE_HIPRI)
+				&& bandwidth >= 35) {
 			likelyWidth = 176;
 			likelyHeight = 144;
-		}
-		else if (bandwidth >= 115) { //640x480
+		} else if (bandwidth >= 115) { // 640x480
 			likelyWidth = 640;
 			likelyHeight = 480;
-		}
-		else if (bandwidth >= 75) { //352x288
+		} else if (bandwidth >= 75) { // 352x288
 			likelyWidth = 352;
 			likelyHeight = 288;
-		}
-		else if (bandwidth >= 35) { //176x144
+		} else if (bandwidth >= 35) { // 176x144
 			likelyWidth = 176;
 			likelyHeight = 144;
 		}
-		
-		
 
 		if (likelyWidth != 0 && likelyHeight != 0) {
-			Size size = findPreviewSize(supportedPreviewSizes, likelyWidth, likelyHeight);
+			Size size = findPreviewSize(supportedPreviewSizes, likelyWidth,
+					likelyHeight);
 			parameters.setPreviewSize(size.width, size.height);
 			if (cameraView.isPreviewOn()) {
 				cameraDevice.stopPreview();
 				cameraDevice.setParameters(parameters);
 				cameraDevice.startPreview();
-			}
-			else {
+			} else {
 				cameraDevice.setParameters(parameters);
 			}
 			result = true;
@@ -273,7 +267,7 @@ PreviewCallback {
 			if (size.width <= width && size.height <= height) {
 				int width2 = (int) Math.pow(width - size.width, 2);
 				int height2 = (int) Math.pow(height - size.height, 2);
-				int sizeDiff = (int)Math.sqrt(width2 + height2);
+				int sizeDiff = (int) Math.sqrt(width2 + height2);
 				if (sizeDiff < diff) {
 					diff = sizeDiff;
 					bestSize = size;
@@ -324,10 +318,9 @@ PreviewCallback {
 		recorder.setFrameRate(frameRate);
 	}
 
-
 	public boolean startRecording() {
 
-		if(cameraDevice != null && cameraDevice.getParameters() != null)
+		if (cameraDevice != null && cameraDevice.getParameters() != null)
 			previewSize = cameraDevice.getParameters().getPreviewSize();
 		else
 			return false;
@@ -392,7 +385,7 @@ PreviewCallback {
 		@Override
 		public void run() {
 			android.os.Process
-			.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+					.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 
 			// Audio
 			int bufferSize;
@@ -472,8 +465,8 @@ PreviewCallback {
 				imm.hideSoftInputFromWindow(
 						streamNameEditText.getWindowToken(), 0);
 
-				new CheckBandwidthTask().execute(getString(R.string.server_addr));
-
+				new CheckBandwidthTask()
+						.execute(getString(R.string.server_addr));
 
 			} else {
 				AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -504,11 +497,9 @@ PreviewCallback {
 
 			if (mProgressDialog == null) {
 				mProgressDialog = ProgressDialog.show(RecordActivity.this,
-						null,
-						getString(R.string.initializing), true);
+						null, getString(R.string.initializing), true);
 				mProgressDialog.setCancelable(true);
-			}
-			else {
+			} else {
 				mProgressDialog.setMessage(getString(R.string.initializing));
 			}
 
@@ -531,7 +522,7 @@ PreviewCallback {
 					result = (Boolean) amfConnection.call("registerLiveStream",
 							params[1], params[2], mailsToBeNotified,
 							possibleMail, is_video_public, Locale.getDefault()
-							.getISO3Language());
+									.getISO3Language());
 
 				} catch (ClientStatusException e) {
 					e.printStackTrace();
@@ -568,7 +559,7 @@ PreviewCallback {
 	}
 
 	public class StopRecordingTask extends
-	AsyncTask<FFmpegFrameRecorder, Void, Void> {
+			AsyncTask<FFmpegFrameRecorder, Void, Void> {
 
 		@Override
 		protected Void doInBackground(FFmpegFrameRecorder... params) {
@@ -587,8 +578,7 @@ PreviewCallback {
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
-			mProgressDialog = ProgressDialog.show(RecordActivity.this,
-					null,
+			mProgressDialog = ProgressDialog.show(RecordActivity.this, null,
 					getString(R.string.checking_bandwidth), true);
 			mProgressDialog.setCancelable(true);
 		}
@@ -610,14 +600,14 @@ PreviewCallback {
 				byte[] data1 = new byte[160 * 1024];
 				int time1 = sendData(outputStream, istr, data1);
 
-				int dataSize = data1.length  - data0.length;
+				int dataSize = data1.length - data0.length;
 				int timeDiff = time1 - time0;
 
 				bandwidth = (int) (dataSize / timeDiff);
 
-				if ((bandwidth > 75) && 
-						(activeNetwork.getType() == ConnectivityManager.TYPE_WIFI ||
-						activeNetwork.getType() == ConnectivityManager.TYPE_ETHERNET)) {
+				if ((bandwidth > 75)
+						&& (activeNetwork.getType() == ConnectivityManager.TYPE_WIFI || activeNetwork
+								.getType() == ConnectivityManager.TYPE_ETHERNET)) {
 
 					byte[] data3 = new byte[480 * 1024];
 					int time3 = sendData(outputStream, istr, data3);
@@ -631,7 +621,6 @@ PreviewCallback {
 					}
 				}
 
-
 				outputStream.write("\n".getBytes());
 				outputStream.flush();
 
@@ -639,14 +628,12 @@ PreviewCallback {
 				e.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
-			}
-			finally {
+			} finally {
 				try {
 					istr.close();
 					outputStream.close();
 					socket.close();
-				}
-				catch (Exception e) {
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
@@ -654,7 +641,8 @@ PreviewCallback {
 			return bandwidth;
 		}
 
-		private int sendData(OutputStream ostream, InputStream istream, byte[] data) {
+		private int sendData(OutputStream ostream, InputStream istream,
+				byte[] data) {
 			int timeDiff = 0;
 			try {
 				long time = System.currentTimeMillis();
@@ -663,7 +651,7 @@ PreviewCallback {
 				ostream.flush();
 				byte[] incomingData = new byte[10];
 				istream.read(incomingData, 0, incomingData.length);
-				timeDiff = (int)(System.currentTimeMillis() - time);
+				timeDiff = (int) (System.currentTimeMillis() - time);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -673,16 +661,19 @@ PreviewCallback {
 		@Override
 		protected void onPostExecute(Integer result) {
 			super.onPostExecute(result);
-			Toast.makeText(getApplicationContext(), "bandwidth -> " + result + "KB", Toast.LENGTH_LONG).show();
+			Toast.makeText(getApplicationContext(),
+					"bandwidth -> " + result + "KB", Toast.LENGTH_LONG).show();
 			if (setCameraPreviewSize(result) == true) {
 
 				initRecorder();
 				new RegisterStreamTask().execute(httpGatewayURL, streamName,
-						streamURL, CloudMessaging.getPossibleMail(RecordActivity.this));
-			}
-			else {
+						streamURL,
+						CloudMessaging.getPossibleMail(RecordActivity.this));
+			} else {
 				mProgressDialog.dismiss();
-				Toast.makeText(getApplicationContext(), getString(R.string.insufficient_bandwidth) , Toast.LENGTH_LONG).show();
+				Toast.makeText(getApplicationContext(),
+						getString(R.string.insufficient_bandwidth),
+						Toast.LENGTH_LONG).show();
 			}
 
 		}
@@ -708,6 +699,15 @@ PreviewCallback {
 
 				e.printStackTrace();
 			}
+
+			if (!snapshotSent) {
+				//send a preview snapshot image to the red5 only for first time
+				snapshotSent = true;
+				Size size = arg1.getParameters().getPreviewSize();
+				SendPreviewTask task = new SendPreviewTask(size.width,size.height);
+				task.execute(httpGatewayURL, data, streamURL);
+			}
+
 		}
 
 	}
