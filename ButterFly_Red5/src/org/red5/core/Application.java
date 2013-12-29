@@ -62,7 +62,6 @@ import org.red5.server.api.stream.IPlayItem;
 import org.red5.server.api.stream.IStreamListener;
 import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.api.stream.ISubscriberStream;
-import org.red5.server.net.rtmp.event.VideoData;
 
 import com.google.android.gcm.server.Constants;
 import com.google.android.gcm.server.Message;
@@ -90,7 +89,6 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		public String streamUrl;
 		public Long registerTime;
 		public ArrayList<String> viewerStreamNames = new ArrayList<String>();
-		private String broadcasterGCMId;
 		private GcmUsers gcmIdList;
 		public Timestamp timeReceived;
 		public boolean imageReceived;
@@ -801,7 +799,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	{
 		try {
 			BufferedImage img = ImageIO.read(new ByteArrayInputStream(data));
-			File outputfile = new File("images/"+streamURL+".png");
+			File outputfile = new File("./images/"+streamURL+".png");
 			ImageIO.write(img, "png", outputfile);
 		} catch (IOException e) {
 			e.printStackTrace();
