@@ -133,4 +133,5 @@ Gizlilik Politikamız zaman zaman değişebilir. Açıkça izninizi almadan bu G
 30 Ekim 2013
 </string>
     <string name="checking_bandwidth">İnternet hızı kontrol ediliyor...</string>
+    <string name="nocamera">Bu cihazda kamera bulunamadı</string>
 </resources>

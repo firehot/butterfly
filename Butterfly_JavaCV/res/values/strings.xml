@@ -142,5 +142,6 @@ Changes\n
 Our Privacy Policy may change from time to time. We will not reduce your rights under this Privacy Policy without your explicit consent. Updated privacy policy is published here.\n
 October 30, 2013</string>
     <string name="checking_bandwidth">Checking internet speed...</string>
+    <string name="nocamera">No camera found in this device</string>
 
 </resources>

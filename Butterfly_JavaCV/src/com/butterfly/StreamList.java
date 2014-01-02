@@ -9,6 +9,7 @@ import android.app.ListActivity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
@@ -149,6 +150,12 @@ public class StreamList extends ListActivity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.activity_client, menu);
+		PackageManager packageManager = getPackageManager();
+		boolean backCamera = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA);
+		boolean frontCamera = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT);
+		if (backCamera == false && frontCamera == false) {
+			menu.findItem(R.id.broadcast_live).setVisible(false);
+		}
 		return true;
 	}
 

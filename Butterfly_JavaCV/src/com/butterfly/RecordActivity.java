@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PreviewCallback;
@@ -126,6 +127,17 @@ public class RecordActivity extends Activity implements OnClickListener,
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		PackageManager packageManager = getPackageManager();
+		boolean backCamera = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA);
+		boolean frontCamera = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT);
+		
+		if (backCamera == false && frontCamera == false) {
+			Toast.makeText(getApplicationContext(), getString(R.string.nocamera), Toast.LENGTH_LONG).
+					show();
+			finish();
+			return;
+		}
 
 		BugSenseHandler.initAndStartSession(this, BugSense.API_KEY);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
