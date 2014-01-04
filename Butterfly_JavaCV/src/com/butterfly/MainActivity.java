@@ -1,11 +1,18 @@
 package com.butterfly;
 
+import java.util.ArrayList;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -15,11 +22,18 @@ import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
+import android.widget.Toast;
 
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.debug.BugSense;
 import com.butterfly.fragment.MapFragment;
 import com.butterfly.fragment.StreamListFragment;
+import com.butterfly.fragment.StreamListFragment.Stream;
+
+import flex.messaging.io.MessageIOConstants;
+import flex.messaging.io.amf.client.AMFConnection;
+import flex.messaging.io.amf.client.exceptions.ClientStatusException;
+import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
 public class MainActivity extends FragmentActivity implements ActionBar.TabListener {
 
@@ -27,6 +41,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 	ViewPager mViewPager;
 	private static StreamListFragment streamListFragment;
 	private static MapFragment mapFragment;
+	ArrayList<Stream> streamList = new ArrayList<Stream>();
+	private String httpGatewayURL;
 
 	private static final String SHARED_PREFERENCE_FIRST_INSTALLATION = "firstInstallation";
 	private static final String APP_SHARED_PREFERENCES = "applicationDetails";
@@ -79,12 +95,20 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 					.setText(mAppSectionsPagerAdapter.getPageTitle(i))
 					.setTabListener(this));
 		}
+		
+		httpGatewayURL = getString(R.string.http_gateway_url);
+		
+		new GetStreamListTask().execute(httpGatewayURL);
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.activity_client, menu);
 		return true;
+	}
+	
+	public ArrayList<Stream> getStreamList() {
+		return streamList;
 	}
 
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -95,7 +119,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 			return true;
 
 		case R.id.refresh:
-			streamListFragment.refreshStreamList();
+			new GetStreamListTask().execute(httpGatewayURL);
 			return true;
 
 		default:
@@ -140,12 +164,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 
 		@Override
 		public Fragment getItem(int i) {
-			System.out.print("i nin degeri");
-			System.out.print(i);
 			switch (i) {
 			case 0:
 				return streamListFragment;
-
 			case 1:
 				return mapFragment;
 				default:
@@ -164,9 +185,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 			
 			switch (position) {
 			case 0:
-				return streamListFragment.FRAGMENT_NAME;
+				return StreamListFragment.FRAGMENT_NAME;
 			case 1:
-				return mapFragment.FRAGMENT_NAME;
+				return MapFragment.FRAGMENT_NAME;
 				default:
 					break;
 			}
@@ -200,6 +221,93 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		});
 		myAlertDialog.show();
 	}
+	
 
+	public class GetStreamListTask extends AsyncTask<String, Void, String> {
+
+		@Override
+		protected void onPreExecute() {
+			setProgressBarIndeterminateVisibility(true);
+			super.onPreExecute();
+		}
+
+		@Override
+		protected String doInBackground(String... params) {
+			String streams = null;
+			AMFConnection amfConnection = new AMFConnection();
+			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
+			try {
+				System.out.println(params[0]);
+				amfConnection.connect(params[0]);
+				streams = (String) amfConnection.call("getLiveStreams");
+			} catch (ClientStatusException e) {
+				e.printStackTrace();
+			} catch (ServerStatusException e) {
+				e.printStackTrace();
+			}
+			amfConnection.close();
+
+			return streams;
+		}
+
+		@Override
+		protected void onPostExecute(String streams) {
+			streamList.clear();
+
+			if (streams != null) {
+				// JSONObject jsonObject = new JSONObject(streams);
+				JSONArray jsonArray;
+				try {
+					jsonArray = new JSONArray(streams);
+					int length = jsonArray.length();
+					if (length > 0) {
+						
+						JSONObject jsonObject;
+
+						for (int i = 0; i < length; i++) {
+							jsonObject = (JSONObject) jsonArray.get(i);
+							streamList.add(new Stream(
+									jsonObject.getString("name"), jsonObject
+											.getString("url"), Integer
+											.parseInt(jsonObject
+													.getString("viewerCount")),
+													Double.parseDouble(jsonObject.getString("latitude")),
+													Double.parseDouble(jsonObject.getString("longitude")),
+													Double.parseDouble(jsonObject.getString("altitude"))
+													));
+
+						}
+						
+						if (streamListFragment != null) {
+							streamListFragment.refreshStreamList(streamList);
+						}
+						if (mapFragment != null) {
+							mapFragment.refreshStreamList(streamList);
+						}
+
+					
+					} else {
+						Toast.makeText(getApplicationContext(),
+								getString(R.string.noLiveStream),
+								Toast.LENGTH_LONG).show();
+					}
+
+				} catch (JSONException e) {
+					e.printStackTrace();
+					Toast.makeText(getApplicationContext(),
+							getString(R.string.connectivityProblem),
+							Toast.LENGTH_LONG).show();
+				}
+
+			} else {
+				Toast.makeText(getApplicationContext(),
+						getString(R.string.connectivityProblem),
+						Toast.LENGTH_LONG).show();
+
+			}
+			setProgressBarIndeterminateVisibility(false);
+			super.onPostExecute(streams);
+		}
+	}
 
 }
