@@ -1,19 +1,14 @@
 package com.butterfly.fragment;
 
 import java.util.ArrayList;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import java.util.HashMap;
 
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.butterfly.ClientActivity;
 import com.butterfly.MainActivity;
@@ -26,51 +21,23 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import flex.messaging.io.MessageIOConstants;
-import flex.messaging.io.amf.client.AMFConnection;
-import flex.messaging.io.amf.client.exceptions.ClientStatusException;
-import flex.messaging.io.amf.client.exceptions.ServerStatusException;
-
 public class MapFragment extends Fragment   {
 
-	public static final String FRAGMENT_NAME = "MAP";
 	private GoogleMap mMap;
 	private Marker mapMarker;
+	private HashMap<String, Stream> hashMap = new HashMap<String, StreamListFragment.Stream>();
 
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View rootView = inflater.inflate(R.layout.activity_map, container, false);
-		return rootView;
-	}
-	public Marker addMarker(double latitude, double longitude, String title) {
-
 		mMap = ((SupportMapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
-		//mMap.setOnMarkerClickListener(this);
-		mapMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(latitude, longitude))
-				.title(title));
-
-		return mapMarker;
-	}
-
-	@Override
-	public void onResume() {
-		super.onResume();
-		ArrayList<Stream> streamList = ((MainActivity)getActivity()).getStreamList();
-
-		refreshStreamList(streamList);
-	}
-
-
-	public void refreshStreamList(ArrayList<Stream> streamList) {
-		mMap.clear();
-		for (final Stream stream : streamList) {
-			Marker marker = addMarker(stream.latitude, stream.longitude, stream.name);
-
-			mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
-
-				@Override
-				public boolean onMarkerClick(Marker marker) {
+		mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
+			
+			@Override
+			public boolean onMarkerClick(Marker marker) {
+				String id = marker.getId();
+				if (hashMap.containsKey(id)) {
+					Stream stream = hashMap.get(id);
 
 					Intent intent = new Intent(getActivity().getApplicationContext(),
 							ClientActivity.class);
@@ -78,10 +45,35 @@ public class MapFragment extends Fragment   {
 							stream.url);
 
 					startActivity(intent);
-					return false;
 				}
-			});
+				return false;
+			}
+		});
+		return rootView;
+	}
+
+	public Marker addMarker(double latitude, double longitude, String title) {
+		mapMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(latitude, longitude))
+				.title(title));
+		return mapMarker;
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		ArrayList<Stream> streamList = ((MainActivity)getActivity()).getStreamList();
+		refreshStreamList(streamList);
+	}
+
+
+	public void refreshStreamList(ArrayList<Stream> streamList) {
+		mMap.clear();
+		hashMap.clear();
+		for (final Stream stream : streamList) {
+			Marker marker = addMarker(stream.latitude, stream.longitude, stream.name);
+			hashMap.put(marker.getId(), stream);
 		}
 
 	}
+
 }

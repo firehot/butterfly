@@ -7,6 +7,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.FragmentTransaction;
 import android.content.DialogInterface;
@@ -18,6 +19,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -29,13 +31,16 @@ import com.butterfly.debug.BugSense;
 import com.butterfly.fragment.MapFragment;
 import com.butterfly.fragment.StreamListFragment;
 import com.butterfly.fragment.StreamListFragment.Stream;
+import com.butterfly.message.CloudMessaging;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 
 import flex.messaging.io.MessageIOConstants;
 import flex.messaging.io.amf.client.AMFConnection;
 import flex.messaging.io.amf.client.exceptions.ClientStatusException;
 import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
-public class MainActivity extends FragmentActivity implements ActionBar.TabListener {
+public class MainActivity extends FragmentActivity  {
 
 	AppSectionsPagerAdapter mAppSectionsPagerAdapter;
 	ViewPager mViewPager;
@@ -74,31 +79,18 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		// parent.
 		actionBar.setHomeButtonEnabled(false);
 
-		// Specify that we will be displaying tabs in the action bar.
-		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-
-		// Set up the ViewPager, attaching the adapter and setting up a listener for when the
-		// user swipes between sections.
 		mViewPager = (ViewPager) findViewById(R.id.pager);
 		mViewPager.setAdapter(mAppSectionsPagerAdapter);
-		mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
-			@Override
-			public void onPageSelected(int position) {
-				actionBar.setSelectedNavigationItem(position);
-			}
-		});
-
-		// For each of the sections in the app, add a tab to the action bar.
-		for (int i = 0; i < mAppSectionsPagerAdapter.getCount(); i++) {
-			actionBar.addTab(
-					actionBar.newTab()
-					.setText(mAppSectionsPagerAdapter.getPageTitle(i))
-					.setTabListener(this));
-		}
 		
-		httpGatewayURL = getString(R.string.http_gateway_url);
-		
+		httpGatewayURL = getString(R.string.http_gateway_url);		
 		new GetStreamListTask().execute(httpGatewayURL);
+		// Check device for Play Services APK.
+		if (checkPlayServices(this)) {
+
+			CloudMessaging msg = new CloudMessaging(
+							this.getApplicationContext(), this, httpGatewayURL);
+		}
+				
 	}
 
 	@Override
@@ -127,6 +119,12 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		}
 		return super.onOptionsItemSelected(item);
 	}
+	
+	@Override
+	protected void onResume() {
+		checkPlayServices(this);
+		super.onResume();
+	}
 
 
 	@Override
@@ -136,25 +134,11 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		BugSenseHandler.closeSession(this);
 	}
 
-	@Override
-	public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-	}
-
-	@Override
-	public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-		// When the given tab is selected, switch to the corresponding page in the ViewPager.
-		mViewPager.setCurrentItem(tab.getPosition());
-	}
-
-	@Override
-	public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-	}
-
 	/**
 	 * A {@link FragmentPagerAdapter} that returns a fragment corresponding to one of the primary
 	 * sections of the app.
 	 */
-	public static class AppSectionsPagerAdapter extends FragmentPagerAdapter {
+	public class AppSectionsPagerAdapter extends FragmentStatePagerAdapter {
 
 		public AppSectionsPagerAdapter(FragmentManager fm) {
 			super(fm);
@@ -185,9 +169,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 			
 			switch (position) {
 			case 0:
-				return StreamListFragment.FRAGMENT_NAME;
+				return getString(R.string.streamListTitle);
 			case 1:
-				return MapFragment.FRAGMENT_NAME;
+				return getString(R.string.mapTitle);
 				default:
 					break;
 			}
@@ -220,6 +204,22 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 			}
 		});
 		myAlertDialog.show();
+	}
+	
+	public static boolean checkPlayServices(Activity activity) {
+		int resultCode = GooglePlayServicesUtil
+				.isGooglePlayServicesAvailable(activity);
+		if (resultCode != ConnectionResult.SUCCESS) {
+			if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
+				GooglePlayServicesUtil.getErrorDialog(resultCode, activity,
+						CloudMessaging.PLAY_SERVICES_RESOLUTION_REQUEST).show();
+			} else {
+				activity.finish();
+			}
+			return false;
+		}
+
+		return true;
 	}
 	
 

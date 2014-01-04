@@ -36,6 +36,8 @@
     <string name="terms_of_service_title">Terms and Privacy</string>
     <string name="shareStream">Share broadcast</string>
     <string name="missed_the_stream">There is no live stream with this url right now. You should have missed it. Please be quick for the next time </string>
+    <string name="streamListTitle">List</string>
+    <string name="mapTitle">Harita</string>
     <plurals name="viewers_count">
         <item quantity="one">%d Viewer</item>
         <item quantity="other">%d Viewers</item>

@@ -24,8 +24,6 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 public class StreamListFragment extends ListFragment {
 
 	public static final String STREAM_PUBLISHED_NAME = "stream-name";
-	public static final String FRAGMENT_NAME = "STREAM LIST";
-	String httpGatewayURL;
 	private StreamListAdapter adapter;
 	public static CloudMessaging msg;
 
@@ -84,26 +82,19 @@ public class StreamListFragment extends ListFragment {
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-		httpGatewayURL = getString(R.string.http_gateway_url);
-
+	
 		adapter = new StreamListAdapter(StreamListFragment.this.getActivity());
 
 		StreamListFragment.this.setListAdapter(adapter);
 		getListView().setOnItemClickListener(itemClickListener);
 
-		// Check device for Play Services APK.
-		if (checkPlayServices(getActivity())) {
-
-			CloudMessaging msg = new CloudMessaging(
-					this.getActivity().getApplicationContext(), getActivity(), httpGatewayURL);
-		}
+		
 
 	}
 
 	@Override
 	public void onResume() {
 		super.onResume();
-		checkPlayServices(this.getActivity());
 		streamList = ((MainActivity)getActivity()).getStreamList();
 		
 		refreshStreamList(streamList);
@@ -117,22 +108,6 @@ public class StreamListFragment extends ListFragment {
 			adapter.addAll(streamList);
 			adapter.notifyDataSetChanged();
 		}
-	}
-
-	public static boolean checkPlayServices(Activity activity) {
-		int resultCode = GooglePlayServicesUtil
-				.isGooglePlayServicesAvailable(activity);
-		if (resultCode != ConnectionResult.SUCCESS) {
-			if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-				GooglePlayServicesUtil.getErrorDialog(resultCode, activity,
-						CloudMessaging.PLAY_SERVICES_RESOLUTION_REQUEST).show();
-			} else {
-				activity.finish();
-			}
-			return false;
-		}
-
-		return true;
 	}
 
 }
