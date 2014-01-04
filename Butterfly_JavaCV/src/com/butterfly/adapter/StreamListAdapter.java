@@ -8,8 +8,7 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import com.butterfly.R;
-import com.butterfly.StreamList.GetStreamListTask;
-import com.butterfly.StreamList.Stream;
+import com.butterfly.fragment.StreamListFragment.Stream;
 import com.loopj.android.image.SmartImageView;
 
 public class StreamListAdapter extends ArrayAdapter<Stream> {

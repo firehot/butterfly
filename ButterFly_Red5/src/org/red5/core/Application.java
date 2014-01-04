@@ -78,7 +78,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		IStreamListener {
 
 	private static final String SENDER_ID = "AIzaSyCFmHIbJO0qCtPo6klp7Ade3qjeGLgtZWw";
-	Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
+	private Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
 	private EntityManager entityManager;
 	private ResourceBundle messagesTR;
 	private ResourceBundle messagesEN;
@@ -92,6 +92,10 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		private GcmUsers gcmIdList;
 		public Timestamp timeReceived;
 		public boolean imageReceived;
+		public double altitude;
+		public double longtitude;
+		public double latitude;
+		
 
 		public Stream(String streamName, String streamUrl, Long registerTime) {
 			super();
@@ -164,12 +168,15 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		streamNames = removeGhostBroadcasters(streamNames);
 		System.out.println("getLiveStreams count 2" + streamNames.size());
 		for (String name : streamNames) {
-			if (registeredStreams.containsKey(name)) {
-				Stream stream = registeredStreams.get(name);
+			if (getRegisteredStreams().containsKey(name)) {
+				Stream stream = getRegisteredStreams().get(name);
 				jsonObject = new JSONObject();
 				jsonObject.put("url", stream.streamUrl);
 				jsonObject.put("name", stream.streamName);
 				jsonObject.put("viewerCount", stream.getViewerCount());
+				jsonObject.put("latitude", stream.latitude);
+				jsonObject.put("longitude", stream.longtitude);
+				jsonObject.put("altitude", stream.altitude);
 				jsonArray.add(jsonObject);
 				// streams.put(stream.streamUrl, stream.streamName);
 			}
@@ -192,7 +199,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			String mailsToBeNotified, String broadcasterMail, boolean isPublic,
 			String deviceLanguage) {
 		boolean result = false;
-		if (registeredStreams.containsKey(url) == false) {
+		if (getRegisteredStreams().containsKey(url) == false) {
 			if (isPublic == true) {
 				Stream stream = new Stream(streamName, url,
 						System.currentTimeMillis());
@@ -208,6 +215,21 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		return result;
 	}
 
+	public boolean  registerLocationForStream(String url, double longitude, double latitude, double altitude) {
+		boolean result = false;
+		if (getRegisteredStreams().containsKey(url) == true) {
+				Stream stream = getRegisteredStreams().get(url);
+				stream.latitude = latitude;
+				stream.longtitude = longitude;
+				stream.altitude = altitude;
+				result = true;
+		}
+		return result;
+	}
+		
+	
+	
+	
 	public boolean registerUser(String register_id, String mail) {
 		boolean result;
 		try {
@@ -446,8 +468,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 
 	public boolean removeStream(String streamUrl) {
 		boolean result = false;
-		if (registeredStreams.containsKey(streamUrl)) {
-			Object object = registeredStreams.remove(streamUrl);
+		if (getRegisteredStreams().containsKey(streamUrl)) {
+			Object object = getRegisteredStreams().remove(streamUrl);
 			if (object != null) {
 				result = true;
 			}
@@ -622,8 +644,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		super.streamPlayItemPlay(subscriberStream, item, isLive);
 
 		String name = item.getName();
-		if (registeredStreams.containsKey(name)) {
-			Stream stream = registeredStreams.get(name);
+		if (getRegisteredStreams().containsKey(name)) {
+			Stream stream = getRegisteredStreams().get(name);
 			stream.addViewer(subscriberStream.getName());
 			System.out
 					.println("Application.streamPlayItemPlay() -- viewerCount "
@@ -657,7 +679,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public void streamSubscriberClose(ISubscriberStream subcriberStream) {
 		super.streamSubscriberClose(subcriberStream);
 
-		Set<Entry<String, Stream>> entrySet = registeredStreams.entrySet();
+		Set<Entry<String, Stream>> entrySet = getRegisteredStreams().entrySet();
 		for (Iterator iterator = entrySet.iterator(); iterator.hasNext();) {
 			Entry<String, Stream> entry = (Entry<String, Stream>) iterator
 					.next();
@@ -816,4 +838,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		}
 	}
 
+	public Map<String, Stream> getRegisteredStreams() {
+		return registeredStreams;
+	}
 }

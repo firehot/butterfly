@@ -10,6 +10,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Query;
 
@@ -24,6 +25,7 @@ import org.red5.core.GcmUsers;
 public class ApplicationTester {
 
 	Application butterflyApp;
+	
 	@Before
 	public void before() {
 		butterflyApp = new Application();
@@ -178,6 +180,27 @@ public class ApplicationTester {
 		assertEquals(1,gcmUsers.getRegIDs().size());
 		gcmUsers.addRegID(regid);
 		assertEquals(1,gcmUsers.getRegIDs().size());
+	}
+	
+	@Test
+	public void testRegisterLocationForStream() {
+		Map<String, Stream> registeredStreams = butterflyApp.getRegisteredStreams();
+		assertEquals(0, registeredStreams.size());
+		registeredStreams.put("video_url", new Stream("location_test", "video_url", System.currentTimeMillis()));
+		
+		assertEquals(1, registeredStreams.size());
+		
+		butterflyApp.registerLocationForStream("video_url", 23.4566, 34.667, 100);
+		
+		registeredStreams = butterflyApp.getRegisteredStreams();
+		assertEquals(1, registeredStreams.size());
+		
+		Stream stream = registeredStreams.get("video_url");
+		assertNotNull(stream);
+		assertEquals(23.4566, stream.longtitude, 1e-8);
+		assertEquals(34.667, stream.latitude, 1e-8);
+		assertEquals(100, stream.altitude, 1e-8);
+		
 	}
 	
 //	@Test

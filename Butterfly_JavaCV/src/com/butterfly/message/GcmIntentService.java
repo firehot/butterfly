@@ -12,7 +12,7 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.butterfly.ClientActivity;
 import com.butterfly.R;
-import com.butterfly.StreamList;
+import com.butterfly.fragment.StreamListFragment;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 public class GcmIntentService extends IntentService {
@@ -105,7 +105,7 @@ public class GcmIntentService extends IntentService {
 		if (streamURL != null) {
 			// Creates an explicit intent for an Activity in your app
 			Intent resultIntent = new Intent(this, ClientActivity.class);
-			resultIntent.putExtra(StreamList.STREAM_PUBLISHED_NAME, streamURL);
+			resultIntent.putExtra(StreamListFragment.STREAM_PUBLISHED_NAME, streamURL);
 
 			// The stack builder object will contain an artificial back stack
 			// for
