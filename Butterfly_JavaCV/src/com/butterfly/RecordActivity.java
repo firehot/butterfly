@@ -188,6 +188,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 	protected void onPause() {
 		super.onPause();
 		stopRecording();
+		finish();
 
 		if (cameraView != null) {
 			cameraView.stopPreview();
