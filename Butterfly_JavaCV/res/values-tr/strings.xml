@@ -36,6 +36,7 @@
 	<string name="missed_the_stream">Bu url\'e sahip canlı yayın şu anda bulunmamaktadır. Kaçırmış olmalısınız. Sonraki yayın için lütfen daha hızlı olun</string>
     <string name="streamListTitle">Liste</string>
     <string name="mapTitle">Harita</string>
+    <string name="batteryLow">Pil zayıf, kayıt işlemi başlatılamıyor</string>
 	<plurals name="viewers_count">
         <item quantity="other">%d İzleyici</item>
     </plurals>
