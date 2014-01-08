@@ -53,15 +53,22 @@ import javax.persistence.Query;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.red5.io.ITag;
+import org.red5.io.flv.impl.FLVWriter;
+import org.red5.io.flv.impl.Tag;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.api.stream.IPlayItem;
+import org.red5.server.api.stream.IStreamFilenameGenerator;
+import org.red5.server.api.stream.IStreamFilenameGenerator.GenerationType;
 import org.red5.server.api.stream.IStreamListener;
 import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.api.stream.ISubscriberStream;
+import org.red5.server.stream.DefaultStreamFilenameGenerator;
+import org.red5.server.util.ScopeUtils;
 
 import com.google.android.gcm.server.Constants;
 import com.google.android.gcm.server.Message;
@@ -75,7 +82,7 @@ import com.google.android.gcm.server.Sender;
  * @author The Red5 Project (red5@osflash.org)
  */
 public class Application extends MultiThreadedApplicationAdapter implements
-		IStreamListener {
+IStreamListener {
 
 	private static final String SENDER_ID = "AIzaSyCFmHIbJO0qCtPo6klp7Ade3qjeGLgtZWw";
 	private Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
@@ -83,6 +90,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	private ResourceBundle messagesTR;
 	private ResourceBundle messagesEN;
 	private BandwidthServer bandwidthServer;
+	private FLVWriter flvWriter;
 
 	public static class Stream implements Serializable {
 		public String streamName;
@@ -95,7 +103,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		public double altitude;
 		public double longtitude;
 		public double latitude;
-		
+		public FLVWriter flvWriter;
+
 
 		public Stream(String streamName, String streamUrl, Long registerTime) {
 			super();
@@ -103,6 +112,40 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			this.streamUrl = streamUrl;
 			this.registerTime = registerTime;
 			this.imageReceived = false;
+
+			try {
+				File file = new File("webapps/ButterFly_Red5/"+streamUrl+".flv");
+				if (file.exists() == false) {
+					file.createNewFile();
+				}
+				flvWriter = new FLVWriter(file, false);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		public void write(IStreamPacket packet) {
+			IoBuffer data = packet.getData().asReadOnlyBuffer().duplicate();
+			if (data.limit() == 0) {
+				System.out.println("data limit -> 0");
+				return;
+			}
+
+			ITag tag = new Tag();
+			tag.setDataType(packet.getDataType());
+			tag.setBodySize(data.limit());
+			tag.setTimestamp(packet.getTimestamp());
+			tag.setBody(data);
+
+			try {
+				flvWriter.writeTag(tag);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		public void close() {
+			flvWriter.close();
 		}
 
 		public void addViewer(String streamName) {
@@ -136,6 +179,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 				new Locale("tr"));
 		messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
 		bandwidthServer = new BandwidthServer();
+
 
 	}
 
@@ -218,18 +262,18 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public boolean  registerLocationForStream(String url, double longitude, double latitude, double altitude) {
 		boolean result = false;
 		if (getRegisteredStreams().containsKey(url) == true) {
-				Stream stream = getRegisteredStreams().get(url);
-				stream.latitude = latitude;
-				stream.longtitude = longitude;
-				stream.altitude = altitude;
-				result = true;
+			Stream stream = getRegisteredStreams().get(url);
+			stream.latitude = latitude;
+			stream.longtitude = longitude;
+			stream.altitude = altitude;
+			result = true;
 		}
 		return result;
 	}
-		
-	
-	
-	
+
+
+
+
 	public boolean registerUser(String register_id, String mail) {
 		boolean result;
 		try {
@@ -345,27 +389,27 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		GcmUsers result = null;
 
 		ArrayList<String> mailListNotifiedByMail = new ArrayList<String>(); // This
-																			// List
-																			// will
-																			// be
-																			// used
-																			// for
-																			// mails,
-																			// which
-																			// are
-																			// not
-																			// available
-																			// on
-																			// the
-																			// database
+		// List
+		// will
+		// be
+		// used
+		// for
+		// mails,
+		// which
+		// are
+		// not
+		// available
+		// on
+		// the
+		// database
 		ArrayList<GcmUsers> userList = new ArrayList<GcmUsers>();// This List
-																	// will be
-																	// used for
-																	// registerIds,
-																	// which are
-																	// available
-																	// on the
-																	// database
+		// will be
+		// used for
+		// registerIds,
+		// which are
+		// available
+		// on the
+		// database
 		if (mails != null) {
 			String[] splits = mails.split(",");
 
@@ -373,12 +417,12 @@ public class Application extends MultiThreadedApplicationAdapter implements
 				result = getRegistrationIdList(splits[i]);
 				if (result == null) {
 					mailListNotifiedByMail.add(splits[i]); // using as a
-															// parameter for
-															// sendMail()
-															// function
+					// parameter for
+					// sendMail()
+					// function
 				} else {
 					userList.add(result); // using as a parameter for
-											// sendNotification() function
+					// sendNotification() function
 				}
 			}
 
@@ -453,13 +497,6 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 
 	@Override
-	public void streamBroadcastStart(IBroadcastStream stream) {
-
-		stream.addStreamListener(this);
-		super.streamBroadcastStart(stream);
-	}
-
-	@Override
 	public void streamPublishStart(IBroadcastStream stream) {
 
 		stream.addStreamListener(this);
@@ -469,11 +506,12 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public boolean removeStream(String streamUrl) {
 		boolean result = false;
 		if (getRegisteredStreams().containsKey(streamUrl)) {
-			Object object = getRegisteredStreams().remove(streamUrl);
-			if (object != null) {
+			Stream stream = getRegisteredStreams().remove(streamUrl);
+			stream.close();
+			if (stream != null) {
 				result = true;
 			}
-			object = null;
+			stream = null;
 			File f = new File("webapps/ButterFly_Red5/"+streamUrl+".png");
 			f.delete();
 		}
@@ -515,10 +553,10 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		System.out.println("Done1");
 		Session session = Session.getInstance(props,
 				new javax.mail.Authenticator() {
-					protected PasswordAuthentication getPasswordAuthentication() {
-						return new PasswordAuthentication(username, password);
-					}
-				});
+			protected PasswordAuthentication getPasswordAuthentication() {
+				return new PasswordAuthentication(username, password);
+			}
+		});
 
 		try {
 			javax.mail.Message message = new MimeMessage(session);
@@ -559,15 +597,15 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		// string, but could certainly be a JSON object.
 		Message message = new Message.Builder()
 
-				// If multiple messages are sent using the same .collapseKey()
-				// the android target device, if it was offline during earlier
-				// message
-				// transmissions, will only receive the latest message for that
-				// key when
-				// it goes back on-line.
-				.collapseKey("1").timeToLive(30).delayWhileIdle(true)
-				.addData("URL", streamURL)
-				.addData("broadcaster", broadcasterMail).build();
+		// If multiple messages are sent using the same .collapseKey()
+		// the android target device, if it was offline during earlier
+		// message
+		// transmissions, will only receive the latest message for that
+		// key when
+		// it goes back on-line.
+		.collapseKey("1").timeToLive(30).delayWhileIdle(true)
+		.addData("URL", streamURL)
+		.addData("broadcaster", broadcasterMail).build();
 
 		try {
 			// use this for multicast messages. The second parameter
@@ -648,8 +686,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			Stream stream = getRegisteredStreams().get(name);
 			stream.addViewer(subscriberStream.getName());
 			System.out
-					.println("Application.streamPlayItemPlay() -- viewerCount "
-							+ stream.getViewerCount());
+			.println("Application.streamPlayItemPlay() -- viewerCount "
+					+ stream.getViewerCount());
 			notifyUserAboutViewerCount(stream.getViewerCount(),
 					stream.getBroadcasterGCMUsers());
 		}
@@ -725,16 +763,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			java.util.Date date = new java.util.Date();
 			streamTemp.timeReceived = new Timestamp(date.getTime());
 
-//			if (packet.getDataType() == org.red5.io.IoConstants.TYPE_VIDEO) {
-//				VideoData data = (VideoData) packet;
-//				if (data.getFrameType().equals(VideoData.FrameType.KEYFRAME)) {
-//					if (!streamTemp.imageReceived) {
-//						System.out.println("image saved");
-//						streamTemp.imageReceived = true;
-//						writeImage(data.getData());
-//					}
-//				}
-//			}
+			streamTemp.write(packet);
 		}
 
 	}
@@ -764,11 +793,12 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		}
 
 		for (String name : toBeRemoved) {
-			registeredStreams.remove(name);
+			Stream stream = registeredStreams.remove(name);
+			stream.close();
 			streamNames.remove(name);
 			File file = new File("webapps/ButterFly_Red5/"+name+".png");
 			file.delete();
-				
+
 		}
 
 		return streamNames;
@@ -815,8 +845,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		}
 
 	}
-	
-	
+
+
 	/**
 	 * This methods gets image in byte array and saves as a file in the server
 	 * @param data
@@ -828,10 +858,10 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			BufferedImage img = ImageIO.read(new ByteArrayInputStream(data));
 			File outputfile = new File("webapps/ButterFly_Red5/"+streamURL+".png");
 			ImageIO.write(img, "png", outputfile);
-			
+
 			if (registeredStreams.containsKey(streamURL)) {
 				Stream stream = registeredStreams.get(streamURL);
-				
+
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
