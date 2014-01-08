@@ -9,11 +9,15 @@ import org.json.JSONObject;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -41,7 +45,7 @@ import flex.messaging.io.amf.client.AMFConnection;
 import flex.messaging.io.amf.client.exceptions.ClientStatusException;
 import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
-public class MainActivity extends FragmentActivity  {
+public class MainActivity extends FragmentActivity {
 
 	AppSectionsPagerAdapter mAppSectionsPagerAdapter;
 	ViewPager mViewPager;
@@ -53,10 +57,12 @@ public class MainActivity extends FragmentActivity  {
 
 	private static final String SHARED_PREFERENCE_FIRST_INSTALLATION = "firstInstallation";
 	private static final String APP_SHARED_PREFERENCES = "applicationDetails";
+	private int batteryLevel = 0;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		getBatteryPercentage();
 		BugSenseHandler.initAndStartSession(this, BugSense.API_KEY);
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
@@ -70,25 +76,28 @@ public class MainActivity extends FragmentActivity  {
 
 		setContentView(R.layout.activity_main);
 
-		// Create the adapter that will return a fragment for each of the three primary sections
+		// Create the adapter that will return a fragment for each of the three
+		// primary sections
 		// of the app.
-		mAppSectionsPagerAdapter = new AppSectionsPagerAdapter(getSupportFragmentManager());
+		mAppSectionsPagerAdapter = new AppSectionsPagerAdapter(
+				getSupportFragmentManager());
 
 		// Set up the action bar.
 		final ActionBar actionBar = getActionBar();
 
-		// Specify that the Home/Up button should not be enabled, since there is no hierarchical
+		// Specify that the Home/Up button should not be enabled, since there is
+		// no hierarchical
 		// parent.
-	
+
 		mViewPager = (ViewPager) findViewById(R.id.pager);
 		mViewPager.setAdapter(mAppSectionsPagerAdapter);
-		
-		httpGatewayURL = getString(R.string.http_gateway_url);		
+
+		httpGatewayURL = getString(R.string.http_gateway_url);
 		new GetStreamListTask().execute(httpGatewayURL);
 		// Check device for Play Services APK.
 		if (checkPlayServices(this)) {
 			CloudMessaging msg = new CloudMessaging(
-							this.getApplicationContext(), this, httpGatewayURL);
+					this.getApplicationContext(), this, httpGatewayURL);
 		}
 	}
 
@@ -96,14 +105,16 @@ public class MainActivity extends FragmentActivity  {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.activity_client, menu);
 		PackageManager packageManager = getPackageManager();
-		boolean backCamera = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA);
-		boolean frontCamera = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT);
+		boolean backCamera = packageManager
+				.hasSystemFeature(PackageManager.FEATURE_CAMERA);
+		boolean frontCamera = packageManager
+				.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT);
 		if (backCamera == false && frontCamera == false) {
 			menu.findItem(R.id.broadcast_live).setVisible(false);
 		}
 		return true;
 	}
-	
+
 	public ArrayList<Stream> getStreamList() {
 		return streamList;
 	}
@@ -111,7 +122,14 @@ public class MainActivity extends FragmentActivity  {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.broadcast_live:
-			Intent i = new Intent(this.getApplicationContext(), ContactsList.class);
+			
+			if(batteryLevel > 0 && batteryLevel < 10)
+			{
+				Toast.makeText(this, getString(R.string.batteryLow), Toast.LENGTH_LONG).show();
+				return false;
+			}
+			Intent i = new Intent(this.getApplicationContext(),
+					ContactsList.class);
 			startActivity(i);
 			return true;
 
@@ -124,13 +142,12 @@ public class MainActivity extends FragmentActivity  {
 		}
 		return super.onOptionsItemSelected(item);
 	}
-	
+
 	@Override
 	protected void onResume() {
 		checkPlayServices(this);
 		super.onResume();
 	}
-
 
 	@Override
 	public void onDestroy() {
@@ -138,15 +155,15 @@ public class MainActivity extends FragmentActivity  {
 
 		BugSenseHandler.closeSession(this);
 	}
-	
+
 	public void registerStreamListListener(IStreamListUpdateListener listener) {
 		streamUpdateListenerList.add(listener);
 	}
-	
+
 	public void removeStreamListListener(IStreamListUpdateListener listener) {
 		streamUpdateListenerList.remove(listener);
 	}
-	
+
 	private void updateStreamListeners() {
 		for (IStreamListUpdateListener listener : streamUpdateListenerList) {
 			listener.streamListUpdated(streamList);
@@ -154,8 +171,8 @@ public class MainActivity extends FragmentActivity  {
 	}
 
 	/**
-	 * A {@link FragmentPagerAdapter} that returns a fragment corresponding to one of the primary
-	 * sections of the app.
+	 * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+	 * one of the primary sections of the app.
 	 */
 	public class AppSectionsPagerAdapter extends FragmentStatePagerAdapter {
 
@@ -165,7 +182,7 @@ public class MainActivity extends FragmentActivity  {
 
 		@Override
 		public Fragment getItem(int i) {
-			
+
 			switch (i) {
 			case 0:
 				streamListFragment = new StreamListFragment();
@@ -173,8 +190,8 @@ public class MainActivity extends FragmentActivity  {
 			case 1:
 				mapFragment = new MapFragment();
 				return mapFragment;
-				default:
-					break;
+			default:
+				break;
 			}
 			return null;
 		}
@@ -186,14 +203,14 @@ public class MainActivity extends FragmentActivity  {
 
 		@Override
 		public CharSequence getPageTitle(int position) {
-			
+
 			switch (position) {
 			case 0:
 				return getString(R.string.streamListTitle);
 			case 1:
 				return getString(R.string.mapTitle);
-				default:
-					break;
+			default:
+				break;
 			}
 			return super.getPageTitle(position);
 		}
@@ -206,26 +223,47 @@ public class MainActivity extends FragmentActivity  {
 		myAlertDialog.setPositiveButton(R.string.accept,
 				new DialogInterface.OnClickListener() {
 
-			public void onClick(DialogInterface arg0, int arg1) {
-				// do something when the OK button is clicked
-				SharedPreferences.Editor mInstallationEditor = applicationPrefs
-						.edit();
-				mInstallationEditor.putBoolean(
-						SHARED_PREFERENCE_FIRST_INSTALLATION, true);
-				mInstallationEditor.commit();
-			}
-		});
+					public void onClick(DialogInterface arg0, int arg1) {
+						// do something when the OK button is clicked
+						SharedPreferences.Editor mInstallationEditor = applicationPrefs
+								.edit();
+						mInstallationEditor.putBoolean(
+								SHARED_PREFERENCE_FIRST_INSTALLATION, true);
+						mInstallationEditor.commit();
+					}
+				});
 		myAlertDialog.setNegativeButton(R.string.cancel,
 				new DialogInterface.OnClickListener() {
 
-			public void onClick(DialogInterface arg0, int arg1) {
-				// do something when the Cancel button is clicked
-				MainActivity.this.finish();
-			}
-		});
+					public void onClick(DialogInterface arg0, int arg1) {
+						// do something when the Cancel button is clicked
+						MainActivity.this.finish();
+					}
+				});
 		myAlertDialog.show();
 	}
-	
+
+	private void getBatteryPercentage() {
+		
+		BroadcastReceiver batteryLevelReceiver = new BroadcastReceiver() {
+			
+			public void onReceive(Context context, Intent intent) {
+				context.unregisterReceiver(this);
+				int currentLevel = intent.getIntExtra(
+						BatteryManager.EXTRA_LEVEL, -1);
+				int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+				int level = -1;
+				if (currentLevel >= 0 && scale > 0) {
+					level = (currentLevel * 100) / scale;
+				}
+				batteryLevel = level;
+			}
+		};
+		IntentFilter batteryLevelFilter = new IntentFilter(
+				Intent.ACTION_BATTERY_CHANGED);
+		registerReceiver(batteryLevelReceiver, batteryLevelFilter);
+	}
+
 	public static boolean checkPlayServices(Activity activity) {
 		int resultCode = GooglePlayServicesUtil
 				.isGooglePlayServicesAvailable(activity);
@@ -241,7 +279,6 @@ public class MainActivity extends FragmentActivity  {
 
 		return true;
 	}
-	
 
 	public class GetStreamListTask extends AsyncTask<String, Void, String> {
 
@@ -281,20 +318,22 @@ public class MainActivity extends FragmentActivity  {
 					jsonArray = new JSONArray(streams);
 					int length = jsonArray.length();
 					if (length > 0) {
-						
+
 						JSONObject jsonObject;
 
 						for (int i = 0; i < length; i++) {
 							jsonObject = (JSONObject) jsonArray.get(i);
-							streamList.add(new Stream(
-									jsonObject.getString("name"), jsonObject
-											.getString("url"), Integer
-											.parseInt(jsonObject
-													.getString("viewerCount")),
-													Double.parseDouble(jsonObject.getString("latitude")),
-													Double.parseDouble(jsonObject.getString("longitude")),
-													Double.parseDouble(jsonObject.getString("altitude"))
-													));
+							streamList.add(new Stream(jsonObject
+									.getString("name"), jsonObject
+									.getString("url"), Integer
+									.parseInt(jsonObject
+											.getString("viewerCount")), Double
+									.parseDouble(jsonObject
+											.getString("latitude")), Double
+									.parseDouble(jsonObject
+											.getString("longitude")), Double
+									.parseDouble(jsonObject
+											.getString("altitude"))));
 
 						}
 					} else {
@@ -302,10 +341,8 @@ public class MainActivity extends FragmentActivity  {
 								getString(R.string.noLiveStream),
 								Toast.LENGTH_LONG).show();
 					}
-					
-					
+
 					updateStreamListeners();
-					
 
 				} catch (JSONException e) {
 					e.printStackTrace();
