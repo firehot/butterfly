@@ -62,13 +62,9 @@ import org.red5.server.api.Red5;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.api.stream.IPlayItem;
-import org.red5.server.api.stream.IStreamFilenameGenerator;
-import org.red5.server.api.stream.IStreamFilenameGenerator.GenerationType;
 import org.red5.server.api.stream.IStreamListener;
 import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.api.stream.ISubscriberStream;
-import org.red5.server.stream.DefaultStreamFilenameGenerator;
-import org.red5.server.util.ScopeUtils;
 
 import com.google.android.gcm.server.Constants;
 import com.google.android.gcm.server.Message;
@@ -376,62 +372,33 @@ IStreamListener {
 	private void sendNotificationsOrMail(String mails, String broadcasterMail,
 			String streamURL, String deviceLanguage) {
 
-		ResourceBundle messages = messagesEN;
-		if (deviceLanguage != null && deviceLanguage.equals("tur")) {
-			messages = messagesTR;
-		}
-
-		String subject = messages.getString("mail_notification_subject");
-		String message = MessageFormat.format(
-				messages.getString("mail_notification_message"),
-				broadcasterMail);
-
 		GcmUsers result = null;
 
-		ArrayList<String> mailListNotifiedByMail = new ArrayList<String>(); // This
-		// List
-		// will
-		// be
-		// used
-		// for
-		// mails,
-		// which
-		// are
-		// not
-		// available
-		// on
-		// the
-		// database
-		ArrayList<GcmUsers> userList = new ArrayList<GcmUsers>();// This List
-		// will be
-		// used for
-		// registerIds,
-		// which are
-		// available
-		// on the
-		// database
+		// This List will be used for mails, which  are not available on the database
+		ArrayList<String> mailListNotifiedByMail = new ArrayList<String>();
+		
+		// This List will be used for registerIds, which are available on the database
+		ArrayList<GcmUsers> userList = new ArrayList<GcmUsers>();
 		if (mails != null) {
 			String[] splits = mails.split(",");
 
 			for (int i = 0; i < splits.length; i++) {
 				result = getRegistrationIdList(splits[i]);
 				if (result == null) {
-					mailListNotifiedByMail.add(splits[i]); // using as a
-					// parameter for
-					// sendMail()
-					// function
+					
+					// using as a parameter for sendMail() function
+					mailListNotifiedByMail.add(splits[i]); 
 				} else {
-					userList.add(result); // using as a parameter for
-					// sendNotification() function
+					// using as a parameter for sendNotification() function
+					userList.add(result); 
 				}
 			}
 
 			if (!mailListNotifiedByMail.isEmpty())
-				sendMail(mailListNotifiedByMail, subject, message,
-						broadcasterMail);
+				sendMail(mailListNotifiedByMail,broadcasterMail,deviceLanguage);
 
 			if (userList.size() > 0)
-				sendNotification(userList, broadcasterMail, streamURL);
+				sendNotification(userList, broadcasterMail, streamURL,deviceLanguage);
 		}
 	}
 
@@ -540,8 +507,19 @@ IStreamListener {
 		entityManager = null;
 	}
 
-	public boolean sendMail(ArrayList<String> email, String subject,
-			String messagex, String broadcasterMail) {
+	public boolean sendMail(ArrayList<String> email, String broadcasterMail,String deviceLanguage) {
+		
+		ResourceBundle messages = messagesEN;
+		if (deviceLanguage != null && deviceLanguage.equals("tur")) {
+			messages = messagesTR;
+		}
+
+		String subject = messages.getString("mail_notification_subject");
+		String messagex = MessageFormat.format(
+				messages.getString("mail_notification_message"),
+				broadcasterMail);
+		
+		
 		boolean resultx = false;
 		final String username = "notification@butterflytv.net";
 		final String password = "Nybn~Dx-E5-$";
@@ -585,7 +563,7 @@ IStreamListener {
 	}
 
 	private boolean sendNotification(ArrayList<GcmUsers> androidTargets,
-			String broadcasterMail, String streamURL) {
+			String broadcasterMail, String streamURL,String deviceLanguage) {
 		boolean resx = false;
 
 		// Instance of com.android.gcm.server.Sender, that does the
@@ -606,6 +584,8 @@ IStreamListener {
 		.collapseKey("1").timeToLive(30).delayWhileIdle(true)
 		.addData("URL", streamURL)
 		.addData("broadcaster", broadcasterMail).build();
+		
+		ArrayList<String> failedNotificationMails = new ArrayList<String>();
 
 		try {
 			// use this for multicast messages. The second parameter
@@ -638,6 +618,8 @@ IStreamListener {
 							String oldRegID = targetRegIDList.get(i);
 							GcmUsers user = GcmUsers.fetchUserByRegID(oldRegID,
 									androidTargets);
+							if(!failedNotificationMails.contains(user.getEmail()))
+								failedNotificationMails.add(user.getEmail());
 							deleteUser(user);
 						}
 					}
@@ -652,6 +634,9 @@ IStreamListener {
 			e.printStackTrace();
 		}
 
+		if(failedNotificationMails.size() >0)
+			sendMail(failedNotificationMails, broadcasterMail, deviceLanguage);
+		
 		// We'll pass the CollapseKey and Message values back to index.jsp, only
 		// so
 		// we can display it in our form again
