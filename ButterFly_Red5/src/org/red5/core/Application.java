@@ -789,48 +789,6 @@ IStreamListener {
 		return streamNames;
 	}
 
-	private boolean writeImage(IoBuffer in) {
-		System.out.println("writeImage 1");
-		BufferedImage image = readImage(in);
-		System.out.println("writeImage 2");
-		try {
-			File outputfile = new File("/red5/images/saved.png");
-			System.out.println("writeImage 3");
-			ImageIO.write(image, "png", outputfile);
-			System.out.println("writeImage 4");
-		} catch (IOException e) {
-			System.out.println("image failed writeImage");
-			return false;
-		}
-
-		return true;
-	}
-
-	private BufferedImage readImage(IoBuffer in) {
-		try {
-			System.out.println("readImage 1");
-			int length = in.getInt();
-			System.out.println("readImage 2");
-			byte[] bytes = new byte[length];
-			System.out.println("readImage 3");
-			in.get(bytes);
-			System.out.println("readImage 4");
-			ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-			System.out.println("readImage 5");
-			return ImageIO.read(bais);
-		} catch (IOException e) {
-			System.out.println("image failed readImage");
-			return null;
-		}
-		catch(Exception ex)
-		{
-			ex.printStackTrace();
-			System.out.println(ex.getMessage());
-			return null;
-		}
-
-	}
-
 
 	/**
 	 * This methods gets image in byte array and saves as a file in the server
@@ -843,11 +801,6 @@ IStreamListener {
 			BufferedImage img = ImageIO.read(new ByteArrayInputStream(data));
 			File outputfile = new File("webapps/ButterFly_Red5/"+streamURL+".png");
 			ImageIO.write(img, "png", outputfile);
-
-			if (registeredStreams.containsKey(streamURL)) {
-				Stream stream = registeredStreams.get(streamURL);
-
-			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
