@@ -1,24 +1,18 @@
 package com.butterfly;
 
-import java.io.FileDescriptor;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,13 +21,11 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.BaseAdapter;
 import android.widget.FilterQueryProvider;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.SimpleCursorAdapter.CursorToStringConverter;
-import android.widget.SimpleCursorAdapter.ViewBinder;
 import android.widget.TextView;
 
 import com.bugsense.trace.BugSenseHandler;
@@ -91,7 +83,7 @@ public class ContactsList extends Activity {
 
 		mAdapter = new FilteredContactListAdapter(this,
 				R.layout.contact_list_item, null, new String[] {
-				displayName, Email.ADDRESS, Data.PHOTO_THUMBNAIL_URI }, new int[] {
+				displayName, displayName, Data.PHOTO_THUMBNAIL_URI }, new int[] {
 				R.id.display_name, R.id.email_address, R.id.photo_uri}, 0, true);
 
 
@@ -154,18 +146,11 @@ public class ContactsList extends Activity {
 	private Cursor getCursor(CharSequence constraint) {
 		String[] selectArgs = null;
 
-		String select = /*
-		 * Searches for an email address that matches the search
-		 * string
-		 */
+		String select = 
 				"(" + Email.ADDRESS + " NOTNULL " + " AND " +
-				/*
-				 * Searches for a MIME type that matches the value of the constant
-				 * Email.CONTENT_ITEM_TYPE. Note the single quotes surrounding
-				 * Email.CONTENT_ITEM_TYPE.
-				 */
 				 Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "'" + " AND "
-				 + displayName + " NOTNULL" + ") ";
+				 + displayName + " NOTNULL" + " AND "
+				 + Data.IS_PRIMARY + "='1' ) ";
 
 		if (constraint != null) {
 			select += " AND (" + Email.ADDRESS + " LIKE ? " + " OR "
@@ -175,9 +160,6 @@ public class ContactsList extends Activity {
 			selectArgs[1] = "%" + constraint + "%";
 			;
 		}
-		// + " AND " +
-		//
-		// Data.DISPLAY_NAME + "=?";
 
 		return getContentResolver().query(Data.CONTENT_URI,
 				CONTACTS_SUMMARY_PROJECTION, select, selectArgs,
@@ -193,13 +175,11 @@ public class ContactsList extends Activity {
 		// The contact's _ID, to construct a content URI
 		Data.CONTACT_ID,
 		// The contact's LOOKUP_KEY, to construct a content URI
-		Data.LOOKUP_KEY, Email.ADDRESS,
+		Data.LOOKUP_KEY, 
+		Email.ADDRESS ,
 		Data.PHOTO_THUMBNAIL_URI,
 
-		/*
-		 * Contacts._ID, Contacts.DISPLAY_NAME, Contacts.CONTACT_STATUS,
-		 * Contacts.CONTACT_PRESENCE, Contacts.PHOTO_ID, Contacts.LOOKUP_KEY,
-		 */};
+	};
 
 	@Override
 	protected void onDestroy() {
@@ -293,6 +273,10 @@ public class ContactsList extends Activity {
 
 	public class FilteredContactListAdapter extends SimpleCursorAdapter {
 
+		private int emailColumnIndex;
+		private int displayNameColumnIndex;
+		private int photoUriColumnIndex;
+
 		public FilteredContactListAdapter(Context context, int layout, Cursor c,
 				String[] from, int[] to, int flag, boolean isSearching) {
 			super(context, layout, c, from, to, flag);
@@ -301,7 +285,9 @@ public class ContactsList extends Activity {
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 
-			//			ViewHolder holder = getViewHolder(convertView);
+			Cursor cursor = getCursor();
+			cursor.moveToPosition(position);
+			
 			ViewHolder holder;
 			if (convertView == null) {
 				convertView = getLayoutInflater().inflate(R.layout.contact_list_item  , null);
@@ -311,15 +297,24 @@ public class ContactsList extends Activity {
 				holder.photoView = (ImageView) convertView.findViewById(R.id.photo_uri);
 				holder.deleteView = (ImageView) convertView.findViewById(R.id.remove_contact);
 				convertView.setTag(holder);
+
+				emailColumnIndex = cursor.getColumnIndex(Email.ADDRESS);
+				displayNameColumnIndex = cursor.getColumnIndex(displayName);
+				photoUriColumnIndex = cursor.getColumnIndex(Data.PHOTO_THUMBNAIL_URI);
 			} else {
 				holder = (ViewHolder) convertView.getTag();
 			}
+			String contactId = cursor.getString(cursor.getColumnIndex(Data.CONTACT_ID));
+			
+			System.out.println("contact id " + contactId);
+			
+			String email = cursor.getString(emailColumnIndex);
+			holder.emailView.setText(email);
 
-			getCursor().moveToPosition(position);
+			String displayName = cursor.getString(displayNameColumnIndex);
+			holder.displayNameView.setText(displayName);
 
-			holder.displayNameView.setText(getCursor().getString(getCursor().getColumnIndex(displayName)));
-			holder.emailView.setText(getCursor().getString(getCursor().getColumnIndex(Email.ADDRESS)));
-			String photoUri = getCursor().getString(getCursor().getColumnIndex(Data.PHOTO_THUMBNAIL_URI));
+			String photoUri = cursor.getString(photoUriColumnIndex);
 			if (photoUri != null) {
 				holder.photoView.setImageURI(Uri.parse(photoUri));
 			}
@@ -327,6 +322,7 @@ public class ContactsList extends Activity {
 				holder.photoView.setImageResource(R.drawable.ic_action_user);
 			}
 			holder.deleteView.setVisibility(View.GONE);
+
 			return convertView;
 		}
 
