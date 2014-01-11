@@ -6,5 +6,11 @@
         android:dither="true"
         android:endColor="#80FFFFFF"
         android:startColor="#20FFFFFF" />
+    
+
+    <padding android:left="7dp" android:top="7dp"
+            android:right="7dp" android:bottom="7dp" />
+    <corners android:radius="8dp" />
+
 
 </shape>
