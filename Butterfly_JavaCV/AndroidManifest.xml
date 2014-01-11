@@ -62,7 +62,7 @@
         <activity
             android:name="com.butterfly.ClientActivity"
             android:configChanges="orientation|screenSize|smallestScreenSize|keyboard|keyboardHidden|navigation"
-            android:parentActivityName="com.butterfly.fragment.StreamListFragment"
+            android:parentActivityName="com.butterfly.MainActivity"
             android:screenOrientation="landscape"
             android:theme="@android:style/Theme.NoTitleBar" >
             <meta-data

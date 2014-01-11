@@ -39,6 +39,7 @@ public class GcmIntentService extends IntentService {
 		} else {
 			String streamURL = intent.getStringExtra("URL");
 			String broadcaster = intent.getStringExtra("broadcaster");
+			String streamName = intent.getStringExtra("name");
 			GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(this);
 			// The getMessageType() intent parameter must be the intent you
 			// received
@@ -54,18 +55,18 @@ public class GcmIntentService extends IntentService {
 				 */
 				if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR
 						.equals(messageType)) {
-					sendNotification(null, null,
+					sendNotification(null, null, null,
 							"Send error: " + extras.toString());
 				} else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED
 						.equals(messageType)) {
-					sendNotification(null, null, "Deleted messages on server: "
+					sendNotification(null, null, null, "Deleted messages on server: "
 							+ extras.toString());
 					// If it's a regular GCM message, do some work.
 				} else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE
 						.equals(messageType)) {
 
 					// Post notification of received message.
-					sendNotification(streamURL, broadcaster, null);
+					sendNotification(streamURL, broadcaster, streamName, null);
 
 				}
 			}
@@ -77,7 +78,7 @@ public class GcmIntentService extends IntentService {
 	// Put the message into a notification and post it.
 	// This is just one simple example of what you might choose to do with
 	// a GCM message.
-	private void sendNotification(String streamURL, String broadcaster,
+	private void sendNotification(String streamURL, String broadcaster, String streamName,
 			String error) {
 		mNotificationManager = (NotificationManager) this
 				.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -96,9 +97,9 @@ public class GcmIntentService extends IntentService {
 				this)
 				.setSmallIcon(R.drawable.ic_launcher)
 				.setAutoCancel(true)
-				.setContentTitle(
+				.setContentTitle(streamName + "(" +
 						getApplicationContext().getString(
-								R.string.live_stream_warning))
+								R.string.live_stream) + ")")
 				// .setStyle(new NotificationCompat.BigTextStyle().bigText(msg))
 				.setContentText(text);
 

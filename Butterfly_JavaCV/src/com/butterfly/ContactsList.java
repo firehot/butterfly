@@ -304,9 +304,6 @@ public class ContactsList extends Activity {
 			} else {
 				holder = (ViewHolder) convertView.getTag();
 			}
-			String contactId = cursor.getString(cursor.getColumnIndex(Data.CONTACT_ID));
-			
-			System.out.println("contact id " + contactId);
 			
 			String email = cursor.getString(emailColumnIndex);
 			holder.emailView.setText(email);

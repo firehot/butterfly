@@ -247,7 +247,7 @@ IStreamListener {
 
 				registeredStreams.put(url, stream);
 			}
-			sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url,
+			sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url, streamName,
 					deviceLanguage);
 			// return true even if stream is not public
 			result = true;
@@ -368,9 +368,10 @@ IStreamListener {
 	 * @param deviceLanguage
 	 *            language of the device. According to this parameter,
 	 *            notification mail language is selected
+	 * @param deviceLanguage 
 	 */
 	private void sendNotificationsOrMail(String mails, String broadcasterMail,
-			String streamURL, String deviceLanguage) {
+			String streamURL, String streamName, String deviceLanguage) {
 
 		GcmUsers result = null;
 
@@ -395,10 +396,10 @@ IStreamListener {
 			}
 
 			if (!mailListNotifiedByMail.isEmpty())
-				sendMail(mailListNotifiedByMail,broadcasterMail,deviceLanguage);
+				sendMail(mailListNotifiedByMail,broadcasterMail,streamName, deviceLanguage);
 
 			if (userList.size() > 0)
-				sendNotification(userList, broadcasterMail, streamURL,deviceLanguage);
+				sendNotification(userList, broadcasterMail, streamURL, streamName, deviceLanguage);
 		}
 	}
 
@@ -507,7 +508,7 @@ IStreamListener {
 		entityManager = null;
 	}
 
-	public boolean sendMail(ArrayList<String> email, String broadcasterMail,String deviceLanguage) {
+	public boolean sendMail(ArrayList<String> email, String broadcasterMail,String streamName, String deviceLanguage) {
 		
 		ResourceBundle messages = messagesEN;
 		if (deviceLanguage != null && deviceLanguage.equals("tur")) {
@@ -517,7 +518,7 @@ IStreamListener {
 		String subject = messages.getString("mail_notification_subject");
 		String messagex = MessageFormat.format(
 				messages.getString("mail_notification_message"),
-				broadcasterMail);
+				broadcasterMail, streamName);
 		
 		
 		boolean resultx = false;
@@ -545,7 +546,7 @@ IStreamListener {
 				message.setRecipients(javax.mail.Message.RecipientType.TO,
 						InternetAddress.parse(email.get(i)));
 				message.setSubject(subject);
-				message.setText(messagex);
+				message.setContent(messagex, "text/html; charset=utf-8");
 				// message.setText(broadcasterMail);
 				System.out.println("Done4");
 				Transport.send(message);
@@ -563,7 +564,7 @@ IStreamListener {
 	}
 
 	private boolean sendNotification(ArrayList<GcmUsers> androidTargets,
-			String broadcasterMail, String streamURL,String deviceLanguage) {
+			String broadcasterMail, String streamURL,String streamName, String deviceLanguage) {
 		boolean resx = false;
 
 		// Instance of com.android.gcm.server.Sender, that does the
@@ -583,7 +584,8 @@ IStreamListener {
 		// it goes back on-line.
 		.collapseKey("1").timeToLive(30).delayWhileIdle(true)
 		.addData("URL", streamURL)
-		.addData("broadcaster", broadcasterMail).build();
+		.addData("broadcaster", broadcasterMail)
+		.addData("name", streamName).build();
 		
 		ArrayList<String> failedNotificationMails = new ArrayList<String>();
 
@@ -635,7 +637,7 @@ IStreamListener {
 		}
 
 		if(failedNotificationMails.size() >0)
-			sendMail(failedNotificationMails, broadcasterMail, deviceLanguage);
+			sendMail(failedNotificationMails, broadcasterMail, streamName, deviceLanguage);
 		
 		// We'll pass the CollapseKey and Message values back to index.jsp, only
 		// so
