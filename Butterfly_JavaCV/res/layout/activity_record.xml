@@ -9,33 +9,54 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         class="com.butterfly.view.CameraView" />
-    
-    <TextView android:id="@+id/viewerCountView"
-        	android:layout_width="wrap_content"
-        	android:layout_height="wrap_content"
-        	android:padding="10dip"
-        	style="?android:attr/textAppearanceMediumInverse"
-        	android:layout_gravity="top|right"
-        	android:layout_marginRight="6dip"
-        	android:background="@android:color/background_dark"
-        	android:textColor="@android:color/background_light"
-        	android:gravity="center"
-        	/>
+
+    <TextView
+        android:id="@+id/viewerCountView"
+        style="?android:attr/textAppearanceMediumInverse"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|right"
+        android:layout_marginRight="6dip"
+        android:background="@android:color/background_dark"
+        android:gravity="center"
+        android:padding="10dip"
+        android:textColor="@android:color/background_light" />
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|right"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="10dp"
         android:background="@drawable/recordlayoutcolor"
         android:orientation="horizontal" >
 
         <CheckBox
-        android:id="@+id/check_public"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="?android:attr/textAppearanceMedium"
-        android:text="@string/public_chkbox" />
-        
+            android:id="@+id/check_public"
+            style="?android:attr/textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:button="@drawable/checkbox_selector"
+            android:text="@string/public_chkbox"
+            android:textColor="#000000" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="fill_parent"
+            android:background="@android:color/darker_gray"
+            android:layout_margin="5dp" />
+
+        <Button
+            android:id="@+id/recorder_control"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bt_order" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="fill_parent"
+            android:background="@android:color/darker_gray" 
+            android:layout_margin="5dp"/>
+
         <EditText
             android:id="@+id/stream_name"
             android:layout_width="wrap_content"
@@ -43,16 +64,6 @@
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
             android:hint="@string/write_name_of_stream" />
-
-        <Button
-            android:id="@+id/recorder_control"
-            android:layout_width="70dp"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:background="@drawable/bt_order"
-            android:text="@string/start" 
-            android:textColor="#FFFFFF"/>
     </LinearLayout>
 
 </FrameLayout>
