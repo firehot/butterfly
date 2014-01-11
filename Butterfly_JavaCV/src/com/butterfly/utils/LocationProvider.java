@@ -85,14 +85,5 @@ public class LocationProvider implements LocationListener, ConnectionCallbacks,
 				this.locationListener.onLocationChanged(location);
 			}
 		}
-
-		Toast.makeText(
-				mActivity,
-				" provider -> " + location.getProvider() + "    latitude "
-						+ location.getLatitude() + " longitude "
-						+ location.getLongitude() + " accuray "
-						+ location.getAccuracy() + " time "
-						+ location.getTime(), Toast.LENGTH_SHORT).show();
-
 	}
 }
