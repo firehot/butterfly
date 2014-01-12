@@ -44,7 +44,12 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 
 		ViewHolder holder = (ViewHolder) rowView.getTag();
 		Stream s = getItem(position);
-		holder.textStreamName.setText(s.name);
+		String streamname = s.name;
+		
+		if(s.name.length() > 17)
+			streamname = s.name.substring(0, 17)+"...";
+
+		holder.textStreamName.setText(streamname);
 		String image_url = this.context.getString(R.string.image_url)+s.url+".png";
 		holder.imageView.setImageUrl(image_url);
 
