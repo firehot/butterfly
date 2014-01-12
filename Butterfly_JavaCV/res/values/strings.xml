@@ -39,7 +39,7 @@
     <string name="shareStream">Share broadcast</string>
     <string name="insufficient_bandwidth">Internet speed is not high enough for broadcasting</string>
     <string name="missed_the_stream">There is no live stream with this url right now. You should have missed it. Please be quick for the next time </string>
-    <string name="streamListTitle">List</string>
+    <string name="streamListTitle">Live Videos</string>
     <string name="mapTitle">Map</string>
     <string name="batteryLow">Battery is low,cant start recording</string>
     <plurals name="viewers_count">

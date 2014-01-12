@@ -34,7 +34,7 @@
 	<string name="chooseContactAndShare">Tanıdıklarını seçin ve İleri\'ye basın</string>
 	<string name="insufficient_bandwidth">İnternet hızınız canlı yayın yapmak için yeteri kadar hızlı değildir</string>
 	<string name="missed_the_stream">Bu url\'e sahip canlı yayın şu anda bulunmamaktadır. Kaçırmış olmalısınız. Sonraki yayın için lütfen daha hızlı olun</string>
-    <string name="streamListTitle">Liste</string>
+    <string name="streamListTitle">Canlı Yayınlar</string>
     <string name="mapTitle">Harita</string>
     <string name="batteryLow">Pil zayıf, kayıt işlemi başlatılamıyor</string>
 	<plurals name="viewers_count">
