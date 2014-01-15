@@ -480,8 +480,8 @@ IStreamListener {
 				result = true;
 			}
 			stream = null;
-			File f = new File("webapps/ButterFly_Red5/"+streamUrl+".png");
-			f.delete();
+//			File f = new File("webapps/ButterFly_Red5/"+streamUrl+".png");
+//			f.delete();
 		}
 		return result;
 	}
@@ -783,8 +783,8 @@ IStreamListener {
 			Stream stream = registeredStreams.remove(name);
 			stream.close();
 			streamNames.remove(name);
-			File file = new File("webapps/ButterFly_Red5/"+name+".png");
-			file.delete();
+//			File file = new File("webapps/ButterFly_Red5/"+name+".png");
+//			file.delete();
 
 		}
 
