@@ -49,6 +49,7 @@ import android.widget.Toast;
 
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.debug.BugSense;
+import com.butterfly.fragment.ContactsListFragment;
 import com.butterfly.message.CloudMessaging;
 import com.butterfly.message.GcmIntentService;
 import com.butterfly.recorder.FFmpegFrameRecorder;
@@ -150,9 +151,9 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		Bundle extras = getIntent().getExtras();
 		if (extras != null
-				&& extras.containsKey(ContactsList.MAILS_TO_BE_NOTIFIED)) {
+				&& extras.containsKey(ContactsListFragment.MAILS_TO_BE_NOTIFIED)) {
 			mailsToBeNotified = getIntent().getExtras().getString(
-					ContactsList.MAILS_TO_BE_NOTIFIED);
+					ContactsListFragment.MAILS_TO_BE_NOTIFIED);
 		}
 
 		// Hide title

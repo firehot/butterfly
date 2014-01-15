@@ -18,7 +18,7 @@
     <string name="write_name_of_stream">Please write the name of the stream</string>
     <string name="connectivityProblem">Problem in connectivity</string>
     <string name="noLiveStream">No live streams right now</string>
-    <string name="write_contact_name_or_email_addr">Write contact name or email address</string>
+    <string name="write_contact_name_or_email_addr">Type friend\'s name or email</string>
     <string name="next">Next</string>
     <string name="start">Start</string>
     <string name="stop">Stop</string>
@@ -41,6 +41,7 @@
     <string name="missed_the_stream">There is no live stream with this url right now. You should have missed it. Please be quick for the next time </string>
     <string name="streamListTitle">Live Videos</string>
     <string name="mapTitle">Map</string>
+    <string name="contactListTitle">Contacts</string>
     <string name="batteryLow">Battery is low,cant start recording</string>
     <plurals name="viewers_count">
         <item quantity="one">%d Viewer</item>
@@ -148,5 +149,6 @@ Our Privacy Policy may change from time to time. We will not reduce your rights 
 October 30, 2013</string>
     <string name="checking_bandwidth">Checking internet speed...</string>
     <string name="nocamera">No camera found in this device</string>
+    <string name="hint">Hint: Choose friends and press camera for live broadcasting</string>
 
 </resources>

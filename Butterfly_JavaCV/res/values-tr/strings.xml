@@ -14,7 +14,7 @@
 	<string name="live_stream">Canlı Yayın</string>
     <string name="stream_shared_with_you">sizinle bir canlı yayın paylaştı. İzlemek için tıklayınız!</string>
 	<string name="noLiveStream">Şu anda canlı yayın bulunmamaktadır</string>
-	<string name="write_contact_name_or_email_addr">isim veya email adresi giriniz</string>
+	<string name="write_contact_name_or_email_addr">Arkadaşınızın isim veya epostasını giriniz</string>
 	<string name="next">İleri</string>
 	<string name="start">Başlat</string>
 	<string name="stop">Durdur</string>
@@ -36,6 +36,7 @@
 	<string name="missed_the_stream">Bu url\'e sahip canlı yayın şu anda bulunmamaktadır. Kaçırmış olmalısınız. Sonraki yayın için lütfen daha hızlı olun</string>
     <string name="streamListTitle">Canlı Yayınlar</string>
     <string name="mapTitle">Harita</string>
+    <string name="contactListTitle">Kişiler</string>
     <string name="batteryLow">Pil zayıf, kayıt işlemi başlatılamıyor</string>
 	<plurals name="viewers_count">
         <item quantity="other">%d İzleyici</item>
@@ -139,4 +140,5 @@ Gizlilik Politikamız zaman zaman değişebilir. Açıkça izninizi almadan bu G
 </string>
     <string name="checking_bandwidth">İnternet hızı kontrol ediliyor...</string>
     <string name="nocamera">Bu cihazda kamera bulunamadı</string>
+    <string name="hint">İpucu: Arkadaşlarınızı seçin ve kamera basarak canlı yayın yapın</string>
 </resources>

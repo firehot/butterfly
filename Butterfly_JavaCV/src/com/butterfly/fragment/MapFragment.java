@@ -25,11 +25,13 @@ public class MapFragment extends Fragment implements IStreamListUpdateListener  
 
 	private GoogleMap mMap;
 	private HashMap<String, Stream> hashMap = new HashMap<String, StreamListFragment.Stream>();
+	private Fragment fragment;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View rootView = inflater.inflate(R.layout.activity_map, container, false);
-		mMap = ((SupportMapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
+		fragment = getFragmentManager().findFragmentById(R.id.map);
+		mMap = ((SupportMapFragment) fragment).getMap();
 		mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
 			
 			@Override
@@ -92,6 +94,15 @@ public class MapFragment extends Fragment implements IStreamListUpdateListener  
 			}
 		}
 
+	}
+	
+	@Override
+	public void onDestroyView() {
+	    super.onDestroyView();
+	    
+	    if (fragment != null){ 
+	        getFragmentManager().beginTransaction().remove(fragment).commit();
+	    }
 	}
 
 }

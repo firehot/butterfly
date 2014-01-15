@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.butterfly"
-    android:versionCode="12"
-    android:versionName="1.4.5" >
+    android:versionCode="13"
+    android:versionName="1.4.6" >
 
     <uses-sdk
         android:minSdkVersion="11"
@@ -68,13 +68,7 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.butterfly.StreamList" />
-        </activity>
-        <activity
-            android:name="com.butterfly.ContactsList"
-            android:configChanges="orientation|screenSize"
-            android:label="@string/app_name" >
-        </activity>
-        
+        </activity>       
 
         <receiver
             android:name="com.butterfly.message.GcmBroadcastReceiver"

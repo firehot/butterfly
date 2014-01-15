@@ -1,9 +1,5 @@
-package com.butterfly;
+package com.butterfly.fragment;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -11,12 +7,13 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract.CommonDataKinds.Email;
-import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
@@ -27,11 +24,13 @@ import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.SimpleCursorAdapter.CursorToStringConverter;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.bugsense.trace.BugSenseHandler;
-import com.butterfly.debug.BugSense;
+import com.butterfly.MainActivity;
+import com.butterfly.R;
+import com.butterfly.RecordActivity;
 
-public class ContactsList extends Activity {
+public class ContactsListFragment extends Fragment {
 
 	public static final String MAILS_TO_BE_NOTIFIED = "mails_to_be_notified";
 
@@ -41,7 +40,11 @@ public class ContactsList extends Activity {
 
 	private SelectedContactAdapter selectedContactAdapter;
 
-	private AutoCompleteTextView textView;
+	private AutoCompleteTextView autoCompleteEditText;
+
+	private RemoveContactListener removeContactListener;
+
+	private ImageView startBroadcastView;
 
 	private static String displayName = Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ? Data.DISPLAY_NAME_PRIMARY
 			: Data.DISPLAY_NAME;
@@ -64,30 +67,67 @@ public class ContactsList extends Activity {
 		}
 	}
 
+	public class RemoveContactListener implements OnClickListener {
+
+		@Override
+		public void onClick(View view) {
+			int position = selectedContactList.getPositionForView((View) view
+					.getParent());
+
+			selectedContactAdapter.remove(selectedContactAdapter.getItem(position));
+			selectedContactAdapter.notifyDataSetChanged();
+		}
+
+	}
+
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
+		View v = inflater.inflate(R.layout.contact_list, container, false);
 
-		BugSenseHandler.initAndStartSession(this, BugSense.API_KEY);
+		removeContactListener = new RemoveContactListener();
+		autoCompleteEditText = (AutoCompleteTextView) v.findViewById(R.id.autoCompleteTextView);
+		startBroadcastView = (ImageView) v.findViewById(R.id.start_broadcast_button); 
+		startBroadcastView.setOnClickListener(new OnClickListener() {
 
-		setContentView(R.layout.contact_list);
+			@Override
+			public void onClick(View v) {
+				int batteryLevel = ((MainActivity)getActivity()).getBatteryLevel();
+				if(batteryLevel > 0 && batteryLevel < 10)
+				{
+					Toast.makeText(getActivity(), getString(R.string.batteryLow), Toast.LENGTH_LONG).show();
+				}
+				else {
+					int count = selectedContactAdapter.getCount();
+					Intent intent = new Intent(getActivity(), RecordActivity.class);
 
-		getActionBar().setTitle(R.string.shareStream);
-		getActionBar().setSubtitle(R.string.chooseContactAndShare);
+					if (selectedContactAdapter.getCount() > 0) {
+						String mails = new String();
+						for (int i = 0; i < count; i++) {
+							mails += selectedContactAdapter.getItem(i).email + ",";
+						}
 
-		textView = (AutoCompleteTextView) findViewById(R.id.autoCompleteTextView);
-		selectedContactList = (ListView) findViewById(R.id.selectedContactList);
-		selectedContactAdapter = new SelectedContactAdapter(getApplicationContext(),
+						mails = mails.substring(0, mails.length() - 1);
+						intent.putExtra(MAILS_TO_BE_NOTIFIED, mails);
+
+					}
+					startActivity(intent);
+				}
+			}
+		});
+
+		selectedContactList = (ListView) v.findViewById(R.id.selectedContactList);
+		selectedContactAdapter = new SelectedContactAdapter(getActivity(),
 				R.layout.contact_list_item);
 		selectedContactList.setAdapter(selectedContactAdapter);
-
-		mAdapter = new FilteredContactListAdapter(this,
+		
+		mAdapter = new FilteredContactListAdapter(getActivity(),
 				R.layout.contact_list_item, null, new String[] {
-				displayName, displayName, Data.PHOTO_THUMBNAIL_URI }, new int[] {
-				R.id.display_name, R.id.email_address, R.id.photo_uri}, 0, true);
+			displayName, displayName, Data.PHOTO_THUMBNAIL_URI }, new int[] {
+			R.id.display_name, R.id.email_address, R.id.photo_uri}, 0, true);
 
 
-		textView.setAdapter(mAdapter);
+		autoCompleteEditText.setAdapter(mAdapter);
 
 		mAdapter.setFilterQueryProvider(new FilterQueryProvider() {
 
@@ -108,7 +148,7 @@ public class ContactsList extends Activity {
 			}
 		});
 
-		textView.setOnItemClickListener(new OnItemClickListener() {
+		autoCompleteEditText.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
 			public void onItemClick(AdapterView<?> adapterView, View arg1,
@@ -136,11 +176,10 @@ public class ContactsList extends Activity {
 					selectedContactAdapter.add(new Contact(name, mail, photoUri));
 					selectedContactAdapter.notifyDataSetChanged();
 				}
-				textView.setText("");
-
+				autoCompleteEditText.setText("");
 			}
 		});
-
+		return v;
 	}
 
 	private Cursor getCursor(CharSequence constraint) {
@@ -148,9 +187,9 @@ public class ContactsList extends Activity {
 
 		String select = 
 				"(" + Email.ADDRESS + " NOTNULL " + " AND " +
-				 Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "'" + " AND "
-				 + displayName + " NOTNULL" + " AND "
-				 + Data.IS_PRIMARY + "='1' ) ";
+						Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "'" + " AND "
+						+ displayName + " NOTNULL" + " AND "
+						+ Data.IS_PRIMARY + "='1' ) ";
 
 		if (constraint != null) {
 			select += " AND (" + Email.ADDRESS + " LIKE ? " + " OR "
@@ -161,7 +200,7 @@ public class ContactsList extends Activity {
 			;
 		}
 
-		return getContentResolver().query(Data.CONTENT_URI,
+		return getActivity().getContentResolver().query(Data.CONTENT_URI,
 				CONTACTS_SUMMARY_PROJECTION, select, selectArgs,
 				displayName + " COLLATE LOCALIZED ASC");
 
@@ -181,55 +220,6 @@ public class ContactsList extends Activity {
 
 	};
 
-	@Override
-	protected void onDestroy() {
-		// TODO Auto-generated method stub
-		super.onDestroy();
-
-		BugSenseHandler.closeSession(this);
-	}
-
-	public void removeContact(View view) {
-
-		int position = selectedContactList.getPositionForView((View) view
-				.getParent());
-
-		selectedContactAdapter.remove(selectedContactAdapter.getItem(position));
-		selectedContactAdapter.notifyDataSetChanged();
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.contact_list_menu, menu);
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-
-		switch (item.getItemId()) {
-		case R.id.action_contact_list_done:
-			int count = selectedContactAdapter.getCount();
-			Intent intent = new Intent(this, RecordActivity.class);
-
-			if (selectedContactAdapter.getCount() > 0) {
-				String mails = new String();
-				for (int i = 0; i < count; i++) {
-					mails += selectedContactAdapter.getItem(i).email + ",";
-				}
-
-				mails = mails.substring(0, mails.length() - 1);
-				intent.putExtra(MAILS_TO_BE_NOTIFIED, mails);
-
-			}
-			startActivity(intent);
-			return true;
-
-		default:
-			return super.onOptionsItemSelected(item);
-		}
-
-	}
 
 	static class ViewHolder {
 		TextView displayNameView;
@@ -248,7 +238,7 @@ public class ContactsList extends Activity {
 		public View getView(int position, View convertView, ViewGroup parent) {
 			ViewHolder holder;
 			if (convertView == null) {
-				convertView = getLayoutInflater().inflate(R.layout.contact_list_item  , null);
+				convertView = getActivity().getLayoutInflater().inflate(R.layout.contact_list_item  , null);
 				holder = new ViewHolder();
 				holder.displayNameView = (TextView) convertView.findViewById(R.id.display_name);
 				holder.emailView = (TextView) convertView.findViewById(R.id.email_address);
@@ -261,6 +251,7 @@ public class ContactsList extends Activity {
 			Contact item = getItem(position);
 			holder.displayNameView.setText(item.displayName);
 			holder.emailView.setText(item.email);
+			holder.deleteView.setOnClickListener(removeContactListener);
 			if (item.photoUri != null) {
 				holder.photoView.setImageURI(Uri.parse(item.photoUri));
 			}
@@ -287,10 +278,10 @@ public class ContactsList extends Activity {
 
 			Cursor cursor = getCursor();
 			cursor.moveToPosition(position);
-			
+
 			ViewHolder holder;
 			if (convertView == null) {
-				convertView = getLayoutInflater().inflate(R.layout.contact_list_item  , null);
+				convertView = getActivity().getLayoutInflater().inflate(R.layout.contact_list_item  , null);
 				holder = new ViewHolder();
 				holder.displayNameView = (TextView) convertView.findViewById(R.id.display_name);
 				holder.emailView = (TextView) convertView.findViewById(R.id.email_address);
@@ -304,7 +295,7 @@ public class ContactsList extends Activity {
 			} else {
 				holder = (ViewHolder) convertView.getTag();
 			}
-			
+
 			String email = cursor.getString(emailColumnIndex);
 			holder.emailView.setText(email);
 
