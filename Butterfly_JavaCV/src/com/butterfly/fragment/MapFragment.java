@@ -96,14 +96,5 @@ public class MapFragment extends Fragment implements IStreamListUpdateListener  
 		}
 
 	}
-	
-	@Override
-	public void onDestroyView() {
-	    super.onDestroyView();
-	    
-	    if (fragment != null){ 
-	        getFragmentManager().beginTransaction().remove(fragment).commit();
-	    }
-	}
 
 }
