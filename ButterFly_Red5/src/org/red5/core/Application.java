@@ -78,7 +78,7 @@ import com.google.android.gcm.server.Sender;
  * @author The Red5 Project (red5@osflash.org)
  */
 public class Application extends MultiThreadedApplicationAdapter implements
-IStreamListener {
+		IStreamListener {
 
 	private static final String SENDER_ID = "AIzaSyCFmHIbJO0qCtPo6klp7Ade3qjeGLgtZWw";
 	private Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
@@ -101,7 +101,6 @@ IStreamListener {
 		public double latitude;
 		public FLVWriter flvWriter;
 
-
 		public Stream(String streamName, String streamUrl, Long registerTime) {
 			super();
 			this.streamName = streamName;
@@ -110,7 +109,8 @@ IStreamListener {
 			this.imageReceived = false;
 
 			try {
-				File file = new File("webapps/ButterFly_Red5/"+streamUrl+".flv");
+				File file = new File("webapps/ButterFly_Red5/" + streamUrl
+						+ ".flv");
 				if (file.exists() == false) {
 					file.createNewFile();
 				}
@@ -175,7 +175,6 @@ IStreamListener {
 				new Locale("tr"));
 		messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
 		bandwidthServer = new BandwidthServer();
-
 
 	}
 
@@ -247,15 +246,16 @@ IStreamListener {
 
 				registeredStreams.put(url, stream);
 			}
-			sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url, streamName,
-					deviceLanguage);
+			sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url,
+					streamName, deviceLanguage);
 			// return true even if stream is not public
 			result = true;
 		}
 		return result;
 	}
 
-	public boolean  registerLocationForStream(String url, double longitude, double latitude, double altitude) {
+	public boolean registerLocationForStream(String url, double longitude,
+			double latitude, double altitude) {
 		boolean result = false;
 		if (getRegisteredStreams().containsKey(url) == true) {
 			Stream stream = getRegisteredStreams().get(url);
@@ -266,9 +266,6 @@ IStreamListener {
 		}
 		return result;
 	}
-
-
-
 
 	public boolean registerUser(String register_id, String mail) {
 		boolean result;
@@ -368,17 +365,19 @@ IStreamListener {
 	 * @param deviceLanguage
 	 *            language of the device. According to this parameter,
 	 *            notification mail language is selected
-	 * @param deviceLanguage 
+	 * @param deviceLanguage
 	 */
 	private void sendNotificationsOrMail(String mails, String broadcasterMail,
 			String streamURL, String streamName, String deviceLanguage) {
 
 		GcmUsers result = null;
 
-		// This List will be used for mails, which  are not available on the database
+		// This List will be used for mails, which are not available on the
+		// database
 		ArrayList<String> mailListNotifiedByMail = new ArrayList<String>();
-		
-		// This List will be used for registerIds, which are available on the database
+
+		// This List will be used for registerIds, which are available on the
+		// database
 		ArrayList<GcmUsers> userList = new ArrayList<GcmUsers>();
 		if (mails != null) {
 			String[] splits = mails.split(",");
@@ -386,20 +385,22 @@ IStreamListener {
 			for (int i = 0; i < splits.length; i++) {
 				result = getRegistrationIdList(splits[i]);
 				if (result == null) {
-					
+
 					// using as a parameter for sendMail() function
-					mailListNotifiedByMail.add(splits[i]); 
+					mailListNotifiedByMail.add(splits[i]);
 				} else {
 					// using as a parameter for sendNotification() function
-					userList.add(result); 
+					userList.add(result);
 				}
 			}
 
 			if (!mailListNotifiedByMail.isEmpty())
-				sendMail(mailListNotifiedByMail,broadcasterMail,streamName, deviceLanguage);
+				sendMail(mailListNotifiedByMail, broadcasterMail, streamName,
+						deviceLanguage);
 
 			if (userList.size() > 0)
-				sendNotification(userList, broadcasterMail, streamURL, streamName, deviceLanguage);
+				sendNotification(userList, broadcasterMail, streamURL,
+						streamName, deviceLanguage);
 		}
 	}
 
@@ -480,8 +481,8 @@ IStreamListener {
 				result = true;
 			}
 			stream = null;
-//			File f = new File("webapps/ButterFly_Red5/"+streamUrl+".png");
-//			f.delete();
+			// File f = new File("webapps/ButterFly_Red5/"+streamUrl+".png");
+			// f.delete();
 		}
 		return result;
 	}
@@ -508,8 +509,9 @@ IStreamListener {
 		entityManager = null;
 	}
 
-	public boolean sendMail(ArrayList<String> email, String broadcasterMail,String streamName, String deviceLanguage) {
-		
+	public boolean sendMail(ArrayList<String> email, String broadcasterMail,
+			String streamName, String deviceLanguage) {
+
 		ResourceBundle messages = messagesEN;
 		if (deviceLanguage != null && deviceLanguage.equals("tur")) {
 			messages = messagesTR;
@@ -519,8 +521,7 @@ IStreamListener {
 		String messagex = MessageFormat.format(
 				messages.getString("mail_notification_message"),
 				broadcasterMail, streamName);
-		
-		
+
 		boolean resultx = false;
 		final String username = "notification@butterflytv.net";
 		final String password = "Nybn~Dx-E5-$";
@@ -532,10 +533,10 @@ IStreamListener {
 		System.out.println("Done1");
 		Session session = Session.getInstance(props,
 				new javax.mail.Authenticator() {
-			protected PasswordAuthentication getPasswordAuthentication() {
-				return new PasswordAuthentication(username, password);
-			}
-		});
+					protected PasswordAuthentication getPasswordAuthentication() {
+						return new PasswordAuthentication(username, password);
+					}
+				});
 
 		try {
 			javax.mail.Message message = new MimeMessage(session);
@@ -564,7 +565,8 @@ IStreamListener {
 	}
 
 	private boolean sendNotification(ArrayList<GcmUsers> androidTargets,
-			String broadcasterMail, String streamURL,String streamName, String deviceLanguage) {
+			String broadcasterMail, String streamURL, String streamName,
+			String deviceLanguage) {
 		boolean resx = false;
 
 		// Instance of com.android.gcm.server.Sender, that does the
@@ -576,17 +578,17 @@ IStreamListener {
 		// string, but could certainly be a JSON object.
 		Message message = new Message.Builder()
 
-		// If multiple messages are sent using the same .collapseKey()
-		// the android target device, if it was offline during earlier
-		// message
-		// transmissions, will only receive the latest message for that
-		// key when
-		// it goes back on-line.
-		.collapseKey("1").timeToLive(30).delayWhileIdle(true)
-		.addData("URL", streamURL)
-		.addData("broadcaster", broadcasterMail)
-		.addData("name", streamName).build();
-		
+				// If multiple messages are sent using the same .collapseKey()
+				// the android target device, if it was offline during earlier
+				// message
+				// transmissions, will only receive the latest message for that
+				// key when
+				// it goes back on-line.
+				.collapseKey("1").timeToLive(30).delayWhileIdle(true)
+				.addData("URL", streamURL)
+				.addData("broadcaster", broadcasterMail)
+				.addData("name", streamName).build();
+
 		ArrayList<String> failedNotificationMails = new ArrayList<String>();
 
 		try {
@@ -620,7 +622,8 @@ IStreamListener {
 							String oldRegID = targetRegIDList.get(i);
 							GcmUsers user = GcmUsers.fetchUserByRegID(oldRegID,
 									androidTargets);
-							if(!failedNotificationMails.contains(user.getEmail()))
+							if (!failedNotificationMails.contains(user
+									.getEmail()))
 								failedNotificationMails.add(user.getEmail());
 							deleteUser(user);
 						}
@@ -636,9 +639,10 @@ IStreamListener {
 			e.printStackTrace();
 		}
 
-		if(failedNotificationMails.size() >0)
-			sendMail(failedNotificationMails, broadcasterMail, streamName, deviceLanguage);
-		
+		if (failedNotificationMails.size() > 0)
+			sendMail(failedNotificationMails, broadcasterMail, streamName,
+					deviceLanguage);
+
 		// We'll pass the CollapseKey and Message values back to index.jsp, only
 		// so
 		// we can display it in our form again
@@ -673,8 +677,8 @@ IStreamListener {
 			Stream stream = getRegisteredStreams().get(name);
 			stream.addViewer(subscriberStream.getName());
 			System.out
-			.println("Application.streamPlayItemPlay() -- viewerCount "
-					+ stream.getViewerCount());
+					.println("Application.streamPlayItemPlay() -- viewerCount "
+							+ stream.getViewerCount());
 			notifyUserAboutViewerCount(stream.getViewerCount(),
 					stream.getBroadcasterGCMUsers());
 		}
@@ -783,29 +787,96 @@ IStreamListener {
 			Stream stream = registeredStreams.remove(name);
 			stream.close();
 			streamNames.remove(name);
-//			File file = new File("webapps/ButterFly_Red5/"+name+".png");
-//			file.delete();
+			// File file = new File("webapps/ButterFly_Red5/"+name+".png");
+			// file.delete();
 
 		}
 
 		return streamNames;
 	}
 
-
 	/**
 	 * This methods gets image in byte array and saves as a file in the server
+	 * 
 	 * @param data
 	 * @param streamURL
 	 */
-	public void savePreview(byte[] data,String streamURL)
-	{
+	public void savePreview(byte[] data, String streamURL) {
 		try {
 			BufferedImage img = ImageIO.read(new ByteArrayInputStream(data));
-			File outputfile = new File("webapps/ButterFly_Red5/"+streamURL+".png");
+			File outputfile = new File("webapps/ButterFly_Red5/" + streamURL
+					+ ".png");
 			ImageIO.write(img, "png", outputfile);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	
+	/**
+	 * Gets the file name list in the path that the videos are recorded
+	 * @return file name list in json
+	 */
+	public String getRecordedVideoFileList() {
+
+		String path = "webapps/ButterFly_Red5/";
+		String fileName;
+		List<String> validFileNames = new ArrayList<String>();
+		File folder = new File(path);
+		File[] listOfFiles = folder.listFiles();
+
+		for (int i = 0; i < listOfFiles.length; i++) {
+
+			if (listOfFiles[i].isFile()) {
+				fileName = listOfFiles[i].getName();
+				if (fileName.endsWith(".png") || fileName.endsWith(".PNG")) {
+
+					//a file is valid if both flv and png files are exist
+					if (isFlvFileExist(listOfFiles,
+							fileName.substring(0, fileName.length() - 3)
+									+ "flv")) {
+						validFileNames.add(fileName);
+					}
+
+				}
+			}
+		}
+
+		JSONArray jsonArray = new JSONArray();
+		JSONObject jsonObject;
+		for (String streamName : validFileNames) {
+
+			jsonObject = new JSONObject();
+			jsonObject.put("streamName", streamName);
+			jsonArray.add(jsonObject);
+
+		}
+
+		return jsonArray.toString();
+
+	}
+
+	/**
+	 * Checks whether a corresponding flv file is exist for a png
+	 * @param listOfFiles
+	 * @param flvFileName
+	 * @return
+	 */
+	public boolean isFlvFileExist(File[] listOfFiles, String flvFileName) {
+		String fileName;
+
+		for (int i = 0; i < listOfFiles.length; i++) {
+
+			if (listOfFiles[i].isFile()) {
+				fileName = listOfFiles[i].getName();
+				if (fileName.equals(flvFileName)) {
+
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	public Map<String, Stream> getRegisteredStreams() {
