@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 
 import com.butterfly.ClientActivity;
 import com.butterfly.MainActivity;
+import com.butterfly.MediaPlayerActivity;
 import com.butterfly.R;
 import com.butterfly.fragment.StreamListFragment.Stream;
 import com.butterfly.listeners.IStreamListUpdateListener;
@@ -53,13 +54,23 @@ public class MapFragment extends Fragment implements IStreamListUpdateListener  
 				String id = marker.getId();
 				if (hashMap.containsKey(id)) {
 					Stream stream = hashMap.get(id);
-
-					Intent intent = new Intent(getActivity().getApplicationContext(),
-							ClientActivity.class);
-					intent.putExtra(StreamListFragment.STREAM_PUBLISHED_NAME,
-							stream.url);
-
-					startActivity(intent);
+					
+					if(stream.isLive)
+					{
+						Intent intent = new Intent(getActivity().getApplicationContext(),
+								ClientActivity.class);
+						intent.putExtra(StreamListFragment.STREAM_PUBLISHED_NAME,
+								stream.url);
+						startActivity(intent);
+					}
+					else
+					{
+						Intent intent = new Intent(getActivity().getApplicationContext(),
+								MediaPlayerActivity.class);
+						intent.putExtra(StreamListFragment.STREAM_PUBLISHED_NAME,
+								stream.url);
+						startActivity(intent);
+					}
 				}
 				return false;
 			}
