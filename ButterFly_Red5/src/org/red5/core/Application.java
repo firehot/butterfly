@@ -198,28 +198,25 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 
 	public String getLiveStreams() {
-		IScope target = Red5.getConnectionLocal().getScope();
-
+		
 		JSONArray jsonArray = new JSONArray();
 		JSONObject jsonObject;
-		Set<String> streamNames = getBroadcastStreamNames(target);
-		System.out.println("getLiveStreams count 1" + streamNames.size());
-		streamNames = removeGhostBroadcasters(streamNames);
-		System.out.println("getLiveStreams count 2" + streamNames.size());
-		for (String name : streamNames) {
-			if (getRegisteredStreams().containsKey(name)) {
-				Stream stream = getRegisteredStreams().get(name);
-				jsonObject = new JSONObject();
-				jsonObject.put("url", stream.streamUrl);
-				jsonObject.put("name", stream.streamName);
-				jsonObject.put("viewerCount", stream.getViewerCount());
-				jsonObject.put("latitude", stream.latitude);
-				jsonObject.put("longitude", stream.longtitude);
-				jsonObject.put("altitude", stream.altitude);
-				jsonObject.put("isLive", stream.isLive);
-				jsonArray.add(jsonObject);
-				// streams.put(stream.streamUrl, stream.streamName);
-			}
+		
+		Set<Entry<String, Stream>> entrySet = getRegisteredStreams().entrySet();
+		for (Iterator iterator = entrySet.iterator(); iterator.hasNext();) {
+			Entry<String, Stream> entry = (Entry<String, Stream>) iterator
+					.next();
+			Stream stream = entry.getValue();
+			
+			jsonObject = new JSONObject();
+			jsonObject.put("url", stream.streamUrl);
+			jsonObject.put("name", stream.streamName);
+			jsonObject.put("viewerCount", stream.getViewerCount());
+			jsonObject.put("latitude", stream.latitude);
+			jsonObject.put("longitude", stream.longtitude);
+			jsonObject.put("altitude", stream.altitude);
+			jsonObject.put("isLive", stream.isLive);
+			jsonArray.add(jsonObject);
 		}
 
 		return jsonArray.toString();

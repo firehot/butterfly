@@ -19,27 +19,24 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.BatteryManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.debug.BugSense;
 import com.butterfly.fragment.ContactsListFragment;
-import com.butterfly.fragment.IStreamListUpdateListener;
 import com.butterfly.fragment.MapFragment;
 import com.butterfly.fragment.StreamListFragment;
 import com.butterfly.fragment.StreamListFragment.Stream;
+import com.butterfly.listeners.IStreamListUpdateListener;
 import com.butterfly.message.CloudMessaging;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -110,7 +107,7 @@ public class MainActivity extends FragmentActivity {
 	public ArrayList<Stream> getStreamList() {
 		return streamList;
 	}
-
+	
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.refresh:
@@ -342,7 +339,7 @@ public class MainActivity extends FragmentActivity {
 													.parseDouble(jsonObject
 															.getString("longitude")), Double
 															.parseDouble(jsonObject
-																	.getString("altitude"))));
+																	.getString("altitude")),Boolean.parseBoolean(jsonObject.getString("isLive"))));
 
 						}
 					} else {

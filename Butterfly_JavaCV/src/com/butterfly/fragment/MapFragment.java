@@ -14,6 +14,7 @@ import com.butterfly.ClientActivity;
 import com.butterfly.MainActivity;
 import com.butterfly.R;
 import com.butterfly.fragment.StreamListFragment.Stream;
+import com.butterfly.listeners.IStreamListUpdateListener;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.SupportMapFragment;

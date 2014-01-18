@@ -1,5 +1,7 @@
 package com.butterfly.adapter;
 
+import org.w3c.dom.Text;
+
 import android.app.Activity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +20,7 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 		public TextView textStreamName;
 		public TextView textStreamViewerCount;
 		public SmartImageView imageView;
+		public TextView liveNowView;
 	}
 
 	public StreamListAdapter(Activity context) {
@@ -38,7 +41,7 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 					.findViewById(R.id.stream_viewer_count);
 			viewHolder.imageView = (SmartImageView) rowView
 					.findViewById(R.id.stream_image);
-
+			viewHolder.liveNowView = (TextView) rowView.findViewById(R.id.live_now);
 			rowView.setTag(viewHolder);
 		}
 
@@ -53,6 +56,9 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 		String image_url = this.context.getString(R.string.image_url)+s.url+".png";
 		holder.imageView.setImageUrl(image_url);
 
+		if(!s.isLive)
+			holder.liveNowView.setText("");
+		
 		if (s.viewerCount > 0) {
 			holder.textStreamViewerCount.setText(context.getResources()
 					.getQuantityString(R.plurals.viewers_count, s.viewerCount,

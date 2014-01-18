@@ -15,8 +15,10 @@ import android.widget.Toast;
 
 import com.butterfly.ClientActivity;
 import com.butterfly.MainActivity;
+import com.butterfly.MediaPlayerActivity;
 import com.butterfly.R;
 import com.butterfly.adapter.StreamListAdapter;
+import com.butterfly.listeners.IStreamListUpdateListener;
 import com.butterfly.message.CloudMessaging;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -34,8 +36,10 @@ public class StreamListFragment extends ListFragment implements IStreamListUpdat
 		public double latitude;
 		public double longitude;
 		public double altitude;
+		public boolean isLive;
 
-		public Stream(String name, String url, int viewerCount, double latitude, double longitude, double altitude) {
+		public Stream(String name, String url, int viewerCount, double latitude, double longitude, double altitude
+				,boolean isLive) {
 			super();
 			this.name = name;
 			this.url = url;
@@ -43,6 +47,7 @@ public class StreamListFragment extends ListFragment implements IStreamListUpdat
 			this.latitude = latitude;
 			this.longitude = longitude;
 			this.altitude = altitude;
+			this.isLive = isLive;
 		}
 
 		@Override
@@ -59,12 +64,26 @@ public class StreamListFragment extends ListFragment implements IStreamListUpdat
 				long id) {
 			Toast.makeText(getActivity(),
 					adapter.getItem(position).name, Toast.LENGTH_SHORT).show();
+			
+			Stream s = adapter.getItem(position);
 
-			Intent intent = new Intent(getActivity().getApplicationContext(),
-					ClientActivity.class);
-			intent.putExtra(STREAM_PUBLISHED_NAME,
-					adapter.getItem(position).url);
-			startActivity(intent);
+			if(s.isLive)
+			{
+				Intent intent = new Intent(getActivity().getApplicationContext(),
+						ClientActivity.class);
+				intent.putExtra(STREAM_PUBLISHED_NAME,
+						adapter.getItem(position).url);
+				startActivity(intent);
+			}
+			else
+			{
+				Intent intent = new Intent(getActivity().getApplicationContext(),
+						MediaPlayerActivity.class);
+				intent.putExtra(STREAM_PUBLISHED_NAME,
+						adapter.getItem(position).url);
+				startActivity(intent);
+			}
+
 
 		}
 	};
