@@ -787,7 +787,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		}
 
 		for (String name : toBeRemoved) {
-			Stream stream = registeredStreams.remove(name);
+			Stream stream = registeredStreams.get(name);
 			stream.isLive = false;
 			stream.close();
 
