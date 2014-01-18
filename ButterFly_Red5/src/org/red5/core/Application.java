@@ -95,18 +95,18 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		public ArrayList<String> viewerStreamNames = new ArrayList<String>();
 		private GcmUsers gcmIdList;
 		public Timestamp timeReceived;
-		public boolean imageReceived;
 		public double altitude;
 		public double longtitude;
 		public double latitude;
 		public FLVWriter flvWriter;
+		public boolean isLive = true;
 
 		public Stream(String streamName, String streamUrl, Long registerTime) {
 			super();
 			this.streamName = streamName;
 			this.streamUrl = streamUrl;
 			this.registerTime = registerTime;
-			this.imageReceived = false;
+			this.isLive = true;
 
 			try {
 				File file = new File("webapps/ButterFly_Red5/" + streamUrl
@@ -216,6 +216,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 				jsonObject.put("latitude", stream.latitude);
 				jsonObject.put("longitude", stream.longtitude);
 				jsonObject.put("altitude", stream.altitude);
+				jsonObject.put("isLive", stream.isLive);
 				jsonArray.add(jsonObject);
 				// streams.put(stream.streamUrl, stream.streamName);
 			}
@@ -461,7 +462,9 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public void streamBroadcastClose(IBroadcastStream stream) {
 		String streamUrl = stream.getPublishedName();
 		// getPublishedName means streamurl to us
-		removeStream(streamUrl);
+		Stream streaming = getRegisteredStreams().get(streamUrl);
+		streaming.isLive = false;
+		streaming.close();
 		super.streamBroadcastClose(stream);
 	}
 
@@ -785,8 +788,9 @@ public class Application extends MultiThreadedApplicationAdapter implements
 
 		for (String name : toBeRemoved) {
 			Stream stream = registeredStreams.remove(name);
+			stream.isLive = false;
 			stream.close();
-			streamNames.remove(name);
+
 			// File file = new File("webapps/ButterFly_Red5/"+name+".png");
 			// file.delete();
 
