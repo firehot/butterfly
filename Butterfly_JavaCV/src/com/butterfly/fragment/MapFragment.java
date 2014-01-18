@@ -6,6 +6,7 @@ import java.util.HashMap;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.view.InflateException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,10 +28,22 @@ public class MapFragment extends Fragment implements IStreamListUpdateListener  
 	private GoogleMap mMap;
 	private HashMap<String, Stream> hashMap = new HashMap<String, StreamListFragment.Stream>();
 	private Fragment fragment;
+	private static View view;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		View rootView = inflater.inflate(R.layout.activity_map, container, false);
+		
+		if (view != null) {
+	        ViewGroup parent = (ViewGroup) view.getParent();
+	        if (parent != null)
+	            parent.removeView(view);
+	    }
+	    try {
+	        view = inflater.inflate(R.layout.activity_map, container, false);
+	    } catch (InflateException e) {
+	        /* map is already there, just return view as it is */
+	    }
+		
 		fragment = getFragmentManager().findFragmentById(R.id.map);
 		mMap = ((SupportMapFragment) fragment).getMap();
 		mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
@@ -51,7 +64,8 @@ public class MapFragment extends Fragment implements IStreamListUpdateListener  
 				return false;
 			}
 		});
-		return rootView;
+		
+		return view;
 	}
 
 	public Marker addMarker(double latitude, double longitude, String title) {
