@@ -19,18 +19,20 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.BatteryManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.Window;
-import android.view.inputmethod.InputMethodManager;
+import android.webkit.WebChromeClient;
+import android.webkit.WebView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.bugsense.trace.BugSenseHandler;
@@ -60,7 +62,7 @@ public class MainActivity extends FragmentActivity {
 	private static final String SHARED_PREFERENCE_FIRST_INSTALLATION = "firstInstallation";
 	private static final String APP_SHARED_PREFERENCES = "applicationDetails";
 	private int batteryLevel = 0;
-	
+
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
@@ -222,10 +224,40 @@ public class MainActivity extends FragmentActivity {
 	}
 
 	private void showTermsOfUse(final SharedPreferences applicationPrefs) {
-		AlertDialog.Builder myAlertDialog = new AlertDialog.Builder(this);
-		myAlertDialog.setTitle(R.string.terms_of_service_title);
-		myAlertDialog.setMessage(R.string.terms_of_service);
-		myAlertDialog.setPositiveButton(R.string.accept,
+		AlertDialog.Builder termsDialog = new AlertDialog.Builder(this);
+		termsDialog.setTitle(R.string.terms_of_service_title);
+		termsDialog.setCancelable(false);
+		final View dialog_view = getLayoutInflater().inflate(R.layout.dialog_privacy_and_terms, null);
+		View acceptingPrivacyTextView = dialog_view.findViewById(R.id.accepting_privacy_and_terms);
+		acceptingPrivacyTextView.setOnClickListener(new OnClickListener() {
+			boolean termsLoadedOnce = false;
+			
+			@Override
+			public void onClick(View v) {
+				if (termsLoadedOnce == false) {
+					termsLoadedOnce = true;
+
+					final ProgressBar progressBar = (ProgressBar)dialog_view.findViewById(R.id.web_view_load_progress);
+					progressBar.setVisibility(View.VISIBLE);
+
+					WebView view = (WebView)dialog_view.findViewById(R.id.privacy_and_terms_view);
+					view.setWebChromeClient(new WebChromeClient(){
+
+						@Override
+						public void onProgressChanged(WebView view, int newProgress) {
+							super.onProgressChanged(view, newProgress);
+							if (newProgress == 100) {
+								view.setVisibility(View.VISIBLE);
+								progressBar.setVisibility(View.GONE);
+							}
+						}
+					});
+					view.loadUrl(getString(R.string.terms_of_service_url));
+				}
+			}
+		});
+		termsDialog.setView(dialog_view);
+		termsDialog.setPositiveButton(R.string.accept,
 				new DialogInterface.OnClickListener() {
 
 			public void onClick(DialogInterface arg0, int arg1) {
@@ -237,7 +269,7 @@ public class MainActivity extends FragmentActivity {
 				mInstallationEditor.commit();
 			}
 		});
-		myAlertDialog.setNegativeButton(R.string.cancel,
+		termsDialog.setNegativeButton(R.string.cancel,
 				new DialogInterface.OnClickListener() {
 
 			public void onClick(DialogInterface arg0, int arg1) {
@@ -245,7 +277,7 @@ public class MainActivity extends FragmentActivity {
 				MainActivity.this.finish();
 			}
 		});
-		myAlertDialog.show();
+		termsDialog.show();
 	}
 
 	private void getBatteryPercentage() {
