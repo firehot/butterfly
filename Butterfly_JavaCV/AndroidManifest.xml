@@ -47,6 +47,11 @@
         android:theme="@style/AppTheme"
         android:logo="@drawable/ic_launcher"
      >
+             <activity
+            android:name="com.butterfly.MediaPlayerActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|keyboard|keyboardHidden|navigation"
+            android:label="@string/app_name" >
+        </activity>
         <activity
             android:name="com.butterfly.RecordActivity"
             android:configChanges="orientation"

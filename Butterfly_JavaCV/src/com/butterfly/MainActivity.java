@@ -34,14 +34,13 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
-
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.debug.BugSense;
 import com.butterfly.fragment.ContactsListFragment;
-import com.butterfly.fragment.IStreamListUpdateListener;
 import com.butterfly.fragment.MapFragment;
 import com.butterfly.fragment.StreamListFragment;
 import com.butterfly.fragment.StreamListFragment.Stream;
+import com.butterfly.listeners.IStreamListUpdateListener;
 import com.butterfly.message.CloudMessaging;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -112,7 +111,7 @@ public class MainActivity extends FragmentActivity {
 	public ArrayList<Stream> getStreamList() {
 		return streamList;
 	}
-
+	
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.refresh:
@@ -374,7 +373,7 @@ public class MainActivity extends FragmentActivity {
 													.parseDouble(jsonObject
 															.getString("longitude")), Double
 															.parseDouble(jsonObject
-																	.getString("altitude"))));
+																	.getString("altitude")),Boolean.parseBoolean(jsonObject.getString("isLive"))));
 
 						}
 					} else {

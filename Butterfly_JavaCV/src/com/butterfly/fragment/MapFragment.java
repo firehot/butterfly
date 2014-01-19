@@ -6,14 +6,17 @@ import java.util.HashMap;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.view.InflateException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.butterfly.ClientActivity;
 import com.butterfly.MainActivity;
+import com.butterfly.MediaPlayerActivity;
 import com.butterfly.R;
 import com.butterfly.fragment.StreamListFragment.Stream;
+import com.butterfly.listeners.IStreamListUpdateListener;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -26,10 +29,22 @@ public class MapFragment extends Fragment implements IStreamListUpdateListener  
 	private GoogleMap mMap;
 	private HashMap<String, Stream> hashMap = new HashMap<String, StreamListFragment.Stream>();
 	private Fragment fragment;
+	private static View view;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		View rootView = inflater.inflate(R.layout.activity_map, container, false);
+		
+		if (view != null) {
+	        ViewGroup parent = (ViewGroup) view.getParent();
+	        if (parent != null)
+	            parent.removeView(view);
+	    }
+	    try {
+	        view = inflater.inflate(R.layout.activity_map, container, false);
+	    } catch (InflateException e) {
+	        /* map is already there, just return view as it is */
+	    }
+		
 		fragment = getFragmentManager().findFragmentById(R.id.map);
 		mMap = ((SupportMapFragment) fragment).getMap();
 		mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
@@ -39,18 +54,29 @@ public class MapFragment extends Fragment implements IStreamListUpdateListener  
 				String id = marker.getId();
 				if (hashMap.containsKey(id)) {
 					Stream stream = hashMap.get(id);
-
-					Intent intent = new Intent(getActivity().getApplicationContext(),
-							ClientActivity.class);
-					intent.putExtra(StreamListFragment.STREAM_PUBLISHED_NAME,
-							stream.url);
-
-					startActivity(intent);
+					
+					if(stream.isLive)
+					{
+						Intent intent = new Intent(getActivity().getApplicationContext(),
+								ClientActivity.class);
+						intent.putExtra(StreamListFragment.STREAM_PUBLISHED_NAME,
+								stream.url);
+						startActivity(intent);
+					}
+					else
+					{
+						Intent intent = new Intent(getActivity().getApplicationContext(),
+								MediaPlayerActivity.class);
+						intent.putExtra(StreamListFragment.STREAM_PUBLISHED_NAME,
+								stream.url);
+						startActivity(intent);
+					}
 				}
 				return false;
 			}
 		});
-		return rootView;
+		
+		return view;
 	}
 
 	public Marker addMarker(double latitude, double longitude, String title) {
@@ -94,15 +120,6 @@ public class MapFragment extends Fragment implements IStreamListUpdateListener  
 			}
 		}
 
-	}
-	
-	@Override
-	public void onDestroyView() {
-	    super.onDestroyView();
-	    
-	    if (fragment != null){ 
-	        getFragmentManager().beginTransaction().remove(fragment).commit();
-	    }
 	}
 
 }
