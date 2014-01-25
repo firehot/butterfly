@@ -17,6 +17,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.FilterQueryProvider;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -43,7 +44,7 @@ public class ContactsListFragment extends Fragment {
 
 	private RemoveContactListener removeContactListener;
 
-	private ImageView startBroadcastView;
+	private Button startBroadcastView;
 
 	private static String displayName = Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ? Data.DISPLAY_NAME_PRIMARY
 			: Data.DISPLAY_NAME;
@@ -86,7 +87,7 @@ public class ContactsListFragment extends Fragment {
 
 		removeContactListener = new RemoveContactListener();
 		autoCompleteEditText = (AutoCompleteTextView) v.findViewById(R.id.autoCompleteTextView);
-		startBroadcastView = (ImageView) v.findViewById(R.id.start_broadcast_button); 
+		startBroadcastView = (Button) v.findViewById(R.id.start_broadcast_button); 
 		startBroadcastView.setOnClickListener(new OnClickListener() {
 
 			@Override

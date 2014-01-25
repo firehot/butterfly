@@ -146,6 +146,11 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		BugSenseHandler.initAndStartSession(this, BugSense.API_KEY);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		// Hide title
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+
 
 		ffmpeg_link = getString(R.string.rtmp_url);
 
@@ -155,12 +160,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 			mailsToBeNotified = getIntent().getExtras().getString(
 					ContactsListFragment.MAILS_TO_BE_NOTIFIED);
 		}
-
-		// Hide title
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
-		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
 		setContentView(R.layout.activity_record);
 
@@ -172,17 +171,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
 		activeNetwork = cm.getActiveNetworkInfo();
-
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-
 		initLayout();
-
-		streamNameEditText = (EditText) findViewById(R.id.stream_name);
-		publicVideoCheckBox = (CheckBox) findViewById(R.id.check_public);
 	}
 
 	@Override
@@ -233,6 +222,9 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 	private void initLayout() {
 
+		streamNameEditText = (EditText) findViewById(R.id.stream_name);
+		publicVideoCheckBox = (CheckBox) findViewById(R.id.check_public);
+		
 		/* add control button: start and stop */
 		btnRecorderControl = (Button) findViewById(R.id.recorder_control);
 		btnRecorderControl.setBackgroundResource(R.drawable.ic_start_record);
