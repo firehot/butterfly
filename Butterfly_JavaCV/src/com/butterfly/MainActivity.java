@@ -15,30 +15,30 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
+import android.widget.AutoCompleteTextView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+
 import com.bugsense.trace.BugSenseHandler;
+import com.butterfly.adapter.AppSectionsPagerAdapter;
 import com.butterfly.debug.BugSense;
 import com.butterfly.fragment.ContactsListFragment;
-import com.butterfly.fragment.MapFragment;
-import com.butterfly.fragment.StreamListFragment;
+import com.butterfly.fragment.ContactsListFragment.RemoveContactListener;
 import com.butterfly.fragment.StreamListFragment.Stream;
 import com.butterfly.listeners.IStreamListUpdateListener;
 import com.butterfly.message.CloudMessaging;
@@ -50,7 +50,8 @@ import flex.messaging.io.amf.client.AMFConnection;
 import flex.messaging.io.amf.client.exceptions.ClientStatusException;
 import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
-public class MainActivity extends FragmentActivity {
+public class MainActivity extends FragmentActivity implements
+		OnPageChangeListener {
 
 	AppSectionsPagerAdapter mAppSectionsPagerAdapter;
 	ViewPager mViewPager;
@@ -83,7 +84,7 @@ public class MainActivity extends FragmentActivity {
 		// primary sections
 		// of the app.
 		mAppSectionsPagerAdapter = new AppSectionsPagerAdapter(
-				getSupportFragmentManager());
+				getSupportFragmentManager(), this);
 
 		// Set up the action bar.
 		final ActionBar actionBar = getActionBar();
@@ -93,6 +94,7 @@ public class MainActivity extends FragmentActivity {
 
 		mViewPager = (ViewPager) findViewById(R.id.pager);
 		mViewPager.setAdapter(mAppSectionsPagerAdapter);
+		mViewPager.setOnPageChangeListener(this);
 		httpGatewayURL = getString(R.string.http_gateway_url);
 		new GetStreamListTask().execute(httpGatewayURL);
 		// Check device for Play Services APK.
@@ -111,7 +113,7 @@ public class MainActivity extends FragmentActivity {
 	public ArrayList<Stream> getStreamList() {
 		return streamList;
 	}
-	
+
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.refresh:
@@ -128,6 +130,13 @@ public class MainActivity extends FragmentActivity {
 	protected void onResume() {
 		checkPlayServices(this);
 		super.onResume();
+	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		
+		showHideKeyboard(false, mViewPager);
 	}
 
 	@Override
@@ -151,99 +160,33 @@ public class MainActivity extends FragmentActivity {
 		}
 	}
 
-	/**
-	 * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
-	 * one of the primary sections of the app.
-	 */
-	public class AppSectionsPagerAdapter extends FragmentStatePagerAdapter {
-
-		private int itemCount = 3;
-
-		public AppSectionsPagerAdapter(FragmentManager fm) {
-			super(fm);
-			PackageManager packageManager = getPackageManager();
-			boolean backCamera = packageManager
-					.hasSystemFeature(PackageManager.FEATURE_CAMERA);
-			boolean frontCamera = packageManager
-					.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT);
-			if (backCamera == false && frontCamera == false) {
-				itemCount = 2;
-			}
-
-		}
-
-		@Override
-		public Fragment getItem(int i) 
-		{
-			if (itemCount == 2) {
-				switch (i) {
-				case 0:
-					return new StreamListFragment();
-				case 1:
-					return new MapFragment();
-				default:
-					break;
-				}
-			}
-			else {
-				switch (i) {
-				case 0:
-					return new ContactsListFragment();
-				case 1:
-					return new StreamListFragment();
-				case 2:
-					return new MapFragment();
-				default:
-					break;
-				}
-			}
-			return null;
-		}
-
-		@Override
-		public int getCount() {
-			return itemCount;
-		}
-
-		@Override
-		public CharSequence getPageTitle(int position) {
-
-			switch (position) {
-			case 0:
-				return getString(R.string.contactListTitle);
-			case 1:
-				return getString(R.string.streamListTitle);
-			case 2:
-				return getString(R.string.mapTitle);
-			default:
-				break;
-			}
-			return super.getPageTitle(position);
-		}
-	}
-
 	private void showTermsOfUse(final SharedPreferences applicationPrefs) {
 		AlertDialog.Builder termsDialog = new AlertDialog.Builder(this);
 		termsDialog.setTitle(R.string.terms_of_service_title);
 		termsDialog.setCancelable(false);
-		final View dialog_view = getLayoutInflater().inflate(R.layout.dialog_privacy_and_terms, null);
-		View acceptingPrivacyTextView = dialog_view.findViewById(R.id.accepting_privacy_and_terms);
+		final View dialog_view = getLayoutInflater().inflate(
+				R.layout.dialog_privacy_and_terms, null);
+		View acceptingPrivacyTextView = dialog_view
+				.findViewById(R.id.accepting_privacy_and_terms);
 		acceptingPrivacyTextView.setOnClickListener(new OnClickListener() {
 			boolean termsLoadedOnce = false;
-			
+
 			@Override
 			public void onClick(View v) {
 				if (termsLoadedOnce == false) {
 					termsLoadedOnce = true;
 
-					final ProgressBar progressBar = (ProgressBar)dialog_view.findViewById(R.id.web_view_load_progress);
+					final ProgressBar progressBar = (ProgressBar) dialog_view
+							.findViewById(R.id.web_view_load_progress);
 					progressBar.setVisibility(View.VISIBLE);
 
-					WebView view = (WebView)dialog_view.findViewById(R.id.privacy_and_terms_view);
-					view.setWebChromeClient(new WebChromeClient(){
+					WebView view = (WebView) dialog_view
+							.findViewById(R.id.privacy_and_terms_view);
+					view.setWebChromeClient(new WebChromeClient() {
 
 						@Override
-						public void onProgressChanged(WebView view, int newProgress) {
+						public void onProgressChanged(WebView view,
+								int newProgress) {
 							super.onProgressChanged(view, newProgress);
 							if (newProgress == 100) {
 								view.setVisibility(View.VISIBLE);
@@ -259,23 +202,23 @@ public class MainActivity extends FragmentActivity {
 		termsDialog.setPositiveButton(R.string.accept,
 				new DialogInterface.OnClickListener() {
 
-			public void onClick(DialogInterface arg0, int arg1) {
-				// do something when the OK button is clicked
-				SharedPreferences.Editor mInstallationEditor = applicationPrefs
-						.edit();
-				mInstallationEditor.putBoolean(
-						SHARED_PREFERENCE_FIRST_INSTALLATION, true);
-				mInstallationEditor.commit();
-			}
-		});
+					public void onClick(DialogInterface arg0, int arg1) {
+						// do something when the OK button is clicked
+						SharedPreferences.Editor mInstallationEditor = applicationPrefs
+								.edit();
+						mInstallationEditor.putBoolean(
+								SHARED_PREFERENCE_FIRST_INSTALLATION, true);
+						mInstallationEditor.commit();
+					}
+				});
 		termsDialog.setNegativeButton(R.string.cancel,
 				new DialogInterface.OnClickListener() {
 
-			public void onClick(DialogInterface arg0, int arg1) {
-				// do something when the Cancel button is clicked
-				MainActivity.this.finish();
-			}
-		});
+					public void onClick(DialogInterface arg0, int arg1) {
+						// do something when the Cancel button is clicked
+						MainActivity.this.finish();
+					}
+				});
 		termsDialog.show();
 	}
 
@@ -368,12 +311,14 @@ public class MainActivity extends FragmentActivity {
 									.getString("url"), Integer
 									.parseInt(jsonObject
 											.getString("viewerCount")), Double
-											.parseDouble(jsonObject
-													.getString("latitude")), Double
-													.parseDouble(jsonObject
-															.getString("longitude")), Double
-															.parseDouble(jsonObject
-																	.getString("altitude")),Boolean.parseBoolean(jsonObject.getString("isLive"))));
+									.parseDouble(jsonObject
+											.getString("latitude")), Double
+									.parseDouble(jsonObject
+											.getString("longitude")), Double
+									.parseDouble(jsonObject
+											.getString("altitude")), Boolean
+									.parseBoolean(jsonObject
+											.getString("isLive"))));
 
 						}
 					} else {
@@ -402,4 +347,59 @@ public class MainActivity extends FragmentActivity {
 		}
 	}
 
+	@Override
+	public void onPageScrollStateChanged(int state) {
+
+		if (state == ViewPager.SCROLL_STATE_IDLE) {
+			
+			//Camera var ise item count 3 oluyor(contactlist,streamlist ve mapfragment)
+			if(mAppSectionsPagerAdapter.getCount() == 3)
+			{
+				if(mViewPager.getCurrentItem() == 0)
+				{
+					//Contactlistfragment secili ise klavye goster
+					showHideKeyboard(true, mViewPager);
+				}
+				else
+				{
+					showHideKeyboard(false, mViewPager);
+				}
+			}
+
+		}
+	}
+	
+	/**
+	 * Klavyenin gosterilip gosterilmemesini saglayan metod
+	 * @param toShow
+	 * @param view
+	 */
+	public void showHideKeyboard(boolean toShow,View view)
+	{
+		final InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+		
+		if(toShow)
+		{
+			inputMethodManager.toggleSoftInputFromWindow(
+					view
+							.getApplicationWindowToken(),
+					InputMethodManager.SHOW_FORCED, 0);
+		}
+		else
+		{
+			inputMethodManager.hideSoftInputFromWindow(
+					view.getWindowToken(), 0);
+		}
+	}
+
+	@Override
+	public void onPageScrolled(int arg0, float arg1, int arg2) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onPageSelected(int position) {
+
+	}
 }
