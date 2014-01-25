@@ -132,14 +132,16 @@ public class RecordActivity extends Activity implements OnClickListener,
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+
 		PackageManager packageManager = getPackageManager();
-		boolean backCamera = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA);
-		boolean frontCamera = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT);
-		
+		boolean backCamera = packageManager
+				.hasSystemFeature(PackageManager.FEATURE_CAMERA);
+		boolean frontCamera = packageManager
+				.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT);
+
 		if (backCamera == false && frontCamera == false) {
-			Toast.makeText(getApplicationContext(), getString(R.string.nocamera), Toast.LENGTH_LONG).
-					show();
+			Toast.makeText(getApplicationContext(),
+					getString(R.string.nocamera), Toast.LENGTH_LONG).show();
 			finish();
 			return;
 		}
@@ -156,7 +158,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		Bundle extras = getIntent().getExtras();
 		if (extras != null
-				&& extras.containsKey(ContactsListFragment.MAILS_TO_BE_NOTIFIED)) {
+				&& extras
+						.containsKey(ContactsListFragment.MAILS_TO_BE_NOTIFIED)) {
 			mailsToBeNotified = getIntent().getExtras().getString(
 					ContactsListFragment.MAILS_TO_BE_NOTIFIED);
 		}
@@ -206,16 +209,17 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 	}
 
-	private void getLocation()
-	{
-		
+	private void getLocation() {
+
 		locationProvider.getLocation(new LocationListener() {
-			
+
 			@Override
 			public void onLocationChanged(Location location) {
-				new RegisterLocationForStreamTask(httpGatewayURL, RecordActivity.this.streamURL).
-					execute(location.getLongitude(), location.getLatitude(), location.getAltitude());
-				
+				new RegisterLocationForStreamTask(httpGatewayURL,
+						RecordActivity.this.streamURL).execute(
+						location.getLongitude(), location.getLatitude(),
+						location.getAltitude());
+
 			}
 		});
 	}
@@ -239,6 +243,10 @@ public class RecordActivity extends Activity implements OnClickListener,
 		Parameters parameters = cameraDevice.getParameters();
 		List<Size> sizes = parameters.getSupportedPreviewSizes();
 		parameters.setPreviewSize(sizes.get(0).width, sizes.get(0).height);
+
+		parameters.setWhiteBalance(Parameters.WHITE_BALANCE_AUTO);
+		parameters.setSceneMode(Parameters.SCENE_MODE_AUTO);
+
 		cameraDevice.setParameters(parameters);
 		cameraView.setCamera(cameraDevice);
 
@@ -272,6 +280,9 @@ public class RecordActivity extends Activity implements OnClickListener,
 			Size size = findPreviewSize(supportedPreviewSizes, likelyWidth,
 					likelyHeight);
 			parameters.setPreviewSize(size.width, size.height);
+			parameters.setWhiteBalance(Parameters.WHITE_BALANCE_AUTO);
+			parameters.setSceneMode(Parameters.SCENE_MODE_AUTO);
+			
 			if (cameraView.isPreviewOn()) {
 				cameraDevice.stopPreview();
 				cameraDevice.setParameters(parameters);
@@ -410,7 +421,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 		@Override
 		public void run() {
 			android.os.Process
-			.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+					.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 
 			// Audio
 			int bufferSize;
@@ -503,7 +514,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 		} else {
 			// This will trigger the audio recording loop to stop and then set
 			// isRecorderStart = false;
-			btnRecorderControl.setBackgroundResource(R.drawable.ic_start_record);
+			btnRecorderControl
+					.setBackgroundResource(R.drawable.ic_start_record);
 			streamNameEditText.setVisibility(View.VISIBLE);
 			publicVideoCheckBox.setVisibility(View.VISIBLE);
 			stopRecording();
@@ -547,7 +559,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 					result = (Boolean) amfConnection.call("registerLiveStream",
 							params[1], params[2], mailsToBeNotified,
 							possibleMail, is_video_public, Locale.getDefault()
-							.getISO3Language());
+									.getISO3Language());
 
 				} catch (ClientStatusException e) {
 					e.printStackTrace();
@@ -570,7 +582,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 				Log.w(LOG_TAG, "Start Button Pushed");
 				streamNameEditText.setVisibility(View.GONE);
 				publicVideoCheckBox.setVisibility(View.GONE);
-				btnRecorderControl.setBackgroundResource(R.drawable.ic_stop_record);
+				btnRecorderControl
+						.setBackgroundResource(R.drawable.ic_stop_record);
 			} else {
 				Toast.makeText(getApplicationContext(),
 						getString(R.string.stream_registration_failed),
@@ -578,18 +591,18 @@ public class RecordActivity extends Activity implements OnClickListener,
 				streamNameEditText.setVisibility(View.VISIBLE);
 				publicVideoCheckBox.setVisibility(View.VISIBLE);
 			}
-			
+
 			RecordActivity.this.getLocation();
 			super.onPostExecute(result);
 
 		}
 	}
 
-	public class RegisterLocationForStreamTask extends AsyncTask<Double, Void, Boolean>
-	{
+	public class RegisterLocationForStreamTask extends
+			AsyncTask<Double, Void, Boolean> {
 		String httpGateway;
 		private String streamURL;
-		
+
 		public RegisterLocationForStreamTask(String httpGateway, String url) {
 			this.httpGateway = httpGateway;
 			this.streamURL = url;
@@ -607,8 +620,9 @@ public class RecordActivity extends Activity implements OnClickListener,
 				System.out.println(params[2]);
 
 				amfConnection.connect(this.httpGateway);
-				result = (Boolean) amfConnection.call("registerLocationForStream",
-						this.streamURL, params[0], params[1], params[2]);
+				result = (Boolean) amfConnection.call(
+						"registerLocationForStream", this.streamURL, params[0],
+						params[1], params[2]);
 
 			} catch (ClientStatusException e) {
 				e.printStackTrace();
@@ -623,7 +637,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 	}
 
 	public class StopRecordingTask extends
-	AsyncTask<FFmpegFrameRecorder, Void, Void> {
+			AsyncTask<FFmpegFrameRecorder, Void, Void> {
 
 		@Override
 		protected Void doInBackground(FFmpegFrameRecorder... params) {
@@ -765,10 +779,11 @@ public class RecordActivity extends Activity implements OnClickListener,
 			}
 
 			if (!snapshotSent) {
-				//send a preview snapshot image to the red5 only for first time
+				// send a preview snapshot image to the red5 only for first time
 				snapshotSent = true;
 				Size size = arg1.getParameters().getPreviewSize();
-				SendPreviewTask task = new SendPreviewTask(size.width,size.height);
+				SendPreviewTask task = new SendPreviewTask(size.width,
+						size.height);
 				task.execute(httpGatewayURL, data, streamURL);
 			}
 

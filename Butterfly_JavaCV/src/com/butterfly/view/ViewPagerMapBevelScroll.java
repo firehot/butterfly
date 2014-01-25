@@ -49,4 +49,5 @@ public class ViewPagerMapBevelScroll extends android.support.v4.view.ViewPager {
         return ((x < swipeMarginWidth) && (dx > 0))
             || ((x > (getWidth() - swipeMarginWidth)) && (dx < 0));
     }
+    
 }

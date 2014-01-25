@@ -45,6 +45,8 @@ public class ContactsListFragment extends Fragment {
 	private RemoveContactListener removeContactListener;
 
 	private Button startBroadcastView;
+	
+	public View fragmentView;
 
 	private static String displayName = Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ? Data.DISPLAY_NAME_PRIMARY
 			: Data.DISPLAY_NAME;
@@ -179,6 +181,9 @@ public class ContactsListFragment extends Fragment {
 				autoCompleteEditText.setText("");
 			}
 		});
+		
+		
+		fragmentView = v;
 		return v;
 	}
 
