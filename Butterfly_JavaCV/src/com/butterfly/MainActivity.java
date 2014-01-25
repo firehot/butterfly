@@ -61,6 +61,7 @@ public class MainActivity extends FragmentActivity {
 	private static final String SHARED_PREFERENCE_FIRST_INSTALLATION = "firstInstallation";
 	private static final String APP_SHARED_PREFERENCES = "applicationDetails";
 	private int batteryLevel = 0;
+	private GetStreamListTask getStreamListTask;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -115,7 +116,12 @@ public class MainActivity extends FragmentActivity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.refresh:
-			new GetStreamListTask().execute(httpGatewayURL);
+			if (getStreamListTask == null 
+					|| getStreamListTask.getStatus() ==  AsyncTask.Status.FINISHED) 
+			{
+				getStreamListTask = new GetStreamListTask();
+				getStreamListTask.execute(httpGatewayURL);
+			}
 			return true;
 
 		default:
@@ -133,7 +139,9 @@ public class MainActivity extends FragmentActivity {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-
+		if (getStreamListTask != null && getStreamListTask.getStatus() == AsyncTask.Status.RUNNING) {
+			getStreamListTask.cancel(true);
+		}
 		BugSenseHandler.closeSession(this);
 	}
 
