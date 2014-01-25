@@ -255,6 +255,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 	public boolean setCameraPreviewSize(int bandwidth) {
 		boolean result = false;
+		if(cameraDevice == null)
+			return result;
 		Parameters parameters = cameraDevice.getParameters();
 		List<Size> supportedPreviewSizes = parameters
 				.getSupportedPreviewSizes();
