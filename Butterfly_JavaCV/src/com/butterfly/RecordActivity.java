@@ -739,8 +739,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 		@Override
 		protected void onPostExecute(Integer result) {
 			super.onPostExecute(result);
-			Toast.makeText(getApplicationContext(),
-					"bandwidth -> " + result + "KB", Toast.LENGTH_LONG).show();
+		
 			if (setCameraPreviewSize(result) == true) {
 
 				initRecorder();
@@ -750,7 +749,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 			} else {
 				mProgressDialog.dismiss();
 				Toast.makeText(getApplicationContext(),
-						getString(R.string.insufficient_bandwidth),
+						getString(R.string.insufficient_bandwidth) + " BW:" + result + "KB",
 						Toast.LENGTH_LONG).show();
 			}
 
