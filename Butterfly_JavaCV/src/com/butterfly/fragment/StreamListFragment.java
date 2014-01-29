@@ -26,6 +26,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 public class StreamListFragment extends ListFragment implements IStreamListUpdateListener{
 
 	public static final String STREAM_PUBLISHED_NAME = "stream-name";
+	public static final String STREAM_IS_LIVE = "is-live";
 	private StreamListAdapter adapter;
 	public static CloudMessaging msg;
 
@@ -64,25 +65,16 @@ public class StreamListFragment extends ListFragment implements IStreamListUpdat
 				long id) {
 			Toast.makeText(getActivity(),
 					adapter.getItem(position).name, Toast.LENGTH_SHORT).show();
-			
+
 			Stream s = adapter.getItem(position);
 
-			if(s.isLive)
-			{
-				Intent intent = new Intent(getActivity().getApplicationContext(),
-						ClientActivity.class);
-				intent.putExtra(STREAM_PUBLISHED_NAME,
-						adapter.getItem(position).url);
-				startActivity(intent);
-			}
-			else
-			{
-				Intent intent = new Intent(getActivity().getApplicationContext(),
-						MediaPlayerActivity.class);
-				intent.putExtra(STREAM_PUBLISHED_NAME,
-						adapter.getItem(position).url);
-				startActivity(intent);
-			}
+			Intent intent = new Intent(getActivity().getApplicationContext(),
+					ClientActivity.class);
+			intent.putExtra(STREAM_PUBLISHED_NAME,
+					adapter.getItem(position).url);
+			intent.putExtra(STREAM_IS_LIVE, s.isLive);
+			startActivity(intent);
+
 
 
 		}
@@ -104,16 +96,16 @@ public class StreamListFragment extends ListFragment implements IStreamListUpdat
 
 		setListAdapter(adapter);
 		getListView().setOnItemClickListener(itemClickListener);
-		
+
 		streamListUpdated(streamList);
 	}
-	
+
 	@Override
 	public void onStart() {
 		((MainActivity)getActivity()).registerStreamListListener(this);
 		super.onStart();
 	}
-	
+
 	@Override
 	public void onStop() {
 		((MainActivity)getActivity()).removeStreamListListener(this);

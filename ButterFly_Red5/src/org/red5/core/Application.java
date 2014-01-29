@@ -109,8 +109,12 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			this.isLive = true;
 
 			try {
-				File file = new File("webapps/ButterFly_Red5/" + streamUrl
-						+ ".flv");
+				File streamsFolder = new File("webapps/ButterFly_Red5/streams");
+				if (streamsFolder.exists() == false) {
+					streamsFolder.mkdir();
+				}
+				File file = new File(streamsFolder, streamUrl + ".flv");
+				
 				if (file.exists() == false) {
 					file.createNewFile();
 				}

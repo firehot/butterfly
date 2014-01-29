@@ -53,7 +53,7 @@ public class ClientActivity extends Activity implements
 		String streamName = intent
 				.getStringExtra(StreamListFragment.STREAM_PUBLISHED_NAME);
 
-		new CheckStreamExistTask().execute(httpUrl, streamName);
+//		new CheckStreamExistTask().execute(httpUrl, streamName);
 
 		setContentView(R.layout.activity_client);
 
@@ -64,10 +64,19 @@ public class ClientActivity extends Activity implements
 		bufferText = getString(R.string.buffer);
 
 		if (streamName != null) {
-			videoView.setVideoPath(rtmpUrl + streamName + " live=1");
+			boolean isLive = intent.getBooleanExtra(StreamListFragment.STREAM_IS_LIVE, false);
+			String videoURL = rtmpUrl + streamName; 
+			if (isLive == true) {
+				videoURL += " live=1";
+			}
+			else {
+				videoURL += ".flv";
+			}
+			
+			videoView.setVideoPath(videoURL);
 
 			videoView.setVideoQuality(MediaPlayer.VIDEOQUALITY_HIGH);
-			videoView.setBufferSize(1024 * 10);
+			//videoView.setBufferSize(1024 * 10);
 
 			videoView
 					.setOnBufferingUpdateListener(new OnBufferingUpdateListener() {
