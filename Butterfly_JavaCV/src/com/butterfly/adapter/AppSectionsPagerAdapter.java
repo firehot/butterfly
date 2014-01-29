@@ -18,11 +18,14 @@ import com.butterfly.fragment.StreamListFragment;
  */
 public class AppSectionsPagerAdapter extends FragmentStatePagerAdapter {
 
-	private int itemCount = 3;
+	private int itemCount = CAMERA_EXISTS_ITEM_COUNT;
 	private Activity activity;
 	StreamListFragment streamFragment;
 	MapFragment mapFragment;
 	ContactsListFragment contactListFragment;
+	public static final int CAMERA_EXISTS_ITEM_COUNT = 3;
+	public static final int CAMERA_NOT_EXISTS_ITEM_COUNT = CAMERA_EXISTS_ITEM_COUNT-1;
+			
 
 	public AppSectionsPagerAdapter(FragmentManager fm, Activity activity) {
 		super(fm);
@@ -33,14 +36,14 @@ public class AppSectionsPagerAdapter extends FragmentStatePagerAdapter {
 		boolean frontCamera = packageManager
 				.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT);
 		if (backCamera == false && frontCamera == false) {
-			itemCount = 2;
+			itemCount = CAMERA_NOT_EXISTS_ITEM_COUNT;
 		}
 
 	}
 
 	@Override
 	public Fragment getItem(int i) {
-		if (itemCount == 2) {
+		if (itemCount == CAMERA_NOT_EXISTS_ITEM_COUNT) {
 			switch (i) {
 			case 0:
 				if (streamFragment == null)
@@ -83,16 +86,28 @@ public class AppSectionsPagerAdapter extends FragmentStatePagerAdapter {
 	@Override
 	public CharSequence getPageTitle(int position) {
 
-		switch (position) {
-		case 0:
-			return this.activity.getString(R.string.contactListTitle);
-		case 1:
-			return this.activity.getString(R.string.streamListTitle);
-		case 2:
-			return this.activity.getString(R.string.mapTitle);
-		default:
-			break;
+		if (itemCount == CAMERA_NOT_EXISTS_ITEM_COUNT) {
+			switch (position) {
+			case 0:
+				return this.activity.getString(R.string.streamListTitle);
+			case 1:
+				return this.activity.getString(R.string.mapTitle);
+			default:
+				break;
+			}
+		} else {
+			switch (position) {
+			case 0:
+				return this.activity.getString(R.string.contactListTitle);
+			case 1:
+				return this.activity.getString(R.string.streamListTitle);
+			case 2:
+				return this.activity.getString(R.string.mapTitle);
+			default:
+				break;
+			}
 		}
+		
 		return super.getPageTitle(position);
 	}
 }
