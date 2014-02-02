@@ -244,8 +244,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 		List<Size> sizes = parameters.getSupportedPreviewSizes();
 		parameters.setPreviewSize(sizes.get(0).width, sizes.get(0).height);
 
-		parameters.setWhiteBalance(Parameters.WHITE_BALANCE_AUTO);
-		parameters.setSceneMode(Parameters.SCENE_MODE_AUTO);
+	//	parameters.setWhiteBalance(Parameters.WHITE_BALANCE_AUTO);
+	//	parameters.setSceneMode(Parameters.SCENE_MODE_AUTO);
 
 		cameraDevice.setParameters(parameters);
 		cameraView.setCamera(cameraDevice);
@@ -282,8 +282,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 			Size size = findPreviewSize(supportedPreviewSizes, likelyWidth,
 					likelyHeight);
 			parameters.setPreviewSize(size.width, size.height);
-			parameters.setWhiteBalance(Parameters.WHITE_BALANCE_AUTO);
-			parameters.setSceneMode(Parameters.SCENE_MODE_AUTO);
+//			parameters.setWhiteBalance(Parameters.WHITE_BALANCE_AUTO);
+//			parameters.setSceneMode(Parameters.SCENE_MODE_AUTO);
 			
 			if (cameraView.isPreviewOn()) {
 				cameraDevice.stopPreview();

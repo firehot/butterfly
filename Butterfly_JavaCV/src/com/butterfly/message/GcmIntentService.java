@@ -12,7 +12,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.butterfly.ClientActivity;
+import com.butterfly.MediaPlayerActivity;
 import com.butterfly.R;
 import com.butterfly.fragment.StreamListFragment;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
@@ -109,7 +109,7 @@ public class GcmIntentService extends IntentService {
 
 		if (streamURL != null) {
 			// Creates an explicit intent for an Activity in your app
-			Intent resultIntent = new Intent(this, ClientActivity.class);
+			Intent resultIntent = new Intent(this, MediaPlayerActivity.class);
 			resultIntent.putExtra(StreamListFragment.STREAM_PUBLISHED_NAME, streamURL);
 
 			// The stack builder object will contain an artificial back stack
@@ -121,7 +121,7 @@ public class GcmIntentService extends IntentService {
 			// your application to the Home screen.
 			TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
 			// Adds the back stack for the Intent (but not the Intent itself)
-			stackBuilder.addParentStack(ClientActivity.class);
+			stackBuilder.addParentStack(MediaPlayerActivity.class);
 			// Adds the Intent that starts the Activity to the top of the stack
 			stackBuilder.addNextIntent(resultIntent);
 			PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(
