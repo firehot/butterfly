@@ -23,7 +23,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -46,19 +45,17 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import javax.management.timer.Timer;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.NoResultException;
 import javax.persistence.Persistence;
 import javax.persistence.Query;
 
-import org.apache.mina.core.buffer.IoBuffer;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.red5.io.ITag;
+import org.red5.core.manage.StreamManager;
+import org.red5.core.manage.UserManager;
 import org.red5.io.flv.impl.FLVWriter;
-import org.red5.io.flv.impl.Tag;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
@@ -91,21 +88,24 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	private BandwidthServer bandwidthServer;
 	private FLVWriter flvWriter;
 	private java.util.Timer streamDeleterTimer;
-	private static long MILLIS_IN_HOUR = 60*60*1000;
+	private static long MILLIS_IN_HOUR = 60 * 60 * 1000;
+	private UserManager userManager;
+	private StreamManager streamManager;
 
 	public Application() {
 		messagesTR = ResourceBundle.getBundle("resources/LanguageBundle",
 				new Locale("tr"));
 		messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
 		bandwidthServer = new BandwidthServer();
-		
-		scheduleStreamDeleterTimer(6* MILLIS_IN_HOUR, 24 * MILLIS_IN_HOUR);
+		userManager = new UserManager(this);
+		streamManager = new StreamManager(this);
+
+		scheduleStreamDeleterTimer(6 * MILLIS_IN_HOUR, 24 * MILLIS_IN_HOUR);
 	}
-	
-	
+
 	public void scheduleStreamDeleterTimer(long runPeriod, final long deleteTime) {
 		TimerTask streamDeleteTask = new TimerTask() {
-			
+
 			@Override
 			public void run() {
 				File dir = new File("webapps/ButterFly_Red5/streams");
@@ -116,22 +116,21 @@ public class Application extends MultiThreadedApplicationAdapter implements
 					if (f.isFile() == true) {
 						if ((timeMillis - f.lastModified()) > deleteTime) {
 							f.delete();
-						}						
+						}
 					}
-				}				
+				}
 			}
 		};
 
 		streamDeleterTimer = new java.util.Timer();
 		streamDeleterTimer.schedule(streamDeleteTask, 0, runPeriod);
 	}
-	
+
 	public void cancelStreamDeleteTimer() {
 		if (streamDeleterTimer != null) {
 			streamDeleterTimer.cancel();
 		}
 	}
-	
 
 	@Override
 	public void appStop(IScope arg0) {
@@ -153,100 +152,35 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 
 	public String getLiveStreams() {
-		
-		JSONArray jsonArray = new JSONArray();
-		JSONObject jsonObject;
-		
-		Set<Entry<String, Stream>> entrySet = getRegisteredStreams().entrySet();
-		for (Iterator iterator = entrySet.iterator(); iterator.hasNext();) {
-			Entry<String, Stream> entry = (Entry<String, Stream>) iterator
-					.next();
-			Stream stream = entry.getValue();
-			
-			jsonObject = new JSONObject();
-			jsonObject.put("url", stream.streamUrl);
-			jsonObject.put("name", stream.streamName);
-			jsonObject.put("viewerCount", stream.getViewerCount());
-			jsonObject.put("latitude", stream.latitude);
-			jsonObject.put("longitude", stream.longtitude);
-			jsonObject.put("altitude", stream.altitude);
-			jsonObject.put("isLive", stream.isLive);
-			jsonArray.add(jsonObject);
-		}
 
-		return jsonArray.toString();
+		Set<Entry<String, Stream>> entrySet = getRegisteredStreams().entrySet();
+		return streamManager.getLiveStreams(entrySet);
 	}
 
 	public boolean isLiveStreamExist(String url) {
+
 		IScope target = Red5.getConnectionLocal().getScope();
 		Set<String> streamNames = getBroadcastStreamNames(target);
-		boolean result = false;
-		if (streamNames.contains(url)) {
-			result = true;
-		}
-		return result;
+
+		return streamManager.isLiveStreamExist(url, streamNames);
+
 	}
 
 	public boolean registerLiveStream(String streamName, String url,
 			String mailsToBeNotified, String broadcasterMail, boolean isPublic,
 			String deviceLanguage) {
-		boolean result = false;
-		if (getRegisteredStreams().containsKey(url) == false) {
-			if (isPublic == true) {
-				Stream stream = new Stream(streamName, url,Calendar.getInstance().getTime());
-				stream.setGCMUser(getRegistrationIdList(broadcasterMail));
 
-				registeredStreams.put(url, stream);
-			}
-			sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url,
-					streamName, deviceLanguage);
-			// return true even if stream is not public
-			result = true;
-		}
-		return result;
+		return streamManager.registerLiveStream(streamName, url,
+				mailsToBeNotified, broadcasterMail, isPublic, deviceLanguage);
 	}
 
 	public boolean registerLocationForStream(String url, double longitude,
 			double latitude, double altitude) {
-		boolean result = false;
-		if (getRegisteredStreams().containsKey(url) == true) {
-			Stream stream = getRegisteredStreams().get(url);
-			stream.latitude = latitude;
-			stream.longtitude = longitude;
-			stream.altitude = altitude;
-			result = true;
-		}
-		return result;
+		return streamManager.registerLocationForStream(url, longitude, latitude, altitude);
 	}
 
 	public boolean registerUser(String register_id, String mail) {
-		boolean result;
-		try {
-			beginTransaction();
-
-			Query query = getEntityManager().createQuery(
-					"FROM GcmUsers where email= :email");
-			query.setParameter("email", mail);
-			List results = query.getResultList();
-			if (results.size() > 0) {
-				GcmUsers gcmUsers = (GcmUsers) results.get(0);
-				RegIDs regid = new RegIDs(register_id);
-				gcmUsers.addRegID(regid);
-			} else {
-				GcmUsers gcmUsers = new GcmUsers(mail);
-				RegIDs regid = new RegIDs(register_id);
-				gcmUsers.addRegID(regid);
-				getEntityManager().persist(gcmUsers);
-			}
-
-			commit();
-			closeEntityManager();
-			result = true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			result = false;
-		}
-		return result;
+		return userManager.registerUser(register_id, mail);
 
 	}
 
@@ -260,48 +194,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	 * @return true if the user is updated succesfully , false if fails
 	 */
 	public boolean updateUser(String register_id, String mail, String oldRegID) {
-		boolean result;
-		try {
-			beginTransaction();
-
-			Query query = getEntityManager().createQuery(
-					"FROM GcmUsers where email= :email");
-			query.setParameter("email", mail);
-			List results = query.getResultList();
-
-			// if user is found
-			if (results.size() > 0) {
-				GcmUsers gcmUsers = (GcmUsers) results.get(0);
-
-				// if reg id doesnt exist for the user
-				if (gcmUsers.getRegIDs().size() == 0) {
-					RegIDs regid = new RegIDs(register_id);
-					gcmUsers.addRegID(regid);
-				} else {
-					// update the reg id of the user using the old reg id
-					for (RegIDs regid : gcmUsers.getRegIDs()) {
-						if (regid.getGcmRegId().equals(oldRegID)) {
-							regid.setGcmRegId(register_id);
-						}
-					}
-				}
-
-			} else {
-				// user doesnt exist, create user and add reg id
-				GcmUsers gcmUsers = new GcmUsers(mail);
-				RegIDs regid = new RegIDs(register_id);
-				gcmUsers.addRegID(regid);
-				getEntityManager().persist(gcmUsers);
-			}
-
-			commit();
-			closeEntityManager();
-			result = true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			result = false;
-		}
-		return result;
+		return userManager.updateUser(register_id, mail, oldRegID);
 
 	}
 
@@ -319,7 +212,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	 *            notification mail language is selected
 	 * @param deviceLanguage
 	 */
-	private void sendNotificationsOrMail(String mails, String broadcasterMail,
+	public void sendNotificationsOrMail(String mails, String broadcasterMail,
 			String streamURL, String streamName, String deviceLanguage) {
 
 		GcmUsers result = null;
@@ -363,50 +256,13 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	 */
 	public GcmUsers getRegistrationIdList(String mail) {
 
-		GcmUsers result = null;
-		try {
-			beginTransaction();
-			Query query = getEntityManager().createQuery(
-					"FROM GcmUsers where email= :email");
-			query.setParameter("email", mail);
-			List results = query.getResultList();
-			if (results.size() > 0) {
-				GcmUsers gcmUsers = (GcmUsers) results.get(0);
-				result = gcmUsers;
-			}
-
-			commit();
-			closeEntityManager();
-
-		} catch (NoResultException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return result;
+		GcmUsers users = userManager.getRegistrationIdList(mail);
+		return users;
 	}
 
 	public int getUserCount(String mail) {
 
-		int result = 0;
-		try {
-			beginTransaction();
-			Query query = getEntityManager().createQuery(
-					"FROM GcmUsers where email= :email");
-			query.setParameter("email", mail);
-			List results = query.getResultList();
-			result = results.size();
-			commit();
-			closeEntityManager();
-
-		} catch (NoResultException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return result;
+		return userManager.getUserCount(mail);
 	}
 
 	@Override
@@ -427,25 +283,14 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 
 	public boolean removeStream(String streamUrl) {
-		boolean result = false;
-		if (getRegisteredStreams().containsKey(streamUrl)) {
-			Stream stream = getRegisteredStreams().remove(streamUrl);
-			stream.close();
-			if (stream != null) {
-				result = true;
-			}
-			stream = null;
-			// File f = new File("webapps/ButterFly_Red5/"+streamUrl+".png");
-			// f.delete();
-		}
-		return result;
+		return streamManager.removeStream(streamUrl);
 	}
 
-	private void beginTransaction() {
+	public void beginTransaction() {
 		getEntityManager().getTransaction().begin();
 	}
 
-	private EntityManager getEntityManager() {
+	public EntityManager getEntityManager() {
 		if (entityManager == null) {
 			EntityManagerFactory entityManagerFactory = Persistence
 					.createEntityManagerFactory("ButterFly_Red5");
@@ -454,11 +299,11 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		return entityManager;
 	}
 
-	private void commit() {
+	public void commit() {
 		getEntityManager().getTransaction().commit();
 	}
 
-	private void closeEntityManager() {
+	public void closeEntityManager() {
 		getEntityManager().close();
 		entityManager = null;
 	}
@@ -605,20 +450,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 
 	public boolean deleteUser(GcmUsers user) {
-		boolean result;
-		try {
-			beginTransaction();
-
-			getEntityManager().remove(user);
-
-			commit();
-			closeEntityManager();
-			result = true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			result = false;
-		}
-		return result;
+		return userManager.deleteUser(user);
 	}
 
 	@Override
@@ -767,9 +599,9 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		}
 	}
 
-	
 	/**
 	 * Gets the file name list in the path that the videos are recorded
+	 * 
 	 * @return file name list in json
 	 */
 	public String getRecordedVideoFileList() {
@@ -786,7 +618,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 				fileName = listOfFiles[i].getName();
 				if (fileName.endsWith(".png") || fileName.endsWith(".PNG")) {
 
-					//a file is valid if both flv and png files are exist
+					// a file is valid if both flv and png files are exist
 					if (isFlvFileExist(listOfFiles,
 							fileName.substring(0, fileName.length() - 3)
 									+ "flv")) {
@@ -813,6 +645,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 
 	/**
 	 * Checks whether a corresponding flv file is exist for a png
+	 * 
 	 * @param listOfFiles
 	 * @param flvFileName
 	 * @return
