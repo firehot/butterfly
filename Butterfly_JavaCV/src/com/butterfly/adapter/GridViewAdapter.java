@@ -57,7 +57,7 @@ public class GridViewAdapter extends BaseAdapter
 		}
 
 		ViewHolder holder = (ViewHolder) rowView.getTag();
-		String file_url = this.context.getString(R.string.image_url)+getItem(i);
+		String file_url = this.context.getString(R.string.http_url)+getItem(i);
 
 		holder.imageView.setImageUrl(file_url);
 		

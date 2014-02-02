@@ -36,6 +36,9 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.imageio.ImageIO;
 import javax.mail.MessagingException;
@@ -78,15 +81,17 @@ import com.google.android.gcm.server.Sender;
  * @author The Red5 Project (red5@osflash.org)
  */
 public class Application extends MultiThreadedApplicationAdapter implements
-		IStreamListener {
+IStreamListener {
 
 	private static final String SENDER_ID = "AIzaSyCFmHIbJO0qCtPo6klp7Ade3qjeGLgtZWw";
+	private static final String WEB_PLAY_URL = "http://www.butterflytv.net/player.html?videoId=";
 	private Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
 	private EntityManager entityManager;
 	private ResourceBundle messagesTR;
 	private ResourceBundle messagesEN;
 	private BandwidthServer bandwidthServer;
-	private FLVWriter flvWriter;
+	private java.util.Timer streamDeleterTimer;
+	private static long MILLIS_IN_HOUR = 60*60*1000;
 
 	public static class Stream implements Serializable {
 		public String streamName;
@@ -100,36 +105,42 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		public double latitude;
 		public FLVWriter flvWriter;
 		public boolean isLive = true;
+		private BlockingQueue<ITag> queue = new LinkedBlockingQueue<ITag>();
+		public boolean isPublic;
 
-		public Stream(String streamName, String streamUrl, Long registerTime) {
+		public Stream(String streamName, String streamUrl, Long registerTime, boolean isPublic) {
 			super();
 			this.streamName = streamName;
 			this.streamUrl = streamUrl;
 			this.registerTime = registerTime;
 			this.isLive = true;
+			this.isPublic = isPublic;
 
-			try {
-				File streamsFolder = new File("webapps/ButterFly_Red5/streams");
-				if (streamsFolder.exists() == false) {
-					streamsFolder.mkdir();
-				}
-				File file = new File(streamsFolder, streamUrl + ".flv");
-				
-				if (file.exists() == false) {
-					file.createNewFile();
-				}
-				flvWriter = new FLVWriter(file, false);
-			} catch (IOException e) {
-				e.printStackTrace();
+			File streamsFolder = new File("webapps/ButterFly_Red5/streams");
+			if (streamsFolder.exists() == false) {
+				streamsFolder.mkdir();
 			}
+			File file = new File(streamsFolder, streamUrl + ".flv");
+
+			if (file.exists() == false) {
+				try {
+					file.createNewFile();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			flvWriter = new FLVWriter(file, false);
 		}
 
 		public void write(IStreamPacket packet) {
+
 			IoBuffer data = packet.getData().asReadOnlyBuffer().duplicate();
+
 			if (data.limit() == 0) {
 				System.out.println("data limit -> 0");
 				return;
 			}
+
 
 			ITag tag = new Tag();
 			tag.setDataType(packet.getDataType());
@@ -180,12 +191,47 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
 		bandwidthServer = new BandwidthServer();
 
+		scheduleStreamDeleterTimer(6* MILLIS_IN_HOUR, 24 * MILLIS_IN_HOUR);
 	}
+
+
+	public void scheduleStreamDeleterTimer(long runPeriod, final long deleteTime) {
+		TimerTask streamDeleteTask = new TimerTask() {
+
+			@Override
+			public void run() {
+				File dir = new File("webapps/ButterFly_Red5/streams");
+				String[] files = dir.list();
+				if (files != null) {
+					long timeMillis = System.currentTimeMillis();
+					for (String fileName : files) {
+						File f = new File(dir, fileName);
+						if (f.isFile() == true && f.exists() == true) {
+							if ((timeMillis - f.lastModified()) > deleteTime) {
+								f.delete();
+							}						
+						}
+					}	
+				}
+			}
+		};
+
+		streamDeleterTimer = new java.util.Timer();
+		streamDeleterTimer.schedule(streamDeleteTask, 0, runPeriod);
+	}
+
+	public void cancelStreamDeleteTimer() {
+		if (streamDeleterTimer != null) {
+			streamDeleterTimer.cancel();
+		}
+	}
+
 
 	@Override
 	public void appStop(IScope arg0) {
 		super.appStop(arg0);
 		getBandwidthServer().close();
+		cancelStreamDeleteTimer();
 
 	}
 
@@ -202,25 +248,26 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 
 	public String getLiveStreams() {
-		
+
 		JSONArray jsonArray = new JSONArray();
 		JSONObject jsonObject;
-		
+
 		Set<Entry<String, Stream>> entrySet = getRegisteredStreams().entrySet();
 		for (Iterator iterator = entrySet.iterator(); iterator.hasNext();) {
 			Entry<String, Stream> entry = (Entry<String, Stream>) iterator
 					.next();
 			Stream stream = entry.getValue();
-			
-			jsonObject = new JSONObject();
-			jsonObject.put("url", stream.streamUrl);
-			jsonObject.put("name", stream.streamName);
-			jsonObject.put("viewerCount", stream.getViewerCount());
-			jsonObject.put("latitude", stream.latitude);
-			jsonObject.put("longitude", stream.longtitude);
-			jsonObject.put("altitude", stream.altitude);
-			jsonObject.put("isLive", stream.isLive);
-			jsonArray.add(jsonObject);
+			if (stream.isPublic == true) {
+				jsonObject = new JSONObject();
+				jsonObject.put("url", stream.streamUrl);
+				jsonObject.put("name", stream.streamName);
+				jsonObject.put("viewerCount", stream.getViewerCount());
+				jsonObject.put("latitude", stream.latitude);
+				jsonObject.put("longitude", stream.longtitude);
+				jsonObject.put("altitude", stream.altitude);
+				jsonObject.put("isLive", stream.isLive);
+				jsonArray.add(jsonObject);
+			}
 		}
 
 		return jsonArray.toString();
@@ -241,13 +288,12 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			String deviceLanguage) {
 		boolean result = false;
 		if (getRegisteredStreams().containsKey(url) == false) {
-			if (isPublic == true) {
-				Stream stream = new Stream(streamName, url,
-						System.currentTimeMillis());
-				stream.setGCMUser(getRegistrationIdList(broadcasterMail));
 
-				registeredStreams.put(url, stream);
-			}
+			Stream stream = new Stream(streamName, url,
+					System.currentTimeMillis(), isPublic);
+			stream.setGCMUser(getRegistrationIdList(broadcasterMail));
+
+			registeredStreams.put(url, stream);
 			sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url,
 					streamName, deviceLanguage);
 			// return true even if stream is not public
@@ -397,7 +443,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			}
 
 			if (!mailListNotifiedByMail.isEmpty())
-				sendMail(mailListNotifiedByMail, broadcasterMail, streamName,
+				sendMail(mailListNotifiedByMail, broadcasterMail, streamName, streamURL,
 						deviceLanguage);
 
 			if (userList.size() > 0)
@@ -464,6 +510,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		String streamUrl = stream.getPublishedName();
 		// getPublishedName means streamurl to us
 		Stream streaming = getRegisteredStreams().get(streamUrl);
+
 		streaming.isLive = false;
 		streaming.close();
 		super.streamBroadcastClose(stream);
@@ -514,17 +561,18 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 
 	public boolean sendMail(ArrayList<String> email, String broadcasterMail,
-			String streamName, String deviceLanguage) {
+			String streamName, String streamURL, String deviceLanguage) {
 
 		ResourceBundle messages = messagesEN;
 		if (deviceLanguage != null && deviceLanguage.equals("tur")) {
 			messages = messagesTR;
 		}
 
+		String webURL = WEB_PLAY_URL + streamURL;
 		String subject = messages.getString("mail_notification_subject");
 		String messagex = MessageFormat.format(
 				messages.getString("mail_notification_message"),
-				broadcasterMail, streamName);
+				broadcasterMail, streamName, webURL);
 
 		boolean resultx = false;
 		final String username = "notification@butterflytv.net";
@@ -537,10 +585,10 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		System.out.println("Done1");
 		Session session = Session.getInstance(props,
 				new javax.mail.Authenticator() {
-					protected PasswordAuthentication getPasswordAuthentication() {
-						return new PasswordAuthentication(username, password);
-					}
-				});
+			protected PasswordAuthentication getPasswordAuthentication() {
+				return new PasswordAuthentication(username, password);
+			}
+		});
 
 		try {
 			javax.mail.Message message = new MimeMessage(session);
@@ -582,16 +630,16 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		// string, but could certainly be a JSON object.
 		Message message = new Message.Builder()
 
-				// If multiple messages are sent using the same .collapseKey()
-				// the android target device, if it was offline during earlier
-				// message
-				// transmissions, will only receive the latest message for that
-				// key when
-				// it goes back on-line.
-				.collapseKey("1").timeToLive(30).delayWhileIdle(true)
-				.addData("URL", streamURL)
-				.addData("broadcaster", broadcasterMail)
-				.addData("name", streamName).build();
+		// If multiple messages are sent using the same .collapseKey()
+		// the android target device, if it was offline during earlier
+		// message
+		// transmissions, will only receive the latest message for that
+		// key when
+		// it goes back on-line.
+		.collapseKey("1").timeToLive(30).delayWhileIdle(true)
+		.addData("URL", streamURL)
+		.addData("broadcaster", broadcasterMail)
+		.addData("name", streamName).build();
 
 		ArrayList<String> failedNotificationMails = new ArrayList<String>();
 
@@ -644,7 +692,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		}
 
 		if (failedNotificationMails.size() > 0)
-			sendMail(failedNotificationMails, broadcasterMail, streamName,
+			sendMail(failedNotificationMails, broadcasterMail, streamName, streamURL,
 					deviceLanguage);
 
 		// We'll pass the CollapseKey and Message values back to index.jsp, only
@@ -681,8 +729,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			Stream stream = getRegisteredStreams().get(name);
 			stream.addViewer(subscriberStream.getName());
 			System.out
-					.println("Application.streamPlayItemPlay() -- viewerCount "
-							+ stream.getViewerCount());
+			.println("Application.streamPlayItemPlay() -- viewerCount "
+					+ stream.getViewerCount());
 			notifyUserAboutViewerCount(stream.getViewerCount(),
 					stream.getBroadcasterGCMUsers());
 		}
@@ -817,7 +865,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		}
 	}
 
-	
+
 	/**
 	 * Gets the file name list in the path that the videos are recorded
 	 * @return file name list in json
@@ -839,7 +887,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 					//a file is valid if both flv and png files are exist
 					if (isFlvFileExist(listOfFiles,
 							fileName.substring(0, fileName.length() - 3)
-									+ "flv")) {
+							+ "flv")) {
 						validFileNames.add(fileName);
 					}
 

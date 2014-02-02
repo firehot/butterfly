@@ -278,6 +278,9 @@ public class RecordActivity extends Activity implements OnClickListener,
 			likelyHeight = 144;
 		}
 
+		likelyWidth = 176;
+		likelyHeight = 144;
+		
 		if (likelyWidth != 0 && likelyHeight != 0) {
 			Size size = findPreviewSize(supportedPreviewSizes, likelyWidth,
 					likelyHeight);

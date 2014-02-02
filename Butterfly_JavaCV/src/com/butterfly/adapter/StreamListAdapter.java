@@ -53,7 +53,7 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 			streamname = s.name.substring(0, 17)+"...";
 
 		holder.textStreamName.setText(streamname);
-		String image_url = this.context.getString(R.string.image_url)+s.url+".png";
+		String image_url = this.context.getString(R.string.http_url)+s.url+".png";
 		holder.imageView.setImageUrl(image_url);
 
 		if(!s.isLive)

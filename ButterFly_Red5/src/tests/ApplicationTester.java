@@ -1,26 +1,25 @@
 
 package tests;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-
-import javax.persistence.Query;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.red5.core.Application;
-import org.red5.core.RegIDs;
 import org.red5.core.Application.Stream;
 import org.red5.core.GcmUsers;
+import org.red5.core.RegIDs;
 
 public class ApplicationTester {
 
@@ -146,7 +145,7 @@ public class ApplicationTester {
 	
 	@Test
 	public void testStreamViewer() {
-		Stream stream = new Stream("streamName", "streamUrl", (long)12121);
+		Stream stream = new Stream("streamName", "streamUrl", (long)12121, true);
 		assertEquals(0, stream.getViewerCount());
 		
 		stream.addViewer("test");
@@ -186,7 +185,7 @@ public class ApplicationTester {
 	public void testRegisterLocationForStream() {
 		Map<String, Stream> registeredStreams = butterflyApp.getRegisteredStreams();
 		assertEquals(0, registeredStreams.size());
-		registeredStreams.put("video_url", new Stream("location_test", "video_url", System.currentTimeMillis()));
+		registeredStreams.put("video_url", new Stream("location_test", "video_url", System.currentTimeMillis(), true));
 		
 		assertEquals(1, registeredStreams.size());
 		
@@ -275,6 +274,69 @@ public class ApplicationTester {
 			e.printStackTrace();
 		}
 		
+	}
+	
+	@Test
+	public void testStreamDeleter() {
+		butterflyApp.cancelStreamDeleteTimer();
+		File webApps = new File("webapps");
+		if (webApps.exists() == false) {
+			webApps.mkdir();
+		}
+		
+		File butterFly = new File(webApps, "ButterFly_Red5");
+		if (butterFly.exists() == false) {
+			butterFly.mkdir();
+		}
+		
+		File streamsFolder = new File(butterFly, "streams");
+		if (streamsFolder.exists() == false) {
+			streamsFolder.mkdir();
+		}
+		
+		File f1 = new File(streamsFolder, "f1");
+		File f2 = new File(streamsFolder, "f2");
+		File f3 = new File(streamsFolder, "f3");
+		try {
+			f1.createNewFile();
+			f2.createNewFile();
+			f3.createNewFile();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		assertEquals(streamsFolder.list().length, 3);
+		
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		butterflyApp.scheduleStreamDeleterTimer(1000, 1000);
+		
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		assertEquals(streamsFolder.list().length, 0);
+		
+		try {
+			f1.createNewFile();
+			f2.createNewFile();
+			f3.createNewFile();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		
+		assertEquals(streamsFolder.list().length, 3);
+
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		assertEquals(streamsFolder.list().length, 0);
 	}
 
 	

@@ -14,7 +14,7 @@
     <string name="server_addr">ec2-54-200-137-96.us-west-2.compute.amazonaws.com</string>
     <string name="http_gateway_url">http://ec2-54-200-137-96.us-west-2.compute.amazonaws.com:5080/ButterFly_Red5/gateway</string>
     <string name="rtmp_url">rtmp://ec2-54-200-137-96.us-west-2.compute.amazonaws.com/ButterFly_Red5/</string>
-    <string name="image_url">http://ec2-54-200-137-96.us-west-2.compute.amazonaws.com:5080/ButterFly_Red5/</string>
+    <string name="http_url">http://ec2-54-200-137-96.us-west-2.compute.amazonaws.com:5080/ButterFly_Red5/</string>
     <string name="write_name_of_stream">Please write the name of the stream</string>
     <string name="connectivityProblem">Problem in connectivity</string>
     <string name="noLiveStream">No live streams right now</string>
