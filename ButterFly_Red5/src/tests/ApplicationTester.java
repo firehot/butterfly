@@ -1,26 +1,25 @@
 
 package tests;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Calendar;
 import java.util.Map;
-
-import javax.persistence.Query;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.red5.core.Application;
-import org.red5.core.RegIDs;
-import org.red5.core.Application.Stream;
 import org.red5.core.GcmUsers;
+import org.red5.core.RegIDs;
+import org.red5.core.Stream;
 
 public class ApplicationTester {
 
@@ -146,7 +145,7 @@ public class ApplicationTester {
 	
 	@Test
 	public void testStreamViewer() {
-		Stream stream = new Stream("streamName", "streamUrl", (long)12121);
+		Stream stream = new Stream("streamName", "streamUrl", Calendar.getInstance().getTime());
 		assertEquals(0, stream.getViewerCount());
 		
 		stream.addViewer("test");
@@ -186,7 +185,7 @@ public class ApplicationTester {
 	public void testRegisterLocationForStream() {
 		Map<String, Stream> registeredStreams = butterflyApp.getRegisteredStreams();
 		assertEquals(0, registeredStreams.size());
-		registeredStreams.put("video_url", new Stream("location_test", "video_url", System.currentTimeMillis()));
+		registeredStreams.put("video_url", new Stream("location_test", "video_url", Calendar.getInstance().getTime()));
 		
 		assertEquals(1, registeredStreams.size());
 		

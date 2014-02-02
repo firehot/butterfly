@@ -27,6 +27,7 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -87,88 +88,6 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	private ResourceBundle messagesEN;
 	private BandwidthServer bandwidthServer;
 	private FLVWriter flvWriter;
-
-	public static class Stream implements Serializable {
-		public String streamName;
-		public String streamUrl;
-		public Long registerTime;
-		public ArrayList<String> viewerStreamNames = new ArrayList<String>();
-		private GcmUsers gcmIdList;
-		public Timestamp timeReceived;
-		public double altitude;
-		public double longtitude;
-		public double latitude;
-		public FLVWriter flvWriter;
-		public boolean isLive = true;
-
-		public Stream(String streamName, String streamUrl, Long registerTime) {
-			super();
-			this.streamName = streamName;
-			this.streamUrl = streamUrl;
-			this.registerTime = registerTime;
-			this.isLive = true;
-
-			try {
-				File file = new File("webapps/ButterFly_Red5/" + streamUrl
-						+ ".flv");
-				if (file.exists() == false) {
-					file.createNewFile();
-				}
-				flvWriter = new FLVWriter(file, false);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		public void write(IStreamPacket packet) {
-			IoBuffer data = packet.getData().asReadOnlyBuffer().duplicate();
-			if (data.limit() == 0) {
-				System.out.println("data limit -> 0");
-				return;
-			}
-
-			ITag tag = new Tag();
-			tag.setDataType(packet.getDataType());
-			tag.setBodySize(data.limit());
-			tag.setTimestamp(packet.getTimestamp());
-			tag.setBody(data);
-
-			try {
-				flvWriter.writeTag(tag);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		public void close() {
-			flvWriter.close();
-		}
-
-		public void addViewer(String streamName) {
-			viewerStreamNames.add(streamName);
-		}
-
-		public boolean containsViewer(String streamName) {
-			return viewerStreamNames.contains(streamName);
-		}
-
-		public void removeViewer(String streamName) {
-			viewerStreamNames.remove(streamName);
-		}
-
-		public int getViewerCount() {
-			return viewerStreamNames.size();
-		}
-
-		public void setGCMUser(GcmUsers registrationIdList) {
-			this.gcmIdList = registrationIdList;
-		}
-
-		public GcmUsers getBroadcasterGCMUsers() {
-			return gcmIdList;
-		}
-
-	}
 
 	public Application() {
 		messagesTR = ResourceBundle.getBundle("resources/LanguageBundle",
@@ -238,8 +157,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		boolean result = false;
 		if (getRegisteredStreams().containsKey(url) == false) {
 			if (isPublic == true) {
-				Stream stream = new Stream(streamName, url,
-						System.currentTimeMillis());
+				Stream stream = new Stream(streamName, url,Calendar.getInstance().getTime());
 				stream.setGCMUser(getRegistrationIdList(broadcasterMail));
 
 				registeredStreams.put(url, stream);
