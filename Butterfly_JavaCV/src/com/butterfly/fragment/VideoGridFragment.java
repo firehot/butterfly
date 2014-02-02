@@ -44,7 +44,7 @@ public class VideoGridFragment extends Fragment implements OnItemClickListener {
 		
 		Intent intent = new Intent(getActivity().getApplicationContext(),
 				MediaPlayerActivity.class);
-		intent.putExtra("video_url",
+		intent.putExtra(StreamListFragment.STREAM_PUBLISHED_NAME,
 				gridAdapter.getItem(position));
 		startActivity(intent);
 	}

@@ -2,7 +2,6 @@ package com.butterfly.fragment;
 
 import java.util.ArrayList;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -13,15 +12,12 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Toast;
 
-import com.butterfly.ClientActivity;
-import com.butterfly.MainActivity;
 import com.butterfly.MediaPlayerActivity;
+import com.butterfly.MainActivity;
 import com.butterfly.R;
 import com.butterfly.adapter.StreamListAdapter;
 import com.butterfly.listeners.IStreamListUpdateListener;
 import com.butterfly.message.CloudMessaging;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
 
 public class StreamListFragment extends ListFragment implements IStreamListUpdateListener{
 
@@ -69,7 +65,7 @@ public class StreamListFragment extends ListFragment implements IStreamListUpdat
 			Stream s = adapter.getItem(position);
 
 			Intent intent = new Intent(getActivity().getApplicationContext(),
-					ClientActivity.class);
+					MediaPlayerActivity.class);
 			intent.putExtra(STREAM_PUBLISHED_NAME,
 					adapter.getItem(position).url);
 			intent.putExtra(STREAM_IS_LIVE, s.isLive);

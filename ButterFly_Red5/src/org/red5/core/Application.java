@@ -36,6 +36,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.TimerTask;
 
 import javax.imageio.ImageIO;
 import javax.mail.MessagingException;
@@ -44,6 +45,7 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import javax.management.timer.Timer;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.NoResultException;
@@ -87,6 +89,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	private ResourceBundle messagesEN;
 	private BandwidthServer bandwidthServer;
 	private FLVWriter flvWriter;
+	private java.util.Timer streamDeleterTimer;
+	private static long MILLIS_IN_HOUR = 60*60*1000;
 
 	public static class Stream implements Serializable {
 		public String streamName;
@@ -179,8 +183,40 @@ public class Application extends MultiThreadedApplicationAdapter implements
 				new Locale("tr"));
 		messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
 		bandwidthServer = new BandwidthServer();
-
+		
+		scheduleStreamDeleterTimer(6* MILLIS_IN_HOUR, 24 * MILLIS_IN_HOUR);
 	}
+	
+	
+	public void scheduleStreamDeleterTimer(long runPeriod, final long deleteTime) {
+		TimerTask streamDeleteTask = new TimerTask() {
+			
+			@Override
+			public void run() {
+				File dir = new File("webapps/ButterFly_Red5/streams");
+				String[] files = dir.list();
+				long timeMillis = System.currentTimeMillis();
+				for (String fileName : files) {
+					File f = new File(dir, fileName);
+					if (f.isFile() == true) {
+						if ((timeMillis - f.lastModified()) > deleteTime) {
+							f.delete();
+						}						
+					}
+				}				
+			}
+		};
+
+		streamDeleterTimer = new java.util.Timer();
+		streamDeleterTimer.schedule(streamDeleteTask, 0, runPeriod);
+	}
+	
+	public void cancelStreamDeleteTimer() {
+		if (streamDeleterTimer != null) {
+			streamDeleterTimer.cancel();
+		}
+	}
+	
 
 	@Override
 	public void appStop(IScope arg0) {
