@@ -11,15 +11,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Calendar;
 import java.util.Map;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.red5.core.Application;
-import org.red5.core.Application.Stream;
 import org.red5.core.GcmUsers;
 import org.red5.core.RegIDs;
+import org.red5.server.stream.ServerStream;
 
 public class ApplicationTester {
 
@@ -145,7 +146,7 @@ public class ApplicationTester {
 	
 	@Test
 	public void testStreamViewer() {
-		Stream stream = new Stream("streamName", "streamUrl", (long)12121, true);
+		org.red5.core.Stream stream = new org.red5.core.Stream("streamName", "streamUrl", Calendar.getInstance().getTime(), true);
 		assertEquals(0, stream.getViewerCount());
 		
 		stream.addViewer("test");
@@ -183,9 +184,9 @@ public class ApplicationTester {
 	
 	@Test
 	public void testRegisterLocationForStream() {
-		Map<String, Stream> registeredStreams = butterflyApp.getRegisteredStreams();
+		Map<String, org.red5.core.Stream> registeredStreams = butterflyApp.getRegisteredStreams();
 		assertEquals(0, registeredStreams.size());
-		registeredStreams.put("video_url", new Stream("location_test", "video_url", System.currentTimeMillis(), true));
+		registeredStreams.put("video_url", new org.red5.core.Stream("location_test", "video_url", Calendar.getInstance().getTime(), true));
 		
 		assertEquals(1, registeredStreams.size());
 		
@@ -194,7 +195,7 @@ public class ApplicationTester {
 		registeredStreams = butterflyApp.getRegisteredStreams();
 		assertEquals(1, registeredStreams.size());
 		
-		Stream stream = registeredStreams.get("video_url");
+		org.red5.core.Stream stream = registeredStreams.get("video_url");
 		assertNotNull(stream);
 		assertEquals(23.4566, stream.longtitude, 1e-8);
 		assertEquals(34.667, stream.latitude, 1e-8);

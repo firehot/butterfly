@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.TimerTask;
 
 import javax.imageio.ImageIO;
 import javax.mail.MessagingException;
@@ -56,6 +57,8 @@ import javax.persistence.Query;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.red5.core.manage.StreamManager;
+import org.red5.core.manage.UserManager;
 import org.red5.io.ITag;
 import org.red5.io.flv.impl.FLVWriter;
 import org.red5.io.flv.impl.Tag;
@@ -91,105 +94,19 @@ IStreamListener {
 	private ResourceBundle messagesEN;
 	private BandwidthServer bandwidthServer;
 	private java.util.Timer streamDeleterTimer;
+	private UserManager userManager;
+	private StreamManager streamManager;
 	private static long MILLIS_IN_HOUR = 60*60*1000;
 
-	public static class Stream implements Serializable {
-		public String streamName;
-		public String streamUrl;
-		public Long registerTime;
-		public ArrayList<String> viewerStreamNames = new ArrayList<String>();
-		private GcmUsers gcmIdList;
-		public Timestamp timeReceived;
-		public double altitude;
-		public double longtitude;
-		public double latitude;
-		public FLVWriter flvWriter;
-		public boolean isLive = true;
-		private BlockingQueue<ITag> queue = new LinkedBlockingQueue<ITag>();
-		public boolean isPublic;
 
-		public Stream(String streamName, String streamUrl, Long registerTime, boolean isPublic) {
-			super();
-			this.streamName = streamName;
-			this.streamUrl = streamUrl;
-			this.registerTime = registerTime;
-			this.isLive = true;
-			this.isPublic = isPublic;
-
-			File streamsFolder = new File("webapps/ButterFly_Red5/streams");
-			if (streamsFolder.exists() == false) {
-				streamsFolder.mkdir();
-			}
-			File file = new File(streamsFolder, streamUrl + ".flv");
-
-			if (file.exists() == false) {
-				try {
-					file.createNewFile();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			flvWriter = new FLVWriter(file, false);
-		}
-
-		public void write(IStreamPacket packet) {
-
-			IoBuffer data = packet.getData().asReadOnlyBuffer().duplicate();
-
-			if (data.limit() == 0) {
-				System.out.println("data limit -> 0");
-				return;
-			}
-
-
-			ITag tag = new Tag();
-			tag.setDataType(packet.getDataType());
-			tag.setBodySize(data.limit());
-			tag.setTimestamp(packet.getTimestamp());
-			tag.setBody(data);
-
-			try {
-				flvWriter.writeTag(tag);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		public void close() {
-			flvWriter.close();
-		}
-
-		public void addViewer(String streamName) {
-			viewerStreamNames.add(streamName);
-		}
-
-		public boolean containsViewer(String streamName) {
-			return viewerStreamNames.contains(streamName);
-		}
-
-		public void removeViewer(String streamName) {
-			viewerStreamNames.remove(streamName);
-		}
-
-		public int getViewerCount() {
-			return viewerStreamNames.size();
-		}
-
-		public void setGCMUser(GcmUsers registrationIdList) {
-			this.gcmIdList = registrationIdList;
-		}
-
-		public GcmUsers getBroadcasterGCMUsers() {
-			return gcmIdList;
-		}
-
-	}
 
 	public Application() {
 		messagesTR = ResourceBundle.getBundle("resources/LanguageBundle",
 				new Locale("tr"));
 		messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
 		bandwidthServer = new BandwidthServer();
+		userManager = new UserManager(this);
+		streamManager = new StreamManager(this);
 
 		scheduleStreamDeleterTimer(6* MILLIS_IN_HOUR, 24 * MILLIS_IN_HOUR);
 	}
@@ -248,29 +165,8 @@ IStreamListener {
 	}
 
 	public String getLiveStreams() {
-
-		JSONArray jsonArray = new JSONArray();
-		JSONObject jsonObject;
-
-		Set<Entry<String, Stream>> entrySet = getRegisteredStreams().entrySet();
-		for (Iterator iterator = entrySet.iterator(); iterator.hasNext();) {
-			Entry<String, Stream> entry = (Entry<String, Stream>) iterator
-					.next();
-			Stream stream = entry.getValue();
-			if (stream.isPublic == true) {
-				jsonObject = new JSONObject();
-				jsonObject.put("url", stream.streamUrl);
-				jsonObject.put("name", stream.streamName);
-				jsonObject.put("viewerCount", stream.getViewerCount());
-				jsonObject.put("latitude", stream.latitude);
-				jsonObject.put("longitude", stream.longtitude);
-				jsonObject.put("altitude", stream.altitude);
-				jsonObject.put("isLive", stream.isLive);
-				jsonArray.add(jsonObject);
-			}
-		}
-
-		return jsonArray.toString();
+		Set<Entry<String, Stream>> entrySet = getRegisteredStreams().entrySet();		
+		return streamManager.getLiveStreams(entrySet);
 	}
 
 	public boolean isLiveStreamExist(String url) {
@@ -286,20 +182,9 @@ IStreamListener {
 	public boolean registerLiveStream(String streamName, String url,
 			String mailsToBeNotified, String broadcasterMail, boolean isPublic,
 			String deviceLanguage) {
-		boolean result = false;
-		if (getRegisteredStreams().containsKey(url) == false) {
 
-			Stream stream = new Stream(streamName, url,
-					System.currentTimeMillis(), isPublic);
-			stream.setGCMUser(getRegistrationIdList(broadcasterMail));
-
-			registeredStreams.put(url, stream);
-			sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url,
-					streamName, deviceLanguage);
-			// return true even if stream is not public
-			result = true;
-		}
-		return result;
+		return streamManager.registerLiveStream(streamName, url,
+				mailsToBeNotified, broadcasterMail, isPublic, deviceLanguage);
 	}
 
 	public boolean registerLocationForStream(String url, double longitude,
@@ -415,7 +300,7 @@ IStreamListener {
 	 *            notification mail language is selected
 	 * @param deviceLanguage
 	 */
-	private void sendNotificationsOrMail(String mails, String broadcasterMail,
+	public void sendNotificationsOrMail(String mails, String broadcasterMail,
 			String streamURL, String streamName, String deviceLanguage) {
 
 		GcmUsers result = null;
@@ -538,11 +423,11 @@ IStreamListener {
 		return result;
 	}
 
-	private void beginTransaction() {
+	public void beginTransaction() {
 		getEntityManager().getTransaction().begin();
 	}
 
-	private EntityManager getEntityManager() {
+	public EntityManager getEntityManager() {
 		if (entityManager == null) {
 			EntityManagerFactory entityManagerFactory = Persistence
 					.createEntityManagerFactory("ButterFly_Red5");
@@ -551,11 +436,11 @@ IStreamListener {
 		return entityManager;
 	}
 
-	private void commit() {
+	public void commit() {
 		getEntityManager().getTransaction().commit();
 	}
 
-	private void closeEntityManager() {
+	public void closeEntityManager() {
 		getEntityManager().close();
 		entityManager = null;
 	}
