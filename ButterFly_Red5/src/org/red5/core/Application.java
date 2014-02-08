@@ -23,10 +23,10 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.TimerTask;
 
 import javax.imageio.ImageIO;
 import javax.mail.MessagingException;
@@ -56,9 +57,9 @@ import javax.persistence.Query;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.red5.io.ITag;
+import org.red5.core.manage.StreamManager;
+import org.red5.core.manage.UserManager;
 import org.red5.io.flv.impl.FLVWriter;
-import org.red5.io.flv.impl.Tag;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
@@ -91,106 +92,27 @@ IStreamListener {
 	private ResourceBundle messagesEN;
 	private BandwidthServer bandwidthServer;
 	private java.util.Timer streamDeleterTimer;
-	private static long MILLIS_IN_HOUR = 60*60*1000;
-
-	public static class Stream implements Serializable {
-		public String streamName;
-		public String streamUrl;
-		public Long registerTime;
-		public ArrayList<String> viewerStreamNames = new ArrayList<String>();
-		private GcmUsers gcmIdList;
-		public Timestamp timeReceived;
-		public double altitude;
-		public double longtitude;
-		public double latitude;
-		public FLVWriter flvWriter;
-		public boolean isLive = true;
-		private BlockingQueue<ITag> queue = new LinkedBlockingQueue<ITag>();
-		public boolean isPublic;
-
-		public Stream(String streamName, String streamUrl, Long registerTime, boolean isPublic) {
-			super();
-			this.streamName = streamName;
-			this.streamUrl = streamUrl;
-			this.registerTime = registerTime;
-			this.isLive = true;
-			this.isPublic = isPublic;
-
-			File streamsFolder = new File("webapps/ButterFly_Red5/streams");
-			if (streamsFolder.exists() == false) {
-				streamsFolder.mkdir();
-			}
-			File file = new File(streamsFolder, streamUrl + ".flv");
-
-			if (file.exists() == false) {
-				try {
-					file.createNewFile();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			flvWriter = new FLVWriter(file, false);
-		}
-
-		public void write(IStreamPacket packet) {
-
-			IoBuffer data = packet.getData().asReadOnlyBuffer().duplicate();
-
-			if (data.limit() == 0) {
-				System.out.println("data limit -> 0");
-				return;
-			}
-
-
-			ITag tag = new Tag();
-			tag.setDataType(packet.getDataType());
-			tag.setBodySize(data.limit());
-			tag.setTimestamp(packet.getTimestamp());
-			tag.setBody(data);
-
-			try {
-				flvWriter.writeTag(tag);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		public void close() {
-			flvWriter.close();
-		}
-
-		public void addViewer(String streamName) {
-			viewerStreamNames.add(streamName);
-		}
-
-		public boolean containsViewer(String streamName) {
-			return viewerStreamNames.contains(streamName);
-		}
-
-		public void removeViewer(String streamName) {
-			viewerStreamNames.remove(streamName);
-		}
-
-		public int getViewerCount() {
-			return viewerStreamNames.size();
-		}
-
-		public void setGCMUser(GcmUsers registrationIdList) {
-			this.gcmIdList = registrationIdList;
-		}
-
-		public GcmUsers getBroadcasterGCMUsers() {
-			return gcmIdList;
-		}
-
-	}
+	private static long MILLIS_IN_HOUR = 60 * 60 * 1000;
+	private UserManager userManager;
+	private StreamManager streamManager;
 
 	public Application() {
 		messagesTR = ResourceBundle.getBundle("resources/LanguageBundle",
 				new Locale("tr"));
 		messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
 		bandwidthServer = new BandwidthServer();
+		userManager = new UserManager(this);
+		streamManager = new StreamManager(this);
 
+		scheduleStreamDeleterTimer(6 * MILLIS_IN_HOUR, 24 * MILLIS_IN_HOUR);
+	}
+
+
+
+	public void cancelStreamDeleteTimer() {
+		if (streamDeleterTimer != null) {
+			streamDeleterTimer.cancel();
+		}
 		scheduleStreamDeleterTimer(6* MILLIS_IN_HOUR, 24 * MILLIS_IN_HOUR);
 	}
 
@@ -220,11 +142,7 @@ IStreamListener {
 		streamDeleterTimer.schedule(streamDeleteTask, 0, runPeriod);
 	}
 
-	public void cancelStreamDeleteTimer() {
-		if (streamDeleterTimer != null) {
-			streamDeleterTimer.cancel();
-		}
-	}
+
 
 
 	@Override
@@ -252,6 +170,7 @@ IStreamListener {
 		JSONArray jsonArray = new JSONArray();
 		JSONObject jsonObject;
 
+
 		Set<Entry<String, Stream>> entrySet = getRegisteredStreams().entrySet();
 		for (Iterator iterator = entrySet.iterator(); iterator.hasNext();) {
 			Entry<String, Stream> entry = (Entry<String, Stream>) iterator
@@ -274,75 +193,29 @@ IStreamListener {
 	}
 
 	public boolean isLiveStreamExist(String url) {
+
 		IScope target = Red5.getConnectionLocal().getScope();
 		Set<String> streamNames = getBroadcastStreamNames(target);
-		boolean result = false;
-		if (streamNames.contains(url)) {
-			result = true;
-		}
-		return result;
+
+		return streamManager.isLiveStreamExist(url, streamNames);
+
 	}
 
 	public boolean registerLiveStream(String streamName, String url,
 			String mailsToBeNotified, String broadcasterMail, boolean isPublic,
 			String deviceLanguage) {
-		boolean result = false;
-		if (getRegisteredStreams().containsKey(url) == false) {
-
-			Stream stream = new Stream(streamName, url,
-					System.currentTimeMillis(), isPublic);
-			stream.setGCMUser(getRegistrationIdList(broadcasterMail));
-
-			registeredStreams.put(url, stream);
-			sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url,
-					streamName, deviceLanguage);
-			// return true even if stream is not public
-			result = true;
-		}
-		return result;
+	
+		return streamManager.registerLiveStream(streamName, url,
+				mailsToBeNotified, broadcasterMail, isPublic, deviceLanguage);
 	}
 
 	public boolean registerLocationForStream(String url, double longitude,
 			double latitude, double altitude) {
-		boolean result = false;
-		if (getRegisteredStreams().containsKey(url) == true) {
-			Stream stream = getRegisteredStreams().get(url);
-			stream.latitude = latitude;
-			stream.longtitude = longitude;
-			stream.altitude = altitude;
-			result = true;
-		}
-		return result;
+		return streamManager.registerLocationForStream(url, longitude, latitude, altitude);
 	}
 
 	public boolean registerUser(String register_id, String mail) {
-		boolean result;
-		try {
-			beginTransaction();
-
-			Query query = getEntityManager().createQuery(
-					"FROM GcmUsers where email= :email");
-			query.setParameter("email", mail);
-			List results = query.getResultList();
-			if (results.size() > 0) {
-				GcmUsers gcmUsers = (GcmUsers) results.get(0);
-				RegIDs regid = new RegIDs(register_id);
-				gcmUsers.addRegID(regid);
-			} else {
-				GcmUsers gcmUsers = new GcmUsers(mail);
-				RegIDs regid = new RegIDs(register_id);
-				gcmUsers.addRegID(regid);
-				getEntityManager().persist(gcmUsers);
-			}
-
-			commit();
-			closeEntityManager();
-			result = true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			result = false;
-		}
-		return result;
+		return userManager.registerUser(register_id, mail);
 
 	}
 
@@ -356,48 +229,7 @@ IStreamListener {
 	 * @return true if the user is updated succesfully , false if fails
 	 */
 	public boolean updateUser(String register_id, String mail, String oldRegID) {
-		boolean result;
-		try {
-			beginTransaction();
-
-			Query query = getEntityManager().createQuery(
-					"FROM GcmUsers where email= :email");
-			query.setParameter("email", mail);
-			List results = query.getResultList();
-
-			// if user is found
-			if (results.size() > 0) {
-				GcmUsers gcmUsers = (GcmUsers) results.get(0);
-
-				// if reg id doesnt exist for the user
-				if (gcmUsers.getRegIDs().size() == 0) {
-					RegIDs regid = new RegIDs(register_id);
-					gcmUsers.addRegID(regid);
-				} else {
-					// update the reg id of the user using the old reg id
-					for (RegIDs regid : gcmUsers.getRegIDs()) {
-						if (regid.getGcmRegId().equals(oldRegID)) {
-							regid.setGcmRegId(register_id);
-						}
-					}
-				}
-
-			} else {
-				// user doesnt exist, create user and add reg id
-				GcmUsers gcmUsers = new GcmUsers(mail);
-				RegIDs regid = new RegIDs(register_id);
-				gcmUsers.addRegID(regid);
-				getEntityManager().persist(gcmUsers);
-			}
-
-			commit();
-			closeEntityManager();
-			result = true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			result = false;
-		}
-		return result;
+		return userManager.updateUser(register_id, mail, oldRegID);
 
 	}
 
@@ -415,7 +247,7 @@ IStreamListener {
 	 *            notification mail language is selected
 	 * @param deviceLanguage
 	 */
-	private void sendNotificationsOrMail(String mails, String broadcasterMail,
+	public void sendNotificationsOrMail(String mails, String broadcasterMail,
 			String streamURL, String streamName, String deviceLanguage) {
 
 		GcmUsers result = null;
@@ -459,50 +291,13 @@ IStreamListener {
 	 */
 	public GcmUsers getRegistrationIdList(String mail) {
 
-		GcmUsers result = null;
-		try {
-			beginTransaction();
-			Query query = getEntityManager().createQuery(
-					"FROM GcmUsers where email= :email");
-			query.setParameter("email", mail);
-			List results = query.getResultList();
-			if (results.size() > 0) {
-				GcmUsers gcmUsers = (GcmUsers) results.get(0);
-				result = gcmUsers;
-			}
-
-			commit();
-			closeEntityManager();
-
-		} catch (NoResultException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return result;
+		GcmUsers users = userManager.getRegistrationIdList(mail);
+		return users;
 	}
 
 	public int getUserCount(String mail) {
 
-		int result = 0;
-		try {
-			beginTransaction();
-			Query query = getEntityManager().createQuery(
-					"FROM GcmUsers where email= :email");
-			query.setParameter("email", mail);
-			List results = query.getResultList();
-			result = results.size();
-			commit();
-			closeEntityManager();
-
-		} catch (NoResultException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return result;
+		return userManager.getUserCount(mail);
 	}
 
 	@Override
@@ -524,25 +319,14 @@ IStreamListener {
 	}
 
 	public boolean removeStream(String streamUrl) {
-		boolean result = false;
-		if (getRegisteredStreams().containsKey(streamUrl)) {
-			Stream stream = getRegisteredStreams().remove(streamUrl);
-			stream.close();
-			if (stream != null) {
-				result = true;
-			}
-			stream = null;
-			// File f = new File("webapps/ButterFly_Red5/"+streamUrl+".png");
-			// f.delete();
-		}
-		return result;
+		return streamManager.removeStream(streamUrl);
 	}
 
-	private void beginTransaction() {
+	public void beginTransaction() {
 		getEntityManager().getTransaction().begin();
 	}
 
-	private EntityManager getEntityManager() {
+	public EntityManager getEntityManager() {
 		if (entityManager == null) {
 			EntityManagerFactory entityManagerFactory = Persistence
 					.createEntityManagerFactory("ButterFly_Red5");
@@ -551,11 +335,11 @@ IStreamListener {
 		return entityManager;
 	}
 
-	private void commit() {
+	public void commit() {
 		getEntityManager().getTransaction().commit();
 	}
 
-	private void closeEntityManager() {
+	public void closeEntityManager() {
 		getEntityManager().close();
 		entityManager = null;
 	}
@@ -703,20 +487,7 @@ IStreamListener {
 	}
 
 	public boolean deleteUser(GcmUsers user) {
-		boolean result;
-		try {
-			beginTransaction();
-
-			getEntityManager().remove(user);
-
-			commit();
-			closeEntityManager();
-			result = true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			result = false;
-		}
-		return result;
+		return userManager.deleteUser(user);
 	}
 
 	@Override
@@ -868,69 +639,71 @@ IStreamListener {
 
 	/**
 	 * Gets the file name list in the path that the videos are recorded
+	 * 
 	 * @return file name list in json
 	 */
-	public String getRecordedVideoFileList() {
-
-		String path = "webapps/ButterFly_Red5/";
-		String fileName;
-		List<String> validFileNames = new ArrayList<String>();
-		File folder = new File(path);
-		File[] listOfFiles = folder.listFiles();
-
-		for (int i = 0; i < listOfFiles.length; i++) {
-
-			if (listOfFiles[i].isFile()) {
-				fileName = listOfFiles[i].getName();
-				if (fileName.endsWith(".png") || fileName.endsWith(".PNG")) {
-
-					//a file is valid if both flv and png files are exist
-					if (isFlvFileExist(listOfFiles,
-							fileName.substring(0, fileName.length() - 3)
-							+ "flv")) {
-						validFileNames.add(fileName);
-					}
-
-				}
-			}
-		}
-
-		JSONArray jsonArray = new JSONArray();
-		JSONObject jsonObject;
-		for (String streamName : validFileNames) {
-
-			jsonObject = new JSONObject();
-			jsonObject.put("streamName", streamName);
-			jsonArray.add(jsonObject);
-
-		}
-
-		return jsonArray.toString();
-
-	}
+//	public String getRecordedVideoFileList() {
+//
+//		String path = "webapps/ButterFly_Red5/";
+//		String fileName;
+//		List<String> validFileNames = new ArrayList<String>();
+//		File folder = new File(path);
+//		File[] listOfFiles = folder.listFiles();
+//
+//		for (int i = 0; i < listOfFiles.length; i++) {
+//
+//			if (listOfFiles[i].isFile()) {
+//				fileName = listOfFiles[i].getName();
+//				if (fileName.endsWith(".png") || fileName.endsWith(".PNG")) {
+//
+//					// a file is valid if both flv and png files are exist
+//					if (isFlvFileExist(listOfFiles,
+//							fileName.substring(0, fileName.length() - 3)
+//							+ "flv")) {
+//						validFileNames.add(fileName);
+//					}
+//
+//				}
+//			}
+//		}
+//
+//		JSONArray jsonArray = new JSONArray();
+//		JSONObject jsonObject;
+//		for (String streamName : validFileNames) {
+//
+//			jsonObject = new JSONObject();
+//			jsonObject.put("streamName", streamName);
+//			jsonArray.add(jsonObject);
+//
+//		}
+//
+//		return jsonArray.toString();
+//
+//	}
 
 	/**
 	 * Checks whether a corresponding flv file is exist for a png
+	 * 
 	 * @param listOfFiles
 	 * @param flvFileName
 	 * @return
 	 */
-	public boolean isFlvFileExist(File[] listOfFiles, String flvFileName) {
-		String fileName;
-
-		for (int i = 0; i < listOfFiles.length; i++) {
-
-			if (listOfFiles[i].isFile()) {
-				fileName = listOfFiles[i].getName();
-				if (fileName.equals(flvFileName)) {
-
-					return true;
-				}
-			}
-		}
-
-		return false;
-	}
+//	public boolean isFlvFileExist(File[] listOfFiles, String flvFileName) {
+//		String fileName;
+//
+//		for (int i = 0; i < listOfFiles.length; i++) {
+//
+//			if (listOfFiles[i].isFile()) {
+//				fileName = listOfFiles[i].getName();
+//				if (fileName.equals(flvFileName)) {
+//
+//					return true;
+//				}
+//			}
+//		}
+//
+//		return false;
+//	}
 
 	public Map<String, Stream> getRegisteredStreams() {
 		return registeredStreams;
