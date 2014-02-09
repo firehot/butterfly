@@ -166,30 +166,8 @@ IStreamListener {
 	}
 
 	public String getLiveStreams() {
-
-		JSONArray jsonArray = new JSONArray();
-		JSONObject jsonObject;
-
-
-		Set<Entry<String, Stream>> entrySet = getRegisteredStreams().entrySet();
-		for (Iterator iterator = entrySet.iterator(); iterator.hasNext();) {
-			Entry<String, Stream> entry = (Entry<String, Stream>) iterator
-					.next();
-			Stream stream = entry.getValue();
-			if (stream.isPublic == true) {
-				jsonObject = new JSONObject();
-				jsonObject.put("url", stream.streamUrl);
-				jsonObject.put("name", stream.streamName);
-				jsonObject.put("viewerCount", stream.getViewerCount());
-				jsonObject.put("latitude", stream.latitude);
-				jsonObject.put("longitude", stream.longtitude);
-				jsonObject.put("altitude", stream.altitude);
-				jsonObject.put("isLive", stream.isLive);
-				jsonArray.add(jsonObject);
-			}
-		}
-
-		return jsonArray.toString();
+		Set<Entry<String, Stream>> entrySet = getRegisteredStreams().entrySet();		
+		return streamManager.getLiveStreams(entrySet);
 	}
 
 	public boolean isLiveStreamExist(String url) {
