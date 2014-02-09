@@ -1,4 +1,4 @@
-package org.red5.core.manage;
+package org.red5.core.manager;
 
 import java.util.List;
 
@@ -7,8 +7,9 @@ import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
 import org.red5.core.Application;
-import org.red5.core.GcmUsers;
-import org.red5.core.RegIDs;
+import org.red5.core.dbModel.GcmUsers;
+import org.red5.core.dbModel.RegIDs;
+import org.red5.core.utils.JPAUtils;
 
 public class UserManager {
 
@@ -25,7 +26,7 @@ public class UserManager {
 	 */
 	public GcmUsers getRegistrationIdList(String mail) {
 
-		EntityManager entityManager = red5App.getEntityManager();
+		EntityManager entityManager = JPAUtils.getEntityManager();
 		GcmUsers result = null;
 		try {
 
@@ -38,7 +39,7 @@ public class UserManager {
 				result = gcmUsers;
 			}
 
-			this.red5App.closeEntityManager();
+			JPAUtils.closeEntityManager();
 		} catch (NoResultException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
@@ -51,9 +52,8 @@ public class UserManager {
 	public boolean registerUser(String register_id, String mail) {
 		boolean result;
 		try {
-			this.red5App.beginTransaction();
-
-			Query query = this.red5App.getEntityManager().createQuery(
+			JPAUtils.beginTransaction();
+			Query query = JPAUtils.getEntityManager().createQuery(
 					"FROM GcmUsers where email= :email");
 			query.setParameter("email", mail);
 			List results = query.getResultList();
@@ -65,11 +65,11 @@ public class UserManager {
 				GcmUsers gcmUsers = new GcmUsers(mail);
 				RegIDs regid = new RegIDs(register_id);
 				gcmUsers.addRegID(regid);
-				this.red5App.getEntityManager().persist(gcmUsers);
+				JPAUtils.getEntityManager().persist(gcmUsers);
 			}
+			JPAUtils.commit();
+			JPAUtils.closeEntityManager();
 
-			this.red5App.commit();
-			this.red5App.closeEntityManager();
 			result = true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -91,9 +91,9 @@ public class UserManager {
 	public boolean updateUser(String register_id, String mail, String oldRegID) {
 		boolean result;
 		try {
-			this.red5App.beginTransaction();
+			JPAUtils.beginTransaction();
 
-			Query query = this.red5App.getEntityManager().createQuery(
+			Query query = JPAUtils.getEntityManager().createQuery(
 					"FROM GcmUsers where email= :email");
 			query.setParameter("email", mail);
 			List results = query.getResultList();
@@ -120,11 +120,11 @@ public class UserManager {
 				GcmUsers gcmUsers = new GcmUsers(mail);
 				RegIDs regid = new RegIDs(register_id);
 				gcmUsers.addRegID(regid);
-				this.red5App.getEntityManager().persist(gcmUsers);
+				JPAUtils.getEntityManager().persist(gcmUsers);
 			}
 
-			this.red5App.commit();
-			this.red5App.closeEntityManager();
+			JPAUtils.commit();
+			JPAUtils.closeEntityManager();
 			result = true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -139,12 +139,12 @@ public class UserManager {
 		int result = 0;
 		try {
 
-			Query query = this.red5App.getEntityManager().createQuery(
+			Query query = JPAUtils.getEntityManager().createQuery(
 					"FROM GcmUsers where email= :email");
 			query.setParameter("email", mail);
 			List results = query.getResultList();
 			result = results.size();
-			this.red5App.closeEntityManager();
+			JPAUtils.closeEntityManager();
 
 		} catch (NoResultException e) {
 			e.printStackTrace();
@@ -155,15 +155,17 @@ public class UserManager {
 		return result;
 	}
 	
-	public boolean deleteUser(GcmUsers user) {
+	public boolean deleteUser(int userId) {
 		boolean result;
 		try {
-			this.red5App.beginTransaction();
+			JPAUtils.beginTransaction();
 
-			this.red5App.getEntityManager().remove(user);
-
-			this.red5App.commit();
-			this.red5App.closeEntityManager();
+			GcmUsers foundUser = JPAUtils.getEntityManager().find(GcmUsers.class, userId);
+			
+			JPAUtils.getEntityManager().remove(foundUser);
+			
+			JPAUtils.commit();
+			JPAUtils.closeEntityManager();
 			result = true;
 		} catch (Exception e) {
 			e.printStackTrace();

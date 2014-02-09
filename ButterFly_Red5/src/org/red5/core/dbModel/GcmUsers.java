@@ -1,4 +1,4 @@
-package org.red5.core;
+package org.red5.core.dbModel;
 // default package
 // Generated 21-Sep-2013 16:53:03 by Hibernate Tools 3.4.0.CR1
 

@@ -1,4 +1,4 @@
-package org.red5.core;
+package org.red5.core.dbModel;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

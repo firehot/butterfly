@@ -1,4 +1,4 @@
-package org.red5.core.manage;
+package org.red5.core.manager;
 
 import java.util.Calendar;
 import java.util.Iterator;
@@ -11,7 +11,7 @@ import javax.persistence.EntityManager;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.red5.core.Application;
-import org.red5.core.Stream;
+import org.red5.core.utils.Stream;
 
 public class StreamManager {
 

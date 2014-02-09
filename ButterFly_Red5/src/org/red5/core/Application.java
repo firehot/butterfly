@@ -57,8 +57,10 @@ import javax.persistence.Query;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.red5.core.manage.StreamManager;
-import org.red5.core.manage.UserManager;
+import org.red5.core.dbModel.GcmUsers;
+import org.red5.core.manager.StreamManager;
+import org.red5.core.manager.UserManager;
+import org.red5.core.utils.Stream;
 import org.red5.io.flv.impl.FLVWriter;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IConnection;
@@ -87,7 +89,6 @@ IStreamListener {
 	private static final String SENDER_ID = "AIzaSyCFmHIbJO0qCtPo6klp7Ade3qjeGLgtZWw";
 	private static final String WEB_PLAY_URL = "http://www.butterflytv.net/player.html?videoId=";
 	private Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
-	private EntityManager entityManager;
 	private ResourceBundle messagesTR;
 	private ResourceBundle messagesEN;
 	private BandwidthServer bandwidthServer;
@@ -300,28 +301,6 @@ IStreamListener {
 		return streamManager.removeStream(streamUrl);
 	}
 
-	public void beginTransaction() {
-		getEntityManager().getTransaction().begin();
-	}
-
-	public EntityManager getEntityManager() {
-		if (entityManager == null) {
-			EntityManagerFactory entityManagerFactory = Persistence
-					.createEntityManagerFactory("ButterFly_Red5");
-			entityManager = entityManagerFactory.createEntityManager();
-		}
-		return entityManager;
-	}
-
-	public void commit() {
-		getEntityManager().getTransaction().commit();
-	}
-
-	public void closeEntityManager() {
-		getEntityManager().close();
-		entityManager = null;
-	}
-
 	public boolean sendMail(ArrayList<String> email, String broadcasterMail,
 			String streamName, String streamURL, String deviceLanguage) {
 
@@ -465,7 +444,7 @@ IStreamListener {
 	}
 
 	public boolean deleteUser(GcmUsers user) {
-		return userManager.deleteUser(user);
+		return userManager.deleteUser(user.getId());
 	}
 
 	@Override
