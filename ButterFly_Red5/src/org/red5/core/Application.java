@@ -96,6 +96,7 @@ IStreamListener {
 	private static long MILLIS_IN_HOUR = 60 * 60 * 1000;
 	private UserManager userManager;
 	private StreamManager streamManager;
+	private boolean mailsSent;
 
 	public Application() {
 		messagesTR = ResourceBundle.getBundle("resources/LanguageBundle",
@@ -183,7 +184,7 @@ IStreamListener {
 	public boolean registerLiveStream(String streamName, String url,
 			String mailsToBeNotified, String broadcasterMail, boolean isPublic,
 			String deviceLanguage) {
-	
+
 		return streamManager.registerLiveStream(streamName, url,
 				mailsToBeNotified, broadcasterMail, isPublic, deviceLanguage);
 	}
@@ -301,146 +302,154 @@ IStreamListener {
 		return streamManager.removeStream(streamUrl);
 	}
 
-	public boolean sendMail(ArrayList<String> email, String broadcasterMail,
+	public void sendMail(final ArrayList<String> email, String broadcasterMail,
 			String streamName, String streamURL, String deviceLanguage) {
-
+		setMailsSent(false);
 		ResourceBundle messages = messagesEN;
 		if (deviceLanguage != null && deviceLanguage.equals("tur")) {
 			messages = messagesTR;
 		}
 
 		String webURL = WEB_PLAY_URL + streamURL;
-		String subject = messages.getString("mail_notification_subject");
-		String messagex = MessageFormat.format(
+		final String subject = messages.getString("mail_notification_subject");
+		final String messagex = MessageFormat.format(
 				messages.getString("mail_notification_message"),
 				broadcasterMail, streamName, webURL);
 
-		boolean resultx = false;
-		final String username = "notification@butterflytv.net";
-		final String password = "Nybn~Dx-E5-$";
-		Properties props = new Properties();
-		props.put("mail.smtp.auth", "true");
-		props.put("mail.smtp.starttls.enable", "true");
-		props.put("mail.smtp.host", "mail.butterflytv.net");
-		props.put("mail.smtp.port", "26");
-		System.out.println("Done1");
-		Session session = Session.getInstance(props,
-				new javax.mail.Authenticator() {
-			protected PasswordAuthentication getPasswordAuthentication() {
-				return new PasswordAuthentication(username, password);
-			}
-		});
+		Thread mailSenderThread = new Thread() {
+			@Override
+			public void run() {
+				final String username = "notification@butterflytv.net";
+				final String password = "Nybn~Dx-E5-$";
+				Properties props = new Properties();
+				props.put("mail.smtp.auth", "true");
+				props.put("mail.smtp.starttls.enable", "true");
+				props.put("mail.smtp.host", "mail.butterflytv.net");
+				props.put("mail.smtp.port", "26");
+				System.out.println("Done1");
+				Session session = Session.getInstance(props,
+						new javax.mail.Authenticator() {
+					protected PasswordAuthentication getPasswordAuthentication() {
+						return new PasswordAuthentication(username, password);
+					}
+				});
 
-		try {
-			javax.mail.Message message = new MimeMessage(session);
-			message.setFrom(new InternetAddress(username));
-			System.out.println("Done2");
-			for (int i = 0; i < email.size(); i++) {
-				System.out.println("Done3");
-				message.setRecipients(javax.mail.Message.RecipientType.TO,
-						InternetAddress.parse(email.get(i)));
-				message.setSubject(subject);
-				message.setContent(messagex, "text/html; charset=utf-8");
-				// message.setText(broadcasterMail);
-				System.out.println("Done4");
-				Transport.send(message);
-				System.out.println("Done5");
-			}
+				try {
+					javax.mail.Message message = new MimeMessage(session);
+					message.setFrom(new InternetAddress(username));
+					System.out.println("Done2");
+					for (int i = 0; i < email.size(); i++) {
+						System.out.println("Done3");
+						message.setRecipients(javax.mail.Message.RecipientType.TO,
+								InternetAddress.parse(email.get(i)));
+						message.setSubject(subject);
+						message.setContent(messagex, "text/html; charset=utf-8");
+						// message.setText(broadcasterMail);
+						System.out.println("Done4");
+						Transport.send(message);
+						System.out.println("Done5");
+					}
 
-			resultx = true;
-			System.out.println("Done");
-		} catch (MessagingException e) {
-			resultx = false;
-			System.out.println(e.getMessage());
-		}
-		return resultx;
+					System.out.println("Done");
+				} catch (MessagingException e) {
+					System.out.println(e.getMessage());
+				}
+				setMailsSent(true);
+			}
+		};
+		mailSenderThread.start();
+
 
 	}
 
-	private boolean sendNotification(ArrayList<GcmUsers> androidTargets,
-			String broadcasterMail, String streamURL, String streamName,
-			String deviceLanguage) {
-		boolean resx = false;
+	private void sendNotification(final ArrayList<GcmUsers> androidTargets,
+			final String broadcasterMail, final String streamURL, final String streamName,
+			final String deviceLanguage) {
+		Thread notifSender = new Thread() {
+			public void run() {
+				// Instance of com.android.gcm.server.Sender, that does the
+				// transmission of a Message to the Google Cloud Messaging service.
+				Sender sender = new Sender(SENDER_ID);
 
-		// Instance of com.android.gcm.server.Sender, that does the
-		// transmission of a Message to the Google Cloud Messaging service.
-		Sender sender = new Sender(SENDER_ID);
+				// This Message object will hold the data that is being transmitted
+				// to the Android client devices. For this demo, it is a simple text
+				// string, but could certainly be a JSON object.
+				Message message = new Message.Builder()
 
-		// This Message object will hold the data that is being transmitted
-		// to the Android client devices. For this demo, it is a simple text
-		// string, but could certainly be a JSON object.
-		Message message = new Message.Builder()
+				// If multiple messages are sent using the same .collapseKey()
+				// the android target device, if it was offline during earlier
+				// message
+				// transmissions, will only receive the latest message for that
+				// key when
+				// it goes back on-line.
+				.collapseKey("1").timeToLive(30).delayWhileIdle(true)
+				.addData("URL", streamURL)
+				.addData("broadcaster", broadcasterMail)
+				.addData("name", streamName).build();
 
-		// If multiple messages are sent using the same .collapseKey()
-		// the android target device, if it was offline during earlier
-		// message
-		// transmissions, will only receive the latest message for that
-		// key when
-		// it goes back on-line.
-		.collapseKey("1").timeToLive(30).delayWhileIdle(true)
-		.addData("URL", streamURL)
-		.addData("broadcaster", broadcasterMail)
-		.addData("name", streamName).build();
+				ArrayList<String> failedNotificationMails = new ArrayList<String>();
 
-		ArrayList<String> failedNotificationMails = new ArrayList<String>();
+				try {
+					// use this for multicast messages. The second parameter
+					// of sender.send() will need to be an array of register ids.
+					List<String> targetRegIDList = GcmUsers
+							.fetchRegIDListbyUsers(androidTargets);
+					MulticastResult result = sender.send(message, targetRegIDList, 1);
 
-		try {
-			// use this for multicast messages. The second parameter
-			// of sender.send() will need to be an array of register ids.
-			List<String> targetRegIDList = GcmUsers
-					.fetchRegIDListbyUsers(androidTargets);
-			MulticastResult result = sender.send(message, targetRegIDList, 1);
+					List<Result> resultList = result.getResults();
+					if (resultList != null) {
+						int canonicalRegId = result.getCanonicalIds();
+						for (int i = 0; i < resultList.size(); i++) {
+							Result innerResult = resultList.get(i);
+							if (innerResult.getMessageId() != null) {
+								if (canonicalRegId != 0) {
 
-			List<Result> resultList = result.getResults();
-			if (resultList != null) {
-				int canonicalRegId = result.getCanonicalIds();
-				for (int i = 0; i < resultList.size(); i++) {
-					Result innerResult = resultList.get(i);
-					if (innerResult.getMessageId() != null) {
-						if (canonicalRegId != 0) {
+									String canoID = innerResult
+											.getCanonicalRegistrationId();
+									String oldRegID = targetRegIDList.get(i);
+									GcmUsers user = GcmUsers.fetchUserByRegID(oldRegID,
+											androidTargets);
+									updateUser(canoID, user.getEmail(), oldRegID);
+								}
 
-							String canoID = innerResult
-									.getCanonicalRegistrationId();
-							String oldRegID = targetRegIDList.get(i);
-							GcmUsers user = GcmUsers.fetchUserByRegID(oldRegID,
-									androidTargets);
-							updateUser(canoID, user.getEmail(), oldRegID);
+							} else {
+								String error = innerResult.getErrorCodeName();
+								if (error.equals(Constants.ERROR_NOT_REGISTERED)) {
+									// application has been removed from device -
+									// unregister database
+									String oldRegID = targetRegIDList.get(i);
+									GcmUsers user = GcmUsers.fetchUserByRegID(oldRegID,
+											androidTargets);
+									if (!failedNotificationMails.contains(user
+											.getEmail()))
+										failedNotificationMails.add(user.getEmail());
+									deleteUser(user);
+								}
+							}
 						}
 
 					} else {
-						String error = innerResult.getErrorCodeName();
-						if (error.equals(Constants.ERROR_NOT_REGISTERED)) {
-							// application has been removed from device -
-							// unregister database
-							String oldRegID = targetRegIDList.get(i);
-							GcmUsers user = GcmUsers.fetchUserByRegID(oldRegID,
-									androidTargets);
-							if (!failedNotificationMails.contains(user
-									.getEmail()))
-								failedNotificationMails.add(user.getEmail());
-							deleteUser(user);
-						}
+						int error = result.getFailure();
+						System.out.println("Broadcast failure: " + error);
 					}
+
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
 
-			} else {
-				int error = result.getFailure();
-				System.out.println("Broadcast failure: " + error);
-			}
+				if (failedNotificationMails.size() > 0)
+					sendMail(failedNotificationMails, broadcasterMail, streamName, streamURL,
+							deviceLanguage);
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+				// We'll pass the CollapseKey and Message values back to index.jsp, only
+				// so
+				// we can display it in our form again
+				System.out.println("OK");
+			};
+		};
+		
+		notifSender.start();
 
-		if (failedNotificationMails.size() > 0)
-			sendMail(failedNotificationMails, broadcasterMail, streamName, streamURL,
-					deviceLanguage);
-
-		// We'll pass the CollapseKey and Message values back to index.jsp, only
-		// so
-		// we can display it in our form again
-		System.out.println("OK");
-		return resx;
 	}
 
 	public boolean deleteUser(GcmUsers user) {
@@ -599,44 +608,44 @@ IStreamListener {
 	 * 
 	 * @return file name list in json
 	 */
-//	public String getRecordedVideoFileList() {
-//
-//		String path = "webapps/ButterFly_Red5/";
-//		String fileName;
-//		List<String> validFileNames = new ArrayList<String>();
-//		File folder = new File(path);
-//		File[] listOfFiles = folder.listFiles();
-//
-//		for (int i = 0; i < listOfFiles.length; i++) {
-//
-//			if (listOfFiles[i].isFile()) {
-//				fileName = listOfFiles[i].getName();
-//				if (fileName.endsWith(".png") || fileName.endsWith(".PNG")) {
-//
-//					// a file is valid if both flv and png files are exist
-//					if (isFlvFileExist(listOfFiles,
-//							fileName.substring(0, fileName.length() - 3)
-//							+ "flv")) {
-//						validFileNames.add(fileName);
-//					}
-//
-//				}
-//			}
-//		}
-//
-//		JSONArray jsonArray = new JSONArray();
-//		JSONObject jsonObject;
-//		for (String streamName : validFileNames) {
-//
-//			jsonObject = new JSONObject();
-//			jsonObject.put("streamName", streamName);
-//			jsonArray.add(jsonObject);
-//
-//		}
-//
-//		return jsonArray.toString();
-//
-//	}
+	//	public String getRecordedVideoFileList() {
+	//
+	//		String path = "webapps/ButterFly_Red5/";
+	//		String fileName;
+	//		List<String> validFileNames = new ArrayList<String>();
+	//		File folder = new File(path);
+	//		File[] listOfFiles = folder.listFiles();
+	//
+	//		for (int i = 0; i < listOfFiles.length; i++) {
+	//
+	//			if (listOfFiles[i].isFile()) {
+	//				fileName = listOfFiles[i].getName();
+	//				if (fileName.endsWith(".png") || fileName.endsWith(".PNG")) {
+	//
+	//					// a file is valid if both flv and png files are exist
+	//					if (isFlvFileExist(listOfFiles,
+	//							fileName.substring(0, fileName.length() - 3)
+	//							+ "flv")) {
+	//						validFileNames.add(fileName);
+	//					}
+	//
+	//				}
+	//			}
+	//		}
+	//
+	//		JSONArray jsonArray = new JSONArray();
+	//		JSONObject jsonObject;
+	//		for (String streamName : validFileNames) {
+	//
+	//			jsonObject = new JSONObject();
+	//			jsonObject.put("streamName", streamName);
+	//			jsonArray.add(jsonObject);
+	//
+	//		}
+	//
+	//		return jsonArray.toString();
+	//
+	//	}
 
 	/**
 	 * Checks whether a corresponding flv file is exist for a png
@@ -645,24 +654,34 @@ IStreamListener {
 	 * @param flvFileName
 	 * @return
 	 */
-//	public boolean isFlvFileExist(File[] listOfFiles, String flvFileName) {
-//		String fileName;
-//
-//		for (int i = 0; i < listOfFiles.length; i++) {
-//
-//			if (listOfFiles[i].isFile()) {
-//				fileName = listOfFiles[i].getName();
-//				if (fileName.equals(flvFileName)) {
-//
-//					return true;
-//				}
-//			}
-//		}
-//
-//		return false;
-//	}
+	//	public boolean isFlvFileExist(File[] listOfFiles, String flvFileName) {
+	//		String fileName;
+	//
+	//		for (int i = 0; i < listOfFiles.length; i++) {
+	//
+	//			if (listOfFiles[i].isFile()) {
+	//				fileName = listOfFiles[i].getName();
+	//				if (fileName.equals(flvFileName)) {
+	//
+	//					return true;
+	//				}
+	//			}
+	//		}
+	//
+	//		return false;
+	//	}
 
 	public Map<String, Stream> getRegisteredStreams() {
 		return registeredStreams;
+	}
+
+
+
+	public boolean isMailsSent() {
+		return mailsSent;
+	}
+
+	private void setMailsSent(boolean mailsSent) {
+		this.mailsSent = mailsSent;
 	}
 }

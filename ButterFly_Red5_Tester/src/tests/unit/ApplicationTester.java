@@ -4,6 +4,7 @@ package tests.unit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Map;
 
@@ -30,11 +32,11 @@ public class ApplicationTester {
 
 	@Before
 	public void before() {
-		
+
 		butterflyApp = new Application();
-		
+
 		prepareEnvironment();
-		
+
 		try {
 			Thread.sleep(100);
 		} catch (InterruptedException e) {
@@ -58,8 +60,8 @@ public class ApplicationTester {
 
 	@After
 	public void after() {
-		
-		
+
+
 		butterflyApp.getBandwidthServer().close();
 		butterflyApp = null;
 	}
@@ -156,13 +158,13 @@ public class ApplicationTester {
 		assertEquals(result, true);
 
 		GcmUsers user = butterflyApp.getRegistrationIdList(mail);
-		
+
 
 		assertEquals(user.fetchRegIDStrings().get(0), String.valueOf(t));
 
 		boolean opResult = butterflyApp.deleteUser(user);
 		assertEquals(true, opResult);
-		
+
 		user = butterflyApp.getRegistrationIdList(mail);
 
 		assertEquals(user, null);
@@ -227,18 +229,25 @@ public class ApplicationTester {
 
 	}
 
-	//	@Test
-	//	public void testSendMail() {
-	//		ArrayList<String> mail = new ArrayList<String>();
-	//		mail.add("ahmetmermerkaya@gmail.com");
-	//		butterflyApp.sendMail(mail, "Test mail ", "Bu bir test mailidir.");
-	//		
-	//		String mailString = new String();
-	//		for (int i = 0; i < mail.size(); i++) {
-	//			mailString += mail.get(i) + ",";
-	//		}
-	//		fail("to correct this test check mail is received at " + mailString);
-	//	}
+	@Test
+	public void testSendMail() {
+		ArrayList<String> mail = new ArrayList<String>();
+		mail.add("ahmetmermerkaya@gmail.com");
+		butterflyApp.sendMail(mail, "Test mail ", "Bu bir test mailidir.", "streamURL", "tur");
+		String mailString = new String();
+		for (int i = 0; i < mail.size(); i++) {
+			mailString += mail.get(i) + ",";
+		}
+		while(butterflyApp.isMailsSent() == false) {
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		fail("to correct this test check mail is received at " + mailString);
+	}
 
 	//	@Test
 	//	public void testSendNotificationOrMail()
