@@ -46,6 +46,9 @@ public class ApplicationTester {
 
 	private void prepareEnvironment() {
 		File webappsDir = new File("webapps");
+		if (webappsDir.exists()) {
+			delete(webappsDir);
+		}
 		JPAUtils.beginTransaction();
 		Query query = JPAUtils.getEntityManager().createQuery("Delete FROM RegIDs");
 		query.executeUpdate();
@@ -53,9 +56,7 @@ public class ApplicationTester {
 		query.executeUpdate();
 		JPAUtils.commit();
 		JPAUtils.closeEntityManager();
-		if (webappsDir.exists()) {
-			delete(webappsDir);
-		}
+	
 	}
 
 	@After
@@ -328,41 +329,66 @@ public class ApplicationTester {
 			streamsFolder.mkdir();
 		}
 
-		File f1 = new File(streamsFolder, "f1");
-		File f2 = new File(streamsFolder, "f2");
-		File f3 = new File(streamsFolder, "f3");
+		File f1 = new File(streamsFolder, "f1.flv");
+		File f2 = new File(streamsFolder, "f2.flv");
+		File f3 = new File(streamsFolder, "f3.flv");
 		try {
 			f1.createNewFile();
 			f2.createNewFile();
 			f3.createNewFile();
+			boolean registered = butterflyApp.registerLiveStream("streamName", "f1", null, null, true, "tur");
+			assertTrue(registered);
+			registered = butterflyApp.registerLiveStream("streamName", "f2", null, null, true, "tur");
+			assertTrue(registered);
+			registered = butterflyApp.registerLiveStream("streamName", "f3", null, null, true, "tur");
+			assertTrue(registered);
+			
+			assertEquals(3, butterflyApp.getRegisteredStreams().size());
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
-		assertEquals(streamsFolder.list().length, 3);
-
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		butterflyApp.scheduleStreamDeleterTimer(1000, 1000);
+		assertEquals(f1.exists(), true);
+		assertEquals(f2.exists(), true);
+		assertEquals(f3.exists(), true);
 
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		assertEquals(streamsFolder.list().length, 0);
+		butterflyApp.scheduleStreamDeleterTimer(1000, 1000);
 
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		assertEquals(f1.exists(), false);
+		assertEquals(f2.exists(), false);
+		assertEquals(f3.exists(), false);
+
+		assertEquals(0, butterflyApp.getRegisteredStreams().size());
+		
 		try {
 			f1.createNewFile();
 			f2.createNewFile();
 			f3.createNewFile();
+			boolean registered = butterflyApp.registerLiveStream("streamName", "f1", null, null, true, "tur");
+			assertTrue(registered);
+			registered = butterflyApp.registerLiveStream("streamName", "f2", null, null, true, "tur");
+			assertTrue(registered);
+			registered = butterflyApp.registerLiveStream("streamName", "f3", null, null, true, "tur");
+			assertTrue(registered);
+			
+			assertEquals(3, butterflyApp.getRegisteredStreams().size());
+
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
-
-		assertEquals(streamsFolder.list().length, 3);
+		assertEquals(f1.exists(), true);
+		assertEquals(f2.exists(), true);
+		assertEquals(f3.exists(), true);
 
 		try {
 			Thread.sleep(2000);
@@ -370,7 +396,10 @@ public class ApplicationTester {
 			e.printStackTrace();
 		}
 
-		assertEquals(streamsFolder.list().length, 0);
+		assertEquals(f1.exists(), false);
+		assertEquals(f2.exists(), false);
+		assertEquals(f3.exists(), false);
+
 	}
 
 

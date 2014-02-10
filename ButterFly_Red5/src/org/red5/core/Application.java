@@ -115,7 +115,6 @@ IStreamListener {
 		if (streamDeleterTimer != null) {
 			streamDeleterTimer.cancel();
 		}
-		scheduleStreamDeleterTimer(6* MILLIS_IN_HOUR, 24 * MILLIS_IN_HOUR);
 	}
 
 
@@ -131,9 +130,15 @@ IStreamListener {
 					for (String fileName : files) {
 						File f = new File(dir, fileName);
 						if (f.isFile() == true && f.exists() == true) {
+							
+							String key = f.getName().substring(0, f.getName().indexOf(".flv"));
 							if ((timeMillis - f.lastModified()) > deleteTime) {
 								f.delete();
-							}						
+								if (registeredStreams.containsKey(key)) {
+									registeredStreams.remove(key);
+								}
+							}
+							
 						}
 					}	
 				}
