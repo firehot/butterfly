@@ -11,7 +11,7 @@ import javax.persistence.EntityManager;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.red5.core.Application;
-import org.red5.core.utils.Stream;
+import org.red5.core.dbModel.Stream;
 
 public class StreamManager {
 

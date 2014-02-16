@@ -1,4 +1,4 @@
-package org.red5.core.utils;
+package org.red5.core.dbModel;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import org.apache.mina.core.buffer.IoBuffer;
-import org.red5.core.dbModel.GcmUsers;
 import org.red5.io.ITag;
 import org.red5.io.flv.impl.FLVWriter;
 import org.red5.io.flv.impl.Tag;
