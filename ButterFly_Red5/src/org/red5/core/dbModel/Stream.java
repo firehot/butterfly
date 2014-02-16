@@ -23,7 +23,7 @@ public class Stream implements Serializable {
 	private GcmUsers gcmIdList;
 	public Timestamp timeReceived;
 	public double altitude;
-	public double longtitude;
+	public double longitude;
 	public double latitude;
 	public FLVWriter flvWriter;
 	public boolean isLive = true;

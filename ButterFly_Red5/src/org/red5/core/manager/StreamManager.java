@@ -6,8 +6,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.red5.core.Application;
@@ -39,7 +37,7 @@ public class StreamManager {
 				jsonObject.put("name", stream.streamName);
 				jsonObject.put("viewerCount", stream.getViewerCount());
 				jsonObject.put("latitude", stream.latitude);
-				jsonObject.put("longitude", stream.longtitude);
+				jsonObject.put("longitude", stream.longitude);
 				jsonObject.put("altitude", stream.altitude);
 				jsonObject.put("isLive", stream.isLive);
 				jsonArray.add(jsonObject);
@@ -88,7 +86,7 @@ public class StreamManager {
 		if (registeredStreams.containsKey(url) == true) {
 			Stream stream = registeredStreams.get(url);
 			stream.latitude = latitude;
-			stream.longtitude = longitude;
+			stream.longitude = longitude;
 			stream.altitude = altitude;
 			result = true;
 		}
