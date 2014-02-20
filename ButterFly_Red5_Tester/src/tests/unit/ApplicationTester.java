@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.red5.core.Application;
 import org.red5.core.dbModel.GcmUsers;
 import org.red5.core.dbModel.RegIDs;
+import org.red5.core.dbModel.Stream;
 import org.red5.core.utils.JPAUtils;
 
 public class ApplicationTester {
@@ -173,7 +174,7 @@ public class ApplicationTester {
 
 	@Test
 	public void testStreamViewer() {
-		org.red5.core.utils.Stream stream = new org.red5.core.utils.Stream("streamName", "streamUrl", Calendar.getInstance().getTime(), true);
+		Stream stream = new Stream("streamName", "streamUrl", Calendar.getInstance().getTime(), true);
 		assertEquals(0, stream.getViewerCount());
 
 		stream.addViewer("test");
@@ -211,9 +212,9 @@ public class ApplicationTester {
 
 	@Test
 	public void testRegisterLocationForStream() {
-		Map<String, org.red5.core.utils.Stream> registeredStreams = butterflyApp.getRegisteredStreams();
+		Map<String, Stream> registeredStreams = butterflyApp.getRegisteredStreams();
 		assertEquals(0, registeredStreams.size());
-		registeredStreams.put("video_url", new org.red5.core.utils.Stream("location_test", "video_url", Calendar.getInstance().getTime(), true));
+		registeredStreams.put("video_url", new Stream("location_test", "video_url", Calendar.getInstance().getTime(), true));
 
 		assertEquals(1, registeredStreams.size());
 
@@ -222,9 +223,9 @@ public class ApplicationTester {
 		registeredStreams = butterflyApp.getRegisteredStreams();
 		assertEquals(1, registeredStreams.size());
 
-		org.red5.core.utils.Stream stream = registeredStreams.get("video_url");
+		Stream stream = registeredStreams.get("video_url");
 		assertNotNull(stream);
-		assertEquals(23.4566, stream.longtitude, 1e-8);
+		assertEquals(23.4566, stream.longitude, 1e-8);
 		assertEquals(34.667, stream.latitude, 1e-8);
 		assertEquals(100, stream.altitude, 1e-8);
 
