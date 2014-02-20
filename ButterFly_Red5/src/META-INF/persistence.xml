@@ -5,6 +5,7 @@
 	<persistence-unit name="ButterFly_Red5">
 		<class>org.red5.core.dbModel.GcmUsers</class>
 		<class>org.red5.core.dbModel.RegIDs</class>
+		<class>org.red5.core.dbModel.Stream</class>
 		<properties>
 			<property name="hibernate.connection.username" value="root" />
 			<property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/butterflydb" />
