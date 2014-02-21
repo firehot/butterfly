@@ -230,6 +230,8 @@ public class ApplicationTester {
 		assertEquals(100, stream.altitude, 1e-8);
 
 	}
+	
+
 
 	@Test
 	public void testSendMail() {
@@ -403,7 +405,13 @@ public class ApplicationTester {
 
 	}
 
-
+	@Test
+	public void testSaveStream()
+	{
+		Stream strm = new Stream("deneme", "denemeurl", Calendar.getInstance().getTime(), true);
+		strm.broadcasterMail = "fdsf";
+		butterflyApp.streamManager.saveStream(strm);
+	}
 
 	public static void delete(File file) {
 

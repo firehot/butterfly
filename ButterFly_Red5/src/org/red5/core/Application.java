@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -37,9 +36,6 @@ import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TimerTask;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.TimerTask;
 
 import javax.imageio.ImageIO;
 import javax.mail.MessagingException;
@@ -48,20 +44,11 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.NoResultException;
-import javax.persistence.Persistence;
-import javax.persistence.Query;
 
-import org.apache.mina.core.buffer.IoBuffer;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.red5.core.dbModel.GcmUsers;
 import org.red5.core.dbModel.Stream;
 import org.red5.core.manager.StreamManager;
 import org.red5.core.manager.UserManager;
-import org.red5.io.flv.impl.FLVWriter;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
@@ -85,7 +72,7 @@ import com.google.android.gcm.server.Sender;
  */
 public class Application extends MultiThreadedApplicationAdapter implements
 IStreamListener {
-
+	
 	private static final String SENDER_ID = "AIzaSyCFmHIbJO0qCtPo6klp7Ade3qjeGLgtZWw";
 	private static final String WEB_PLAY_URL = "http://www.butterflytv.net/player.html?videoId=";
 	private Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
@@ -94,8 +81,8 @@ IStreamListener {
 	private BandwidthServer bandwidthServer;
 	private java.util.Timer streamDeleterTimer;
 	private static long MILLIS_IN_HOUR = 60 * 60 * 1000;
-	private UserManager userManager;
-	private StreamManager streamManager;
+	public UserManager userManager;
+	public StreamManager streamManager;
 	private boolean mailsSent;
 
 	public Application() {
