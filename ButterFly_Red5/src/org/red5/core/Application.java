@@ -49,6 +49,7 @@ import org.red5.core.dbModel.GcmUsers;
 import org.red5.core.dbModel.Stream;
 import org.red5.core.manager.StreamManager;
 import org.red5.core.manager.UserManager;
+import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
@@ -58,6 +59,7 @@ import org.red5.server.api.stream.IPlayItem;
 import org.red5.server.api.stream.IStreamListener;
 import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.api.stream.ISubscriberStream;
+import org.slf4j.Logger;
 
 import com.google.android.gcm.server.Constants;
 import com.google.android.gcm.server.Message;
@@ -72,6 +74,8 @@ import com.google.android.gcm.server.Sender;
  */
 public class Application extends MultiThreadedApplicationAdapter implements
 IStreamListener {
+	
+	private static Logger log = Red5LoggerFactory.getLogger(Application.class);
 	
 	private static final String SENDER_ID = "AIzaSyCFmHIbJO0qCtPo6klp7Ade3qjeGLgtZWw";
 	private static final String WEB_PLAY_URL = "http://www.butterflytv.net/player.html?videoId=";
@@ -94,6 +98,8 @@ IStreamListener {
 		streamManager = new StreamManager(this);
 
 		scheduleStreamDeleterTimer(6 * MILLIS_IN_HOUR, 24 * MILLIS_IN_HOUR);
+		
+		log.info("app started");
 	}
 
 
@@ -141,6 +147,7 @@ IStreamListener {
 
 	@Override
 	public void appStop(IScope arg0) {
+		log.info("app stop");
 		super.appStop(arg0);
 		getBandwidthServer().close();
 		cancelStreamDeleteTimer();
@@ -150,6 +157,7 @@ IStreamListener {
 	/** {@inheritDoc} */
 	@Override
 	public boolean connect(IConnection conn, IScope scope, Object[] params) {
+		log.info("app connect");
 		return true;
 	}
 
