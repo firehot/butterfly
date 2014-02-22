@@ -160,6 +160,10 @@ public class Stream implements Serializable {
 		}
 		flvWriter = new FLVWriter(file, false);
 	}
+	
+	public Stream() {
+		super();
+	}
 
 	public void write(IStreamPacket packet) {
 

@@ -406,12 +406,28 @@ public class ApplicationTester {
 	}
 
 	@Test
-	public void testSaveStream()
+	public void testSaveUpdateDeleteStream()
 	{
 		Stream strm = new Stream("deneme", "denemeurl", Calendar.getInstance().getTime(), true);
 		strm.broadcasterMail = "fdsf";
 		butterflyApp.streamManager.saveStream(strm);
+		
+		Stream createdStream = butterflyApp.streamManager.getStream("denemeurl");
+		assertNotNull(createdStream);
+		
+		strm.altitude = 1300;
+		butterflyApp.streamManager.updateStream(strm);
+		
+		createdStream = butterflyApp.streamManager.getStream("denemeurl");
+		assertNotNull(createdStream);
+		assertEquals(createdStream.altitude, 1300,1);
+		
+		butterflyApp.streamManager.deleteStream(strm);
+		createdStream = butterflyApp.streamManager.getStream("denemeurl");
+		assertEquals(createdStream,null);
+		
 	}
+	
 
 	public static void delete(File file) {
 
