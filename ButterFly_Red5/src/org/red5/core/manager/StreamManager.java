@@ -168,6 +168,7 @@ public class StreamManager {
 		return result;
 	}
 	
+	
 	public Stream getStream(String streamUrl) {
 
 		Stream resultStream = null;
