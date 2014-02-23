@@ -2,14 +2,21 @@ package org.red5.core.manager;
 
 import java.util.Calendar;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.Query;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.red5.core.Application;
+import org.red5.core.dbModel.GcmUsers;
 import org.red5.core.dbModel.Stream;
+import org.red5.core.utils.JPAUtils;
 
 public class StreamManager {
 
@@ -106,5 +113,78 @@ public class StreamManager {
 			// f.delete();
 		}
 		return result;
+	}
+	
+	public boolean saveStream(Stream stream) {
+		boolean result;
+		try {
+			
+			JPAUtils.beginTransaction();
+			JPAUtils.getEntityManager().persist(stream);
+			JPAUtils.commit();
+			JPAUtils.closeEntityManager();
+
+			result = true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = false;
+		}
+		return result;
+
+	}
+	
+	public boolean updateStream(Stream stream) {
+		boolean result;
+		try {
+			
+			JPAUtils.beginTransaction();
+			JPAUtils.getEntityManager().merge(stream);
+			JPAUtils.commit();
+			JPAUtils.closeEntityManager();
+
+			result = true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = false;
+		}
+		return result;
+
+	}
+	
+	public boolean deleteStream(Stream stream) {
+		boolean result;
+		try {
+			EntityManager em = JPAUtils.getEntityManager();
+			JPAUtils.beginTransaction();	
+			em.remove(em.contains(stream) ? stream : em.merge(stream));	
+			JPAUtils.commit();
+			JPAUtils.closeEntityManager();
+			result = true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = false;
+		}
+		return result;
+	}
+	
+	
+	public Stream getStream(String streamUrl) {
+
+		Stream resultStream = null;
+		try {
+
+			Query query = JPAUtils.getEntityManager().createQuery(
+					"FROM Stream where streamUrl= :streamUrl");
+			query.setParameter("streamUrl", streamUrl);
+			resultStream = (Stream)query.getSingleResult();
+			JPAUtils.closeEntityManager();
+
+		} catch (NoResultException e) {
+			return null;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return resultStream;
 	}
 }
