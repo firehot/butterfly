@@ -64,12 +64,11 @@ public class StreamManager {
 
 		boolean result = false;
 		if (registeredStreams.containsKey(url) == false) {
-			if (isPublic == true) {
-				Stream stream = new Stream(streamName, url, Calendar.getInstance().getTime(), isPublic);
-				stream.setGCMUser(this.red5App.getRegistrationIdList(broadcasterMail));
+			
+			Stream stream = new Stream(streamName, url, Calendar.getInstance().getTime(), isPublic);
+			stream.setGCMUser(this.red5App.getRegistrationIdList(broadcasterMail));
 
-				registeredStreams.put(url, stream);
-			}
+			registeredStreams.put(url, stream);
 			this.red5App.sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url,
 					streamName, deviceLanguage);
 			// return true even if stream is not public

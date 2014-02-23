@@ -360,8 +360,8 @@ public class MainActivity extends FragmentActivity implements
 
 		if (state == ViewPager.SCROLL_STATE_IDLE) {
 			
-			//Camera var ise item count 3 oluyor(contactlist,streamlist ve mapfragment)
-			if(mAppSectionsPagerAdapter.getCount() == 3)
+			//Camera var ise item count 2 oluyor(contactlist,streamlist ve mapfragment)
+			if(mAppSectionsPagerAdapter.getCount() == 2)
 			{
 				if(mViewPager.getCurrentItem() == 0)
 				{
