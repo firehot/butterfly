@@ -475,9 +475,6 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		if (getRegisteredStreams().containsKey(name)) {
 			Stream stream = getRegisteredStreams().get(name);
 			stream.addViewer(subscriberStream.getName());
-			System.out
-					.println("Application.streamPlayItemPlay() -- viewerCount "
-							+ stream.getViewerCount());
 			notifyUserAboutViewerCount(getViewerCount(stream.streamUrl),
 					stream.getBroadcasterGCMUsers());
 		}
