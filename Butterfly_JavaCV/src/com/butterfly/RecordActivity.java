@@ -99,7 +99,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 	private EditText streamNameEditText;
 	private CheckBox publicVideoCheckBox;
 
-	private ProgressDialog mProgressDialog;
+	private static ProgressDialog mProgressDialog;
 	private String mailsToBeNotified;
 	private Size previewSize;
 	private BytePointer bytePointer;
@@ -668,6 +668,10 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		@Override
 		protected Integer doInBackground(String... params) {
+			return measureBandwidth(params);
+		}
+
+		private Integer measureBandwidth(String... params) {
 			int bandwidth = 0;
 			Socket socket = null;
 			OutputStream outputStream = null;
@@ -793,6 +797,10 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		}
 
+	}
+	
+	public String getStreamURL() {
+		return streamURL;
 	}
 
 }
