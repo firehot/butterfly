@@ -14,7 +14,6 @@ import javax.persistence.Query;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.red5.core.Application;
-import org.red5.core.dbModel.GcmUsers;
 import org.red5.core.dbModel.Stream;
 import org.red5.core.utils.JPAUtils;
 
@@ -42,7 +41,7 @@ public class StreamManager {
 				jsonObject = new JSONObject();
 				jsonObject.put("url", stream.streamUrl);
 				jsonObject.put("name", stream.streamName);
-				jsonObject.put("viewerCount", stream.getViewerCount());
+				jsonObject.put("viewerCount", this.red5App.getViewerCount(stream.streamUrl));
 				jsonObject.put("latitude", stream.latitude);
 				jsonObject.put("longitude", stream.longitude);
 				jsonObject.put("altitude", stream.altitude);
@@ -187,5 +186,25 @@ public class StreamManager {
 		}
 
 		return resultStream;
+	}
+	
+	public List<Stream> getAllStreamList() {
+		List results = null;
+		try {
+
+			Query query = JPAUtils.getEntityManager().createQuery(
+					"FROM Stream");
+			
+			results = query.getResultList();
+			
+			JPAUtils.closeEntityManager();
+
+		} catch (NoResultException e) {
+			return null;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return (List<Stream>)((Object)results);
 	}
 }

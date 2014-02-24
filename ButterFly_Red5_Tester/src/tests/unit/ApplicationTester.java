@@ -173,33 +173,6 @@ public class ApplicationTester {
 	}
 
 	@Test
-	public void testStreamViewer() {
-		Stream stream = new Stream("streamName", "streamUrl", Calendar.getInstance().getTime(), true);
-		assertEquals(0, stream.getViewerCount());
-
-		stream.addViewer("test");
-		assertEquals(1, stream.getViewerCount());
-
-		stream.removeViewer("test");
-		assertEquals(0, stream.getViewerCount());
-
-		stream.addViewer("test2");
-		stream.addViewer("test3");
-		stream.addViewer("test4");
-
-		assertEquals(3, stream.getViewerCount());
-
-		stream.removeViewer("test5");
-
-		assertEquals(3, stream.getViewerCount());
-
-		assertTrue(stream.containsViewer("test2"));
-
-		assertTrue(!stream.containsViewer("test2121212"));
-
-	}
-
-	@Test
 	public void testRegisterMultipleUser()
 	{
 		GcmUsers gcmUsers = new GcmUsers("mail@mail.com");

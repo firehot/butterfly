@@ -204,11 +204,6 @@ public class Stream implements Serializable {
 		viewerStreamNames.remove(streamName);
 	}
 
-	@Transient
-	public int getViewerCount() {
-		return viewerStreamNames.size();
-	}
-
 	public void setGCMUser(GcmUsers registrationIdList) {
 		this.gcmIdList = registrationIdList;
 	}
