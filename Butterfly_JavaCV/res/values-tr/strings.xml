@@ -34,8 +34,7 @@
 	<string name="chooseContactAndShare">Tanıdıklarını seçin ve İleri\'ye basın</string>
 	<string name="insufficient_bandwidth">İnternet hızınız canlı yayın yapmak için yeteri kadar hızlı değildir</string>
 	<string name="missed_the_stream">Bu url\'e sahip canlı yayın şu anda bulunmamaktadır. Kaçırmış olmalısınız. Sonraki yayın için lütfen daha hızlı olun</string>
-    <string name="streamListTitle">Canlı Yayınlar</string>
-    <string name="mapTitle">Harita</string>
+    <string name="streamListTitle">Benimle Paylaşılan Yayınlar</string>
     <string name="contactListTitle">Kişiler</string>
     <string name="batteryLow">Pil zayıf, kayıt işlemi başlatılamıyor</string>
 	<plurals name="viewers_count">
@@ -45,4 +44,6 @@
 	<string name="checking_bandwidth">İnternet hızı kontrol ediliyor...</string>
     <string name="nocamera">Bu cihazda kamera bulunamadı</string>
     <string name="hint">İpucu: Arkadaşlarınızı seçin ve kamera basarak canlı yayın yapın</string>
+    <string name="list">List</string>
+    <string name="map">Map</string>
 </resources>

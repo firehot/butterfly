@@ -9,8 +9,9 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 
 import com.butterfly.R;
 import com.butterfly.fragment.ContactsListFragment;
-import com.butterfly.fragment.MapFragment;
+import com.butterfly.fragment.VideoMapFragment;
 import com.butterfly.fragment.StreamListFragment;
+import com.butterfly.fragment.VideoFragmentTabs;
 
 /**
  * A {@link FragmentPagerAdapter} that returns a fragment corresponding to one
@@ -20,10 +21,10 @@ public class AppSectionsPagerAdapter extends FragmentStatePagerAdapter {
 
 	private int itemCount = CAMERA_EXISTS_ITEM_COUNT;
 	private Activity activity;
-	StreamListFragment streamFragment;
-	MapFragment mapFragment;
+	VideoFragmentTabs videoFragmentTabs;
+	VideoMapFragment mapFragment;
 	ContactsListFragment contactListFragment;
-	public static final int CAMERA_EXISTS_ITEM_COUNT = 3;
+	public static final int CAMERA_EXISTS_ITEM_COUNT = 2;
 	public static final int CAMERA_NOT_EXISTS_ITEM_COUNT = CAMERA_EXISTS_ITEM_COUNT-1;
 			
 
@@ -46,13 +47,10 @@ public class AppSectionsPagerAdapter extends FragmentStatePagerAdapter {
 		if (itemCount == CAMERA_NOT_EXISTS_ITEM_COUNT) {
 			switch (i) {
 			case 0:
-				if (streamFragment == null)
-					streamFragment = new StreamListFragment();
-				return streamFragment;
-			case 1:
-				if(mapFragment == null)
-					mapFragment = new MapFragment();
-				return mapFragment;
+				if (videoFragmentTabs == null)
+					videoFragmentTabs = new VideoFragmentTabs();
+				return videoFragmentTabs;
+	
 			default:
 				break;
 			}
@@ -62,15 +60,10 @@ public class AppSectionsPagerAdapter extends FragmentStatePagerAdapter {
 				if(contactListFragment == null)
 					contactListFragment = new ContactsListFragment();
 				return contactListFragment;
-
 			case 1:
-				if (streamFragment == null)
-					streamFragment = new StreamListFragment();
-				return streamFragment;
-			case 2:
-				if(mapFragment == null)
-					mapFragment = new MapFragment();
-				return mapFragment;
+				if (videoFragmentTabs == null)
+					videoFragmentTabs = new VideoFragmentTabs();
+				return videoFragmentTabs;
 			default:
 				break;
 			}
@@ -90,8 +83,6 @@ public class AppSectionsPagerAdapter extends FragmentStatePagerAdapter {
 			switch (position) {
 			case 0:
 				return this.activity.getString(R.string.streamListTitle);
-			case 1:
-				return this.activity.getString(R.string.mapTitle);
 			default:
 				break;
 			}
@@ -101,8 +92,6 @@ public class AppSectionsPagerAdapter extends FragmentStatePagerAdapter {
 				return this.activity.getString(R.string.contactListTitle);
 			case 1:
 				return this.activity.getString(R.string.streamListTitle);
-			case 2:
-				return this.activity.getString(R.string.mapTitle);
 			default:
 				break;
 			}

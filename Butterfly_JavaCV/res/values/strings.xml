@@ -39,8 +39,7 @@
     <string name="shareStream">Share broadcast</string>
     <string name="insufficient_bandwidth">Internet speed is not high enough for broadcasting</string>
     <string name="missed_the_stream">There is no live stream with this url right now. You should have missed it. Please be quick for the next time </string>
-    <string name="streamListTitle">Live Videos</string>
-    <string name="mapTitle">Map</string>
+    <string name="streamListTitle">Streams Shared With Me</string>
     <string name="contactListTitle">Contacts</string>
     <string name="batteryLow">Battery is low,cant start recording</string>
     <plurals name="viewers_count">
@@ -52,5 +51,7 @@
     <string name="checking_bandwidth">Checking internet speed...</string>
     <string name="nocamera">No camera found in this device</string>
     <string name="hint">Hint: Choose friends and press camera for live broadcasting</string>
+    <string name="list">List</string>
+    <string name="map">Map</string>
 
 </resources>

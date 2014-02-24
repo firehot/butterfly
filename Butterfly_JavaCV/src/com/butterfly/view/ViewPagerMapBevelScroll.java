@@ -6,7 +6,7 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import com.butterfly.adapter.AppSectionsPagerAdapter;
-import com.butterfly.fragment.MapFragment;
+import com.butterfly.fragment.VideoMapFragment;
 
 public class ViewPagerMapBevelScroll extends android.support.v4.view.ViewPager {
 
@@ -35,7 +35,7 @@ public class ViewPagerMapBevelScroll extends android.support.v4.view.ViewPager {
             	AppSectionsPagerAdapter adapter = (AppSectionsPagerAdapter)getAdapter();
             	Fragment fragment = adapter.getItem(getCurrentItem());
             	
-            	if(fragment instanceof MapFragment)
+            	if(fragment instanceof VideoMapFragment)
             	{
             		return !isAllowedMapSwipe(x, dx);
             	}

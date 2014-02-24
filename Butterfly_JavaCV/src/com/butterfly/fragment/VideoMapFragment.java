@@ -6,92 +6,107 @@ import java.util.HashMap;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTabHost;
 import android.view.InflateException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView.FindListener;
 
 import com.butterfly.MediaPlayerActivity;
 import com.butterfly.MainActivity;
 import com.butterfly.R;
 import com.butterfly.fragment.StreamListFragment.Stream;
 import com.butterfly.listeners.IStreamListUpdateListener;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MapFragment extends Fragment implements IStreamListUpdateListener  {
+public class VideoMapFragment extends Fragment implements IStreamListUpdateListener  {
 
 	private GoogleMap mMap;
 	private HashMap<String, Stream> hashMap = new HashMap<String, StreamListFragment.Stream>();
-	private Fragment fragment;
+	private SupportMapFragment fragment;
+	private MapView mpView;
 	private static View view;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		
+
 		if (view != null) {
-	        ViewGroup parent = (ViewGroup) view.getParent();
-	        if (parent != null)
-	            parent.removeView(view);
-	    }
-	    try {
-	        view = inflater.inflate(R.layout.activity_map, container, false);
-	    } catch (InflateException e) {
-	        /* map is already there, just return view as it is */
-	    }
-		
-		fragment = getFragmentManager().findFragmentById(R.id.map);
-		mMap = ((SupportMapFragment) fragment).getMap();
-		mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
-			
-			@Override
-			public boolean onMarkerClick(Marker marker) {
-				String id = marker.getId();
-				if (hashMap.containsKey(id)) {
-					Stream stream = hashMap.get(id);
-					
-					Intent intent = new Intent(getActivity().getApplicationContext(),
-								MediaPlayerActivity.class);
-					intent.putExtra(StreamListFragment.STREAM_PUBLISHED_NAME,
-								stream.url);
-					intent.putExtra(StreamListFragment.STREAM_IS_LIVE, stream.isLive);
-					startActivity(intent);
-					
-				}
-				return false;
-			}
-		});
-		
+			ViewGroup parent = (ViewGroup) view.getParent();
+			if (parent != null)
+				parent.removeView(view);
+		}
+		try {
+			view = inflater.inflate(R.layout.view_map, container, false);
+		} catch (InflateException e) {
+			/* map is already there, just return view as it is */
+		}
+
+		mpView = (MapView)view.findViewById(R.id.map);
+		mpView.onCreate(savedInstanceState);
+
+
 		return view;
 	}
 
 	public Marker addMarker(double latitude, double longitude, String title) {
 		if (latitude != 0 || longitude != 0) {
 			Marker mapMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(latitude, longitude))
-				.title(title));
-		
+					.title(title));
+
 			return mapMarker;
 		}
 		return null;
-	}
+	}	
 
 	@Override
 	public void onResume() {
 		super.onResume();
-		ArrayList<Stream> streamList = ((MainActivity)getActivity()).getStreamList();
-		streamListUpdated(streamList);
+		mpView.onResume();
+		mMap = mpView.getMap();
+		// Check if we were successful in obtaining the map.
+		if (mMap != null) {
+			// The Map is verified. It is now safe to manipulate the map.
+			mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
+
+				@Override
+				public boolean onMarkerClick(Marker marker) {
+					String id = marker.getId();
+					if (hashMap.containsKey(id)) {
+						Stream stream = hashMap.get(id);
+
+						Intent intent = new Intent(getActivity().getApplicationContext(),
+								MediaPlayerActivity.class);
+						intent.putExtra(StreamListFragment.STREAM_PUBLISHED_NAME,
+								stream.url);
+						intent.putExtra(StreamListFragment.STREAM_IS_LIVE, stream.isLive);
+						startActivity(intent);
+
+					}
+					return false;
+				}
+			});
+			ArrayList<Stream> streamList = ((MainActivity)getActivity()).getStreamList();
+			streamListUpdated(streamList);
+		}
+
 	}
-	
+
 	@Override
 	public void onStart() {
 		((MainActivity)getActivity()).registerStreamListListener(this);
 		super.onStart();
 	}
-	
+
 	@Override
 	public void onStop() {
 		((MainActivity)getActivity()).removeStreamListListener(this);
