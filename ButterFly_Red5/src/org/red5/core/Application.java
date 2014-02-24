@@ -555,42 +555,6 @@ public class Application extends MultiThreadedApplicationAdapter implements
 
 	}
 
-	/*
-	 * en son alinan paket zamani ile mevcut zaman arasinda 5sn fark varsa bu
-	 * stream silinir
-	 */
-	private Set<String> removeGhostBroadcasters(Set<String> streamNames) {
-		List<String> toBeRemoved = new ArrayList<String>();
-
-		for (String name : streamNames) {
-
-			if (registeredStreams.containsKey(name)) {
-				Stream stream = registeredStreams.get(name);
-				java.util.Date date = new java.util.Date();
-				Timestamp currentTime = new Timestamp(date.getTime());
-
-				if (stream.timeReceived != null) {
-					long diff = currentTime.getTime()
-							- stream.timeReceived.getTime();
-					if (diff > 5000) {
-						toBeRemoved.add(name);
-					}
-				}
-			}
-		}
-
-		for (String name : toBeRemoved) {
-			Stream stream = registeredStreams.get(name);
-			stream.isLive = false;
-			stream.close();
-
-			// File file = new File("webapps/ButterFly_Red5/"+name+".png");
-			// file.delete();
-
-		}
-
-		return streamNames;
-	}
 
 	/**
 	 * This methods gets image in byte array and saves as a file in the server
