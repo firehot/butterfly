@@ -1,5 +1,6 @@
 package org.red5.core.manager;
 
+import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
@@ -31,12 +32,23 @@ public class StreamManager {
 		JSONArray jsonArray = new JSONArray();
 		JSONObject jsonObject;
 
+		java.util.Date date = new java.util.Date();
+		Timestamp currentTime = new Timestamp(date.getTime());
 
 		for (Iterator iterator = entrySet.iterator(); iterator.hasNext();) {
 			Entry<String, Stream> entry = (Entry<String, Stream>) iterator
 					.next();
 			Stream stream = entry.getValue();
 
+			if (stream.timeReceived != null) {
+				
+				long diff = currentTime.getTime() - stream.timeReceived.getTime();
+				if ( diff > 5000) {
+					stream.isLive = false;
+					stream.close();
+				}
+			}
+					
 			if (stream.isPublic) {
 				jsonObject = new JSONObject();
 				jsonObject.put("url", stream.streamUrl);
