@@ -14,6 +14,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Map;
 
 import javax.persistence.Query;
@@ -400,6 +401,31 @@ public class ApplicationTester {
 		assertEquals(createdStream,null);
 		
 	}
+	
+	@Test
+	public void testGetAllStreamList()
+	{
+		List<Stream> streamList = butterflyApp.streamManager.getAllStreamList();
+		int streamCount = streamList.size();
+		
+		Stream strm1 = new Stream("stream1", "stream1url", Calendar.getInstance().getTime(), true);
+		strm1.broadcasterMail = "stream1mail";
+		butterflyApp.streamManager.saveStream(strm1);	
+		Stream createdStream = butterflyApp.streamManager.getStream("stream1url");
+		assertNotNull(createdStream);
+		
+		Stream strm2 = new Stream("stream2", "stream2url", Calendar.getInstance().getTime(), true);
+		strm2.broadcasterMail = "stream2mail";
+		butterflyApp.streamManager.saveStream(strm2);
+		createdStream = butterflyApp.streamManager.getStream("stream2url");
+		assertNotNull(createdStream);
+		
+		streamList = butterflyApp.streamManager.getAllStreamList();
+		assertEquals(streamCount+2, streamList.size());
+		
+		
+	}
+
 	
 
 	public static void delete(File file) {
