@@ -84,7 +84,7 @@ public class StreamManager {
 		if (registeredStreams.containsKey(url) == false) {
 			
 			Stream stream = new Stream(streamName, url, Calendar.getInstance().getTime(), isPublic);
-			stream.setGCMUser(this.red5App.getRegistrationIdList(broadcasterMail));
+			stream.setBroadcasterMail(broadcasterMail);
 
 			registeredStreams.put(url, stream);
 			this.red5App.sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url,

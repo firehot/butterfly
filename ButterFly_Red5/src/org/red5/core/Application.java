@@ -476,7 +476,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			Stream stream = getRegisteredStreams().get(name);
 			stream.addViewer(subscriberStream.getName());
 			notifyUserAboutViewerCount(getViewerCount(stream.streamUrl),
-					stream.getBroadcasterGCMUsers());
+					this.getRegistrationIdList(stream.broadcasterMail));
 		}
 
 	}
@@ -512,7 +512,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			if (value.containsViewer(subcriberStream.getName())) {
 				value.removeViewer(subcriberStream.getName());
 				notifyUserAboutViewerCount(getViewerCount(value.streamUrl),
-						value.getBroadcasterGCMUsers());
+						this.getRegistrationIdList(value.broadcasterMail));
 				break;
 			}
 

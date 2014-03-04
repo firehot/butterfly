@@ -38,7 +38,6 @@ public class Stream implements Serializable {
 	public boolean isLive = true;
 	public boolean isPublic;
 	
-	private GcmUsers gcmIdList;
 	public Timestamp timeReceived;
 	public FLVWriter flvWriter;
 
@@ -203,14 +202,4 @@ public class Stream implements Serializable {
 	public void removeViewer(String streamName) {
 		viewerStreamNames.remove(streamName);
 	}
-
-	public void setGCMUser(GcmUsers registrationIdList) {
-		this.gcmIdList = registrationIdList;
-	}
-
-	@Transient
-	public GcmUsers getBroadcasterGCMUsers() {
-		return gcmIdList;
-	}
-
 }
