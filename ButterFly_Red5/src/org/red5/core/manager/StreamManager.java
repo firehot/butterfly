@@ -16,6 +16,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.red5.core.Application;
 import org.red5.core.dbModel.Stream;
+import org.red5.core.dbModel.StreamProxy;
 import org.red5.core.utils.JPAUtils;
 
 public class StreamManager {
@@ -27,28 +28,19 @@ public class StreamManager {
 		this.red5App = red5App;
 	}
 
-	public String getLiveStreams(Set<Entry<String, Stream>> entrySet) {
+	public String getLiveStreams( Map<String, StreamProxy> entrySet) {
 
 		JSONArray jsonArray = new JSONArray();
 		JSONObject jsonObject;
 
 		java.util.Date date = new java.util.Date();
 		Timestamp currentTime = new Timestamp(date.getTime());
+		
+		List<Stream> streamList;
+		removeGhostStreams(entrySet, currentTime);
 
-		for (Iterator iterator = entrySet.iterator(); iterator.hasNext();) {
-			Entry<String, Stream> entry = (Entry<String, Stream>) iterator
-					.next();
-			Stream stream = entry.getValue();
-
-			if (stream.timeReceived != null) {
-				
-				long diff = currentTime.getTime() - stream.timeReceived.getTime();
-				if ( diff > 5000) {
-					stream.isLive = false;
-					stream.close();
-				}
-			}
-					
+		streamList = getAllStreamList();
+		for (Stream stream : streamList) {
 			if (stream.isPublic) {
 				jsonObject = new JSONObject();
 				jsonObject.put("url", stream.streamUrl);
@@ -65,6 +57,28 @@ public class StreamManager {
 		return jsonArray.toString();
 	}
 
+	private void removeGhostStreams(Map<String, StreamProxy> entrySet,
+			Timestamp currentTime) {
+		List<Stream> streamList = getAllStreamList();
+		for (Stream stream : streamList) {
+			
+			StreamProxy streamProxy = null;
+			if(entrySet.containsKey(stream.streamUrl))
+			{
+				streamProxy = entrySet.get(stream.streamUrl);
+				
+				if (streamProxy.timeReceived != null) {
+					
+					long diff = currentTime.getTime() - streamProxy.timeReceived.getTime();
+					if ( diff > 5000) {
+						
+						removeStream(stream.streamUrl);
+					}
+				}
+			}
+		}
+	}
+
 	public boolean isLiveStreamExist(String url,Set<String> streamNames) {
 
 		boolean result = false;
@@ -78,15 +92,18 @@ public class StreamManager {
 			String mailsToBeNotified, String broadcasterMail, boolean isPublic,
 			String deviceLanguage) {
 
-		Map<String, Stream> registeredStreams = this.red5App.getRegisteredStreams();
+		Map<String, StreamProxy> registeredStreams = this.red5App.getLiveStreamProxies();
 
 		boolean result = false;
 		if (registeredStreams.containsKey(url) == false) {
 			
 			Stream stream = new Stream(streamName, url, Calendar.getInstance().getTime(), isPublic);
 			stream.setBroadcasterMail(broadcasterMail);
+			saveStream(stream);
+			
+			StreamProxy proxy = new StreamProxy(url, stream.getId());
 
-			registeredStreams.put(url, stream);
+			registeredStreams.put(url, proxy);
 			this.red5App.sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url,
 					streamName, deviceLanguage);
 			// return true even if stream is not public
@@ -98,30 +115,36 @@ public class StreamManager {
 	public boolean registerLocationForStream(String url, double longitude,
 			double latitude, double altitude) {
 
-		Map<String, Stream> registeredStreams = this.red5App.getRegisteredStreams();
+		Stream stream = getStream(url);
+		
 		boolean result = false;
-		if (registeredStreams.containsKey(url) == true) {
-			Stream stream = registeredStreams.get(url);
+		if (stream  != null) {
+			
 			stream.latitude = latitude;
 			stream.longitude = longitude;
 			stream.altitude = altitude;
+			
+			updateStream(stream);
 			result = true;
 		}
 		return result;
 	}
 
 	public boolean removeStream(String streamUrl) {
-		Map<String, Stream> registeredStreams = this.red5App.getRegisteredStreams();
+		Map<String, StreamProxy> registeredLiveStreams = this.red5App.getLiveStreamProxies();
 		boolean result = false;
-		if (registeredStreams.containsKey(streamUrl)) {
-			Stream stream = registeredStreams.remove(streamUrl);
+		if (registeredLiveStreams.containsKey(streamUrl)) {
+			StreamProxy stream = registeredLiveStreams.remove(streamUrl);
 			stream.close();
+			
+			Stream strm = getStream(streamUrl);
+			strm.isLive = false;
+			updateStream(strm);
+			
 			if (stream != null) {
 				result = true;
 			}
 			stream = null;
-			// File f = new File("webapps/ButterFly_Red5/"+streamUrl+".png");
-			// f.delete();
 		}
 		return result;
 	}

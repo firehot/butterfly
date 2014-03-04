@@ -186,18 +186,21 @@ public class ApplicationTester {
 
 	@Test
 	public void testRegisterLocationForStream() {
-		Map<String, Stream> registeredStreams = butterflyApp.getRegisteredStreams();
-		assertEquals(0, registeredStreams.size());
-		registeredStreams.put("video_url", new Stream("location_test", "video_url", Calendar.getInstance().getTime(), true));
+		List<Stream> streamList = butterflyApp.streamManager.getAllStreamList();
+		assertEquals(0, streamList.size());
+		
+		Stream strm =  new Stream("location_test", "video_url", Calendar.getInstance().getTime(), true);
+		butterflyApp.streamManager.saveStream(strm);
 
-		assertEquals(1, registeredStreams.size());
+		streamList = butterflyApp.streamManager.getAllStreamList();
+		assertEquals(1, streamList.size());
 
 		butterflyApp.registerLocationForStream("video_url", 23.4566, 34.667, 100);
 
-		registeredStreams = butterflyApp.getRegisteredStreams();
-		assertEquals(1, registeredStreams.size());
+		streamList = butterflyApp.streamManager.getAllStreamList();
+		assertEquals(1, streamList.size());
 
-		Stream stream = registeredStreams.get("video_url");
+		Stream stream = butterflyApp.streamManager.getStream("video_url");
 		assertNotNull(stream);
 		assertEquals(23.4566, stream.longitude, 1e-8);
 		assertEquals(34.667, stream.latitude, 1e-8);
@@ -320,7 +323,7 @@ public class ApplicationTester {
 			registered = butterflyApp.registerLiveStream("streamName", "f3", null, null, true, "tur");
 			assertTrue(registered);
 			
-			assertEquals(3, butterflyApp.getRegisteredStreams().size());
+			assertEquals(3, butterflyApp.getLiveStreamProxies().size());
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
@@ -345,7 +348,7 @@ public class ApplicationTester {
 		assertEquals(f2.exists(), false);
 		assertEquals(f3.exists(), false);
 
-		assertEquals(0, butterflyApp.getRegisteredStreams().size());
+		assertEquals(0, butterflyApp.getLiveStreamProxies().size());
 		
 		try {
 			f1.createNewFile();
@@ -358,7 +361,7 @@ public class ApplicationTester {
 			registered = butterflyApp.registerLiveStream("streamName", "f3", null, null, true, "tur");
 			assertTrue(registered);
 			
-			assertEquals(3, butterflyApp.getRegisteredStreams().size());
+			assertEquals(3, butterflyApp.getLiveStreamProxies().size());
 
 		} catch (IOException e1) {
 			e1.printStackTrace();

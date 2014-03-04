@@ -47,6 +47,7 @@ import javax.mail.internet.MimeMessage;
 
 import org.red5.core.dbModel.GcmUsers;
 import org.red5.core.dbModel.Stream;
+import org.red5.core.dbModel.StreamProxy;
 import org.red5.core.manager.StreamManager;
 import org.red5.core.manager.UserManager;
 import org.red5.logging.Red5LoggerFactory;
@@ -79,7 +80,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 
 	private static final String SENDER_ID = "AIzaSyCFmHIbJO0qCtPo6klp7Ade3qjeGLgtZWw";
 	private static final String WEB_PLAY_URL = "http://www.butterflytv.net/player.html?videoId=";
-	private Map<String, Stream> registeredStreams = new HashMap<String, Stream>();
+	private Map<String, StreamProxy> proxyStreams = new HashMap<String, StreamProxy>();
 	private ResourceBundle messagesTR;
 	private ResourceBundle messagesEN;
 	private BandwidthServer bandwidthServer;
@@ -125,9 +126,9 @@ public class Application extends MultiThreadedApplicationAdapter implements
 									f.getName().indexOf(".flv"));
 							if ((timeMillis - f.lastModified()) > deleteTime) {
 								f.delete();
-								if (registeredStreams.containsKey(key)) {
-									registeredStreams.remove(key);
-								}
+								Stream stream = streamManager.getStream(key);
+								if(stream != null)
+									streamManager.deleteStream(stream);
 							}
 
 						}
@@ -163,8 +164,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 
 	public String getLiveStreams() {
-		Set<Entry<String, Stream>> entrySet = getRegisteredStreams().entrySet();
-		return streamManager.getLiveStreams(entrySet);
+		return streamManager.getLiveStreams(getLiveStreamProxies());
 	}
 
 	public boolean isLiveStreamExist(String url) {
@@ -280,10 +280,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public void streamBroadcastClose(IBroadcastStream stream) {
 		String streamUrl = stream.getPublishedName();
 		// getPublishedName means streamurl to us
-		Stream streaming = getRegisteredStreams().get(streamUrl);
-
-		streaming.isLive = false;
-		streaming.close();
+		
+		removeStream(streamUrl);
 		super.streamBroadcastClose(stream);
 	}
 
@@ -472,9 +470,12 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		super.streamPlayItemPlay(subscriberStream, item, isLive);
 
 		String name = item.getName();
-		if (getRegisteredStreams().containsKey(name)) {
-			Stream stream = getRegisteredStreams().get(name);
-			stream.addViewer(subscriberStream.getName());
+		if (getLiveStreamProxies().containsKey(name)) {
+			StreamProxy streamProxy = getLiveStreamProxies().get(name);
+			streamProxy.addViewer(subscriberStream.getName());
+			
+			Stream stream = streamManager.getStream(name);
+			
 			notifyUserAboutViewerCount(getViewerCount(stream.streamUrl),
 					this.getRegistrationIdList(stream.broadcasterMail));
 		}
@@ -504,15 +505,18 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public void streamSubscriberClose(ISubscriberStream subcriberStream) {
 		super.streamSubscriberClose(subcriberStream);
 
-		Set<Entry<String, Stream>> entrySet = getRegisteredStreams().entrySet();
+		Set<Entry<String, StreamProxy>> entrySet = getLiveStreamProxies().entrySet();
 		for (Iterator iterator = entrySet.iterator(); iterator.hasNext();) {
-			Entry<String, Stream> entry = (Entry<String, Stream>) iterator
+			Entry<String, StreamProxy> entry = (Entry<String, StreamProxy>) iterator
 					.next();
-			Stream value = entry.getValue();
+			StreamProxy value = entry.getValue();
 			if (value.containsViewer(subcriberStream.getName())) {
 				value.removeViewer(subcriberStream.getName());
-				notifyUserAboutViewerCount(getViewerCount(value.streamUrl),
-						this.getRegistrationIdList(value.broadcasterMail));
+				
+				Stream stream = streamManager.getStream(value.streamUrl);
+				
+				notifyUserAboutViewerCount(getViewerCount(stream.streamUrl),
+						this.getRegistrationIdList(stream.broadcasterMail));
 				break;
 			}
 
@@ -545,8 +549,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public void packetReceived(IBroadcastStream stream, IStreamPacket packet) {
 		String streamUrl = stream.getPublishedName();
 
-		if (registeredStreams.containsKey(streamUrl)) {
-			Stream streamTemp = registeredStreams.get(streamUrl);
+		if (proxyStreams.containsKey(streamUrl)) {
+			StreamProxy streamTemp = proxyStreams.get(streamUrl);
 			java.util.Date date = new java.util.Date();
 			streamTemp.timeReceived = new Timestamp(date.getTime());
 
@@ -641,8 +645,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	// return false;
 	// }
 
-	public Map<String, Stream> getRegisteredStreams() {
-		return registeredStreams;
+	public Map<String, StreamProxy> getLiveStreamProxies() {
+		return proxyStreams;
 	}
 
 	public boolean isMailsSent() {

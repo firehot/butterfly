@@ -3,6 +3,7 @@ package org.red5.core.dbModel;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.io.ITag;
@@ -16,6 +17,8 @@ public class StreamProxy {
 	public FLVWriter flvWriter;
 	public String streamUrl;
 	public int id;
+	
+	public ArrayList<String> viewerStreamNames = new ArrayList<String>();
 	
 	public StreamProxy(String streamUrl,int id)
 	{
@@ -63,5 +66,17 @@ public class StreamProxy {
 
 	public void close() {
 		flvWriter.close();
+	}
+	
+	public void addViewer(String streamName) {
+		viewerStreamNames.add(streamName);
+	}
+
+	public boolean containsViewer(String streamName) {
+		return viewerStreamNames.contains(streamName);
+	}
+
+	public void removeViewer(String streamName) {
+		viewerStreamNames.remove(streamName);
 	}
 }
