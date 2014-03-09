@@ -27,6 +27,7 @@ import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -45,11 +46,14 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import org.red5.core.dbModel.GcmUserMails;
 import org.red5.core.dbModel.GcmUsers;
+import org.red5.core.dbModel.RegIds;
 import org.red5.core.dbModel.Stream;
 import org.red5.core.dbModel.StreamProxy;
 import org.red5.core.manager.StreamManager;
 import org.red5.core.manager.UserManager;
+import org.red5.core.utils.JPAUtils;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IConnection;
@@ -226,7 +230,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public void sendNotificationsOrMail(String mails, String broadcasterMail,
 			String streamURL, String streamName, String deviceLanguage) {
 
-		GcmUsers result = null;
+		Set<RegIds> result = null;
 
 		// This List will be used for mails, which are not available on the
 		// database
@@ -234,7 +238,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 
 		// This List will be used for registerIds, which are available on the
 		// database
-		ArrayList<GcmUsers> userList = new ArrayList<GcmUsers>();
+		Set<RegIds> regIdSet = new HashSet<RegIds>();
 		if (mails != null) {
 			String[] splits = mails.split(",");
 
@@ -246,7 +250,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 					mailListNotifiedByMail.add(splits[i]);
 				} else {
 					// using as a parameter for sendNotification() function
-					userList.add(result);
+					regIdSet.addAll(result);
 				}
 			}
 
@@ -254,8 +258,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 				sendMail(mailListNotifiedByMail, broadcasterMail, streamName,
 						streamURL, deviceLanguage);
 
-			if (userList.size() > 0)
-				sendNotification(userList, broadcasterMail, streamURL,
+			if (regIdSet.size() > 0)
+				sendNotification(regIdSet, broadcasterMail, streamURL,
 						streamName, deviceLanguage);
 		}
 	}
@@ -265,16 +269,10 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	 * @return user with reg ids of mail in the table if mail is not exist, null
 	 *         returns else return GcmUsers of mail
 	 */
-	public GcmUsers getRegistrationIdList(String mail) {
-
-		GcmUsers users = userManager.getRegistrationIdList(mail);
-		return users;
+	public Set<RegIds> getRegistrationIdList(String mail) {
+		return userManager.getRegistrationIdList(mail);
 	}
 
-	public int getUserCount(String mail) {
-
-		return userManager.getUserCount(mail);
-	}
 
 	@Override
 	public void streamBroadcastClose(IBroadcastStream stream) {
@@ -357,7 +355,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 
 	}
 
-	private void sendNotification(final ArrayList<GcmUsers> androidTargets,
+	private void sendNotification(final Set<RegIds> regIdSet,
 			final String broadcasterMail, final String streamURL,
 			final String streamName, final String deviceLanguage) {
 		Thread notifSender = new Thread() {
@@ -394,13 +392,17 @@ public class Application extends MultiThreadedApplicationAdapter implements
 					// use this for multicast messages. The second parameter
 					// of sender.send() will need to be an array of register
 					// ids.
-					List<String> targetRegIDList = GcmUsers
-							.fetchRegIDListbyUsers(androidTargets);
+					List<String> targetRegIDList = new ArrayList<String>();
+					for (RegIds regIds : regIdSet) {
+						targetRegIDList.add(regIds.getGcmRegId());
+					}
+							
 					MulticastResult result = sender.send(message,
 							targetRegIDList, 1);
 
 					List<Result> resultList = result.getResults();
-					if (resultList != null) {
+					if (resultList != null) 
+					{
 						int canonicalRegId = result.getCanonicalIds();
 						for (int i = 0; i < resultList.size(); i++) {
 							Result innerResult = resultList.get(i);
@@ -410,10 +412,14 @@ public class Application extends MultiThreadedApplicationAdapter implements
 									String canoID = innerResult
 											.getCanonicalRegistrationId();
 									String oldRegID = targetRegIDList.get(i);
-									GcmUsers user = GcmUsers.fetchUserByRegID(
-											oldRegID, androidTargets);
-									updateUser(canoID, user.getEmail(),
-											oldRegID);
+									GcmUsers user = userManager.getGcmUserByRegId(oldRegID);
+									
+									Set<GcmUserMails> gcmUserMailses = user.getGcmUserMailses();
+									GcmUserMails userMail = gcmUserMailses.iterator().next();
+									
+									if (userMail != null && userMail.getMail() != null) {
+										updateUser(canoID, userMail.getMail(), oldRegID);
+									}
 								}
 
 							} else {
@@ -424,13 +430,15 @@ public class Application extends MultiThreadedApplicationAdapter implements
 									// -
 									// unregister database
 									String oldRegID = targetRegIDList.get(i);
-									GcmUsers user = GcmUsers.fetchUserByRegID(
-											oldRegID, androidTargets);
-									if (!failedNotificationMails.contains(user
-											.getEmail()))
-										failedNotificationMails.add(user
-												.getEmail());
-									deleteUser(user);
+									GcmUsers user = userManager.getGcmUserByRegId(oldRegID);
+									Set<GcmUserMails> gcmUserMailses = user.getGcmUserMailses();
+									GcmUserMails userMail = gcmUserMailses.iterator().next();
+									
+									if (userMail != null && userMail.getMail() != null) {
+										if (!failedNotificationMails.contains(userMail.getMail()))
+											failedNotificationMails.add(userMail.getMail());
+										}
+									deleteRegId(oldRegID);
 								}
 							}
 						}
@@ -460,8 +468,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 
 	}
 
-	public boolean deleteUser(GcmUsers user) {
-		return userManager.deleteUser(user.getId());
+	public boolean deleteRegId(String oldRegID) {
+		return userManager.deleteRegId(oldRegID);
 	}
 
 	@Override
@@ -483,7 +491,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 
 	private void notifyUserAboutViewerCount(int viewerCount,
-			GcmUsers broadcasterGCMUsers) {
+			Set<RegIds> regIdset) {
 
 		Sender sender = new Sender(SENDER_ID);
 
@@ -492,9 +500,13 @@ public class Application extends MultiThreadedApplicationAdapter implements
 				.addData("viewerCount", String.valueOf(viewerCount)).build();
 
 		try {
-			MulticastResult result = sender.send(message,
-					broadcasterGCMUsers.fetchRegIDStrings(), 1);
-
+			List<String> regIds = new ArrayList<String>();
+			for (RegIds regIDs : regIdset) {
+				regIds.add(regIDs.getGcmRegId());
+			}
+			if (regIds.size() >= 0) {
+				MulticastResult result = sender.send(message,regIds, 1);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

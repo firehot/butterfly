@@ -103,6 +103,7 @@ public class StreamManager {
 			
 			StreamProxy proxy = new StreamProxy(url, stream.getId());
 
+
 			registeredStreams.put(url, proxy);
 			this.red5App.sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url,
 					streamName, deviceLanguage);
@@ -111,6 +112,8 @@ public class StreamManager {
 		}
 		return result;
 	}
+
+
 
 	public boolean registerLocationForStream(String url, double longitude,
 			double latitude, double altitude) {
@@ -133,7 +136,8 @@ public class StreamManager {
 	public boolean removeStream(String streamUrl) {
 		Map<String, StreamProxy> registeredLiveStreams = this.red5App.getLiveStreamProxies();
 		boolean result = false;
-		if (registeredLiveStreams.containsKey(streamUrl)) {
+		if (registeredLiveStreams.containsKey(streamUrl)) 
+		{
 			StreamProxy stream = registeredLiveStreams.remove(streamUrl);
 			stream.close();
 			
@@ -223,11 +227,10 @@ public class StreamManager {
 	}
 	
 	public List<Stream> getAllStreamList() {
-		List results = null;
+		List<Stream> results = null;
 		try {
-
-			Query query = JPAUtils.getEntityManager().createQuery(
-					"FROM Stream");
+			Query query = JPAUtils.getEntityManager().
+					createQuery("FROM Stream");
 			
 			results = query.getResultList();
 			
@@ -239,6 +242,7 @@ public class StreamManager {
 			e.printStackTrace();
 		}
 
-		return (List<Stream>)((Object)results);
+		return results;
 	}
+
 }

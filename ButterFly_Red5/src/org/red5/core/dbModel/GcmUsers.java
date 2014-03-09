@@ -1,16 +1,18 @@
 package org.red5.core.dbModel;
 // default package
-// Generated 21-Sep-2013 16:53:03 by Hibernate Tools 3.4.0.CR1
+// Generated Mar 9, 2014 1:16:35 PM by Hibernate Tools 4.0.0
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
+
+import static javax.persistence.GenerationType.IDENTITY;
+
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -22,113 +24,45 @@ import javax.persistence.Table;
 @Table(name = "gcm_users")
 public class GcmUsers implements java.io.Serializable {
 
-	private int id;
-	private String email;
-	public List<RegIDs> regIDs;
+	private Integer id;
+	private Set<GcmUserMails> gcmUserMailses = new HashSet<GcmUserMails>(0);
+	private Set<RegIds> regIdses = new HashSet<RegIds>(0);
 
 	public GcmUsers() {
-		
-		regIDs = new ArrayList<RegIDs>();
 	}
 
-	public GcmUsers(String email) {
-		this.email = email;
-		regIDs = new ArrayList<RegIDs>();
+	public GcmUsers(Set<GcmUserMails> gcmUserMailses, Set<RegIds> regIdses) {
+		this.gcmUserMailses = gcmUserMailses;
+		this.regIdses = regIdses;
 	}
 
-
-	@Column(name = "email", unique = true,nullable = false, length = 45)
-	public String getEmail() {
-		return this.email;
-	}
-
-	public void setEmail(String email) {
-		this.email = email;
-	}
-	
-	
 	@Id
-	@GeneratedValue(strategy=GenerationType.AUTO)
-	@Column(name = "id")
-	public int getId() {
-		return id;
+	@GeneratedValue(strategy = IDENTITY)
+	@Column(name = "id", unique = true, nullable = false)
+	public Integer getId() {
+		return this.id;
 	}
 
-	public void setId(int id) {
+	public void setId(Integer id) {
 		this.id = id;
 	}
 
-
-	@OneToMany(fetch=FetchType.EAGER, cascade = CascadeType.ALL, mappedBy="user",orphanRemoval=true)
-	public List<RegIDs> getRegIDs() {
-		return regIDs;
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "gcmUsers")
+	public Set<GcmUserMails> getGcmUserMailses() {
+		return this.gcmUserMailses;
 	}
 
-	public void setRegIDs(List<RegIDs> regIDs) {
-		this.regIDs = regIDs;
+	public void setGcmUserMailses(Set<GcmUserMails> gcmUserMailses) {
+		this.gcmUserMailses = gcmUserMailses;
 	}
-	
-	public void addRegID(RegIDs regid)
-	{
-		if(!this.regIDs.contains(regid))
-		{
-			this.regIDs.add(regid);
-			regid.setUser(this);
-		}
+
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "gcmUsers")
+	public Set<RegIds> getRegIdses() {
+		return this.regIdses;
 	}
-	
-	public void removeID(RegIDs regid)
-	{
-		regIDs.remove(regid);
-	}
-	
-	public void clearRegIDS()
-	{
-		regIDs.clear();
-	}
-	
-	public List<String> fetchRegIDStrings()
-	{
-		if(regIDs.size() == 0)
-			return null;
-		else
-		{
-			List<String> regids = new ArrayList<String>();
-			
-			for (RegIDs regid : this.regIDs) {
-				regids.add(regid.getGcmRegId());
-			}
-			
-			return regids;
-		}
-	}
-	
-	public static GcmUsers fetchUserByRegID(String regID,List<GcmUsers> users)
-	{
-		
-		for (GcmUsers gcmUsers : users) {
-			
-			for (RegIDs regid : gcmUsers.getRegIDs()) {
-				if(regid.equals(regID))
-					return gcmUsers;
-			}
-		}
-		
-		return null;
-	}
-	
-	public static List<String> fetchRegIDListbyUsers(List<GcmUsers> users)
-	{
-		List<String> regIDList = new ArrayList<String>();
-		
-		for (GcmUsers gcmUsers : users) {
-			
-			List<String> tempList = gcmUsers.fetchRegIDStrings();
-			if(tempList != null)
-				regIDList.addAll(tempList);
-		}
-		
-		return regIDList;
+
+	public void setRegIdses(Set<RegIds> regIdses) {
+		this.regIdses = regIdses;
 	}
 
 

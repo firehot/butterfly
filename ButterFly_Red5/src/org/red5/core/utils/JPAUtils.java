@@ -1,8 +1,13 @@
 package org.red5.core.utils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+
+import org.red5.core.dbModel.GcmUsers;
 
 public class JPAUtils {
 	
@@ -30,4 +35,6 @@ public class JPAUtils {
 		getEntityManager().close();
 		entityManager = null;
 	}
+
+
 }

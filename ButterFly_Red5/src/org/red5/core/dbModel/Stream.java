@@ -1,3 +1,4 @@
+
 package org.red5.core.dbModel;
 
 import java.io.File;
@@ -147,5 +148,4 @@ public class Stream implements Serializable {
 		super();
 	}
 
-	
 }

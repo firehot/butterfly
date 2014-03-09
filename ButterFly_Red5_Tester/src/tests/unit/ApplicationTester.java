@@ -16,15 +16,20 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
+import org.jruby.compiler.ir.operands.Array;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.red5.core.Application;
+import org.red5.core.dbModel.GcmUserMails;
 import org.red5.core.dbModel.GcmUsers;
-import org.red5.core.dbModel.RegIDs;
+import org.red5.core.dbModel.RegIds;
 import org.red5.core.dbModel.Stream;
 import org.red5.core.utils.JPAUtils;
 
@@ -52,13 +57,17 @@ public class ApplicationTester {
 			delete(webappsDir);
 		}
 		JPAUtils.beginTransaction();
-		Query query = JPAUtils.getEntityManager().createQuery("Delete FROM RegIDs");
+		Query query = JPAUtils.getEntityManager().createQuery("Delete FROM RegIds");
+		query.executeUpdate();
+		query = JPAUtils.getEntityManager().createQuery("Delete FROM GcmUserMails");
 		query.executeUpdate();
 		query = JPAUtils.getEntityManager().createQuery("Delete FROM GcmUsers");
 		query.executeUpdate();
+		query = JPAUtils.getEntityManager().createQuery("Delete FROM Stream");
+		query.executeUpdate();		
 		JPAUtils.commit();
 		JPAUtils.closeEntityManager();
-	
+
 	}
 
 	@After
@@ -71,25 +80,25 @@ public class ApplicationTester {
 
 	@Test
 	public void testRegisterStream() {
-		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", null, null, true, null);
+		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", null, "mail@mail.com", true, null);
 		assertEquals(registerLiveStream, true);
 
-		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", null, null, true, null);
+		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", null, "mail@mail.com", true, null);
 		assertEquals(registerLiveStream, false);
 
 
-		registerLiveStream = butterflyApp.registerLiveStream("publishedName"+11, "publishUrl", null, null, true, null);
+		registerLiveStream = butterflyApp.registerLiveStream("publishedName"+11, "publishUrl", null, "mail@mail.com", true, null);
 		//should return false because url is key
 		assertEquals(registerLiveStream, false);
 
-		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl" + 11, null, null, true, null);
+		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl" + 11, null, "mail@mail.com", true, null);
 		//should return true because url is changed
 		assertEquals(registerLiveStream, true);
 	}
 
 	@Test
 	public void testRemoveStream() {
-		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", null, null, true, null);
+		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", null, "mail@mail.com", true, null);
 		assertEquals(registerLiveStream, true);
 
 		registerLiveStream = butterflyApp.removeStream("publishUrl");
@@ -104,35 +113,77 @@ public class ApplicationTester {
 		int t = (int) (Math.random()*1000);
 		boolean result = butterflyApp.registerUser(String.valueOf(t), "dgsdgs");
 		assertEquals(true, result);
+
+	}
+
+	public int getMailRowCount(String mail) {
+
+		int result = 0;
+		try {
+
+			Query query = JPAUtils.getEntityManager().createQuery(
+					"FROM GcmUserMails where mail= :email");
+			query.setParameter("email", mail);
+			List results = query.getResultList();
+			result = results.size();
+			JPAUtils.closeEntityManager();
+
+		} catch (NoResultException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return result;
 	}
 
 	@Test
 	public void testUserUpdate()
 	{
-		int count = butterflyApp.getUserCount("mail1");
+		int count = getMailRowCount("mail1");
 		int initialCount = count;
 
 		int t = (int) (Math.random()*1000);
 		boolean result = butterflyApp.registerUser(String.valueOf(t), "mail1");
 		assertEquals(true, result);
 
-		GcmUsers registerId = butterflyApp.getRegistrationIdList("mail1");
-		assertEquals(registerId.fetchRegIDStrings().get(0), String.valueOf(t));
-
-		count = butterflyApp.getUserCount("mail1");
+		
+		count = getMailRowCount("mail1");
 		assertEquals(initialCount+1, count);
 
-		t = (int) (Math.random()*1000);
-		result = butterflyApp.registerUser(String.valueOf(t), "mail1");
+		int t2 = (int) (Math.random()*1000);
+		result = butterflyApp.registerUser(String.valueOf(t2), "mail1");
 		assertEquals(true, result);
 
-		registerId = butterflyApp.getRegistrationIdList("mail1");
-		assertEquals(registerId.fetchRegIDStrings().get(1), String.valueOf(t));
+		EntityManager entityManager = JPAUtils.getEntityManager();
+		
+		try {
 
-		count = butterflyApp.getUserCount("mail1");
+			Query query = entityManager
+					.createQuery("FROM GcmUserMails WHERE mail= :email");
+			query.setParameter("email", "mail1");
+			List results = query.getResultList();
+			if (results.size() > 0) {
+				GcmUsers gcmUsers = ((GcmUserMails) results.get(0)).getGcmUsers();
+				Set<RegIds> regIdSet = gcmUsers.getRegIdses();
+			
+			}
+
+			JPAUtils.closeEntityManager();
+		} catch (NoResultException e) {
+			fail(e.getMessage());
+			e.printStackTrace();
+		} catch (Exception e) {
+			fail(e.getMessage());
+			e.printStackTrace();
+		}
+		
+		
+		count = getMailRowCount("mail1");
 		assertEquals(initialCount+1, count);
 
 	}
+
 
 
 	@Test
@@ -142,13 +193,95 @@ public class ApplicationTester {
 		boolean result = butterflyApp.registerUser(String.valueOf(t), mail);
 		assertEquals(result, true);
 
-		GcmUsers registerId = butterflyApp.getRegistrationIdList(mail);
+		GcmUsers gcmUser = butterflyApp.userManager.getGcmUserByMail(mail);
 
-		assertEquals(registerId.fetchRegIDStrings().get(0), String.valueOf(t));
+		Query query = JPAUtils.getEntityManager().createQuery("FROM RegIds WHERE gcmUsers.id = :id");
+		query.setParameter("id", gcmUser.getId());
+		
+		List<RegIds> list = query.getResultList();
+		
+		assertEquals(list.get(0).getGcmRegId(), String.valueOf(t));
 
-		registerId = butterflyApp.getRegistrationIdList("slkdjflasjf" + t);
+		gcmUser = butterflyApp.userManager.getGcmUserByMail("slkdjflasjf" + t);
 
-		assertEquals(registerId, null);
+		assertEquals(gcmUser, null);
+	}
+	
+	@Test
+	public void testRegisterCommaSeparatedMails() {
+		String id = "123132131";
+		boolean isRegistered = butterflyApp.registerUser(id, "hasan@hasan.com,salih@salih.com,okan@okan.com");
+		assertEquals(isRegistered, true);
+		
+		Query query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails WHERE mail=:mail");
+		query.setParameter("mail", "hasan@hasan.com");
+		GcmUserMails userMail = (GcmUserMails) query.getSingleResult();
+		
+		assertEquals(userMail.getGcmUsers().getRegIdses().iterator().next().getGcmRegId(), id);
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails WHERE mail=:mail");
+		query.setParameter("mail", "salih@salih.com");
+		userMail = (GcmUserMails) query.getSingleResult();
+		
+		assertEquals(userMail.getGcmUsers().getRegIdses().iterator().next().getGcmRegId(), id);
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails WHERE mail=:mail");
+		query.setParameter("mail", "okan@okan.com");
+		userMail = (GcmUserMails) query.getSingleResult();
+		
+		assertEquals(userMail.getGcmUsers().getRegIdses().iterator().next().getGcmRegId(), id);
+		
+		
+		//differnt reg id and also adding an extra mail to array
+		String id2="65565656";
+		isRegistered = butterflyApp.registerUser(id2, "hasan@hasan.com,salih@salih.com,okan@okan.com,ferit@ferit.com");
+		assertEquals(isRegistered, true);
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails WHERE mail=:mail");
+		query.setParameter("mail", "hasan@hasan.com");
+		//because hasan@hasan.com exists, it doesnt add extra gcmuser. It only adds reg id and new email addres ferit@ferit.com
+		assertEquals(query.getResultList().size(),1);
+		userMail = (GcmUserMails) query.getSingleResult();
+		
+		assertEquals(userMail.getGcmUsers().getRegIdses().size(), 2);
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails WHERE mail=:mail");
+		query.setParameter("mail", "salih@salih.com");
+		assertEquals(query.getResultList().size(),1);
+		userMail = (GcmUserMails) query.getSingleResult();
+		
+		assertEquals(userMail.getGcmUsers().getRegIdses().size(), 2);
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails WHERE mail=:mail");
+		query.setParameter("mail", "okan@okan.com");
+		assertEquals(query.getResultList().size(),1);
+		userMail = (GcmUserMails) query.getSingleResult();
+		
+		assertEquals(userMail.getGcmUsers().getRegIdses().size(), 2);
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails WHERE mail=:mail");
+		query.setParameter("mail", "okan@okan.com");
+		assertEquals(query.getResultList().size(),1);
+		userMail = (GcmUserMails) query.getSingleResult();
+		
+		assertEquals(userMail.getGcmUsers().getRegIdses().size(), 2);
+		
+		isRegistered = butterflyApp.registerUser(id2, "hasan@hasan.com,salih@salih.com,okan@okan.com,ferit@ferit.com");
+		assertEquals(isRegistered, false);
+		
+		
+		isRegistered = butterflyApp.registerUser(id2, "hasan@hasan.com,ferit@ferit.com");
+		assertEquals(isRegistered, false);
+		
+		isRegistered = butterflyApp.registerUser(id2, "dunya@dunya.com,ferit@ferit.com");
+		assertEquals(isRegistered, false);
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails WHERE mail=:mail");
+		query.setParameter("mail", "dunya@dunya.com");
+		assertEquals(query.getResultList().size(),1);
+		userMail = (GcmUserMails) query.getSingleResult();
+		
+		assertEquals(userMail.getGcmUsers().getRegIdses().size(), 2);
 	}
 
 
@@ -160,15 +293,13 @@ public class ApplicationTester {
 		boolean result = butterflyApp.registerUser(String.valueOf(t), mail);
 		assertEquals(result, true);
 
-		GcmUsers user = butterflyApp.getRegistrationIdList(mail);
+		GcmUsers user = butterflyApp.userManager.getGcmUserByMail(mail);
 
-
-		assertEquals(user.fetchRegIDStrings().get(0), String.valueOf(t));
-
-		boolean opResult = butterflyApp.deleteUser(user);
+		boolean opResult = butterflyApp.deleteRegId(String.valueOf(t));
 		assertEquals(true, opResult);
 
-		user = butterflyApp.getRegistrationIdList(mail);
+		user = butterflyApp.userManager.getGcmUserByRegId(String.valueOf(t));
+				
 
 		assertEquals(user, null);
 	}
@@ -176,12 +307,11 @@ public class ApplicationTester {
 	@Test
 	public void testRegisterMultipleUser()
 	{
-		GcmUsers gcmUsers = new GcmUsers("mail@mail.com");
-		RegIDs regid = new RegIDs("regid");
-		gcmUsers.addRegID(regid);
-		assertEquals(1,gcmUsers.getRegIDs().size());
-		gcmUsers.addRegID(regid);
-		assertEquals(1,gcmUsers.getRegIDs().size());
+		boolean registerUser = butterflyApp.registerUser("deneme", "deneme@deneme.com");
+		assertTrue(registerUser);
+
+		registerUser = butterflyApp.registerUser("deneme", "deneme@deneme.com");
+		assertTrue(!registerUser);
 	}
 
 	@Test
@@ -190,6 +320,7 @@ public class ApplicationTester {
 		assertEquals(0, streamList.size());
 		
 		Stream strm =  new Stream("location_test", "video_url", Calendar.getInstance().getTime(), true);
+		strm.setBroadcasterMail("mail@mail.com");
 		butterflyApp.streamManager.saveStream(strm);
 
 		streamList = butterflyApp.streamManager.getAllStreamList();
@@ -207,7 +338,7 @@ public class ApplicationTester {
 		assertEquals(100, stream.altitude, 1e-8);
 
 	}
-	
+
 
 
 	@Test
@@ -226,7 +357,7 @@ public class ApplicationTester {
 				e.printStackTrace();
 			}
 		}
-		
+
 		fail("to correct this test check mail is received at " + mailString);
 	}
 
@@ -316,14 +447,14 @@ public class ApplicationTester {
 			f1.createNewFile();
 			f2.createNewFile();
 			f3.createNewFile();
-			boolean registered = butterflyApp.registerLiveStream("streamName", "f1", null, null, true, "tur");
+			boolean registered = butterflyApp.registerLiveStream("streamName", "f1", null, "mail@mail.com", true, "tur");
 			assertTrue(registered);
-			registered = butterflyApp.registerLiveStream("streamName", "f2", null, null, true, "tur");
+			registered = butterflyApp.registerLiveStream("streamName", "f2", null, "mail@mail.com", true, "tur");
 			assertTrue(registered);
-			registered = butterflyApp.registerLiveStream("streamName", "f3", null, null, true, "tur");
+			registered = butterflyApp.registerLiveStream("streamName", "f3", null, "mail@mail.com", true, "tur");
 			assertTrue(registered);
-			
 			assertEquals(3, butterflyApp.getLiveStreamProxies().size());
+
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
@@ -343,13 +474,13 @@ public class ApplicationTester {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		
+
 		assertEquals(f1.exists(), false);
 		assertEquals(f2.exists(), false);
 		assertEquals(f3.exists(), false);
 
 		assertEquals(0, butterflyApp.getLiveStreamProxies().size());
-		
+
 		try {
 			f1.createNewFile();
 			f2.createNewFile();
@@ -388,23 +519,23 @@ public class ApplicationTester {
 		Stream strm = new Stream("deneme", "denemeurl", Calendar.getInstance().getTime(), true);
 		strm.broadcasterMail = "fdsf";
 		butterflyApp.streamManager.saveStream(strm);
-		
+
 		Stream createdStream = butterflyApp.streamManager.getStream("denemeurl");
 		assertNotNull(createdStream);
-		
+
 		strm.altitude = 1300;
 		butterflyApp.streamManager.updateStream(strm);
-		
+
 		createdStream = butterflyApp.streamManager.getStream("denemeurl");
 		assertNotNull(createdStream);
 		assertEquals(createdStream.altitude, 1300,1);
-		
+
 		butterflyApp.streamManager.deleteStream(strm);
 		createdStream = butterflyApp.streamManager.getStream("denemeurl");
 		assertEquals(createdStream,null);
-		
+
 	}
-	
+
 	@Test
 	public void testGetAllStreamList()
 	{
