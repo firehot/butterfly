@@ -3,8 +3,9 @@
 	xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
 	<persistence-unit name="ButterFly_Red5">
+		<class>org.red5.core.dbModel.GcmUserMails</class>
 		<class>org.red5.core.dbModel.GcmUsers</class>
-		<class>org.red5.core.dbModel.RegIDs</class>
+		<class>org.red5.core.dbModel.RegIds</class>
 		<class>org.red5.core.dbModel.Stream</class>
 		<properties>
 			<property name="hibernate.connection.username" value="root" />

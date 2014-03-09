@@ -14,7 +14,9 @@ import javax.persistence.Query;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.red5.core.Application;
+import org.red5.core.dbModel.GcmUserMails;
 import org.red5.core.dbModel.GcmUsers;
+import org.red5.core.dbModel.RegIds;
 import org.red5.core.dbModel.Stream;
 import org.red5.core.utils.JPAUtils;
 
@@ -73,7 +75,8 @@ public class StreamManager {
 		if (registeredStreams.containsKey(url) == false) {
 			
 			Stream stream = new Stream(streamName, url, Calendar.getInstance().getTime(), isPublic);
-			stream.setGCMUser(this.red5App.getRegistrationIdList(broadcasterMail));
+			stream.setGCMUser(red5App.userManager.getGcmUserByMail(broadcasterMail));
+			
 
 			registeredStreams.put(url, stream);
 			this.red5App.sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url,
@@ -83,6 +86,8 @@ public class StreamManager {
 		}
 		return result;
 	}
+
+
 
 	public boolean registerLocationForStream(String url, double longitude,
 			double latitude, double altitude) {
@@ -187,4 +192,6 @@ public class StreamManager {
 
 		return resultStream;
 	}
+
+
 }

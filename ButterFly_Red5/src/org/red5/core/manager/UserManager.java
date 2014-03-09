@@ -1,14 +1,19 @@
 package org.red5.core.manager;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
 import org.red5.core.Application;
+import org.red5.core.dbModel.GcmUserMails;
 import org.red5.core.dbModel.GcmUsers;
-import org.red5.core.dbModel.RegIDs;
+import org.red5.core.dbModel.RegIds;
 import org.red5.core.utils.JPAUtils;
 
 public class UserManager {
@@ -24,19 +29,19 @@ public class UserManager {
 	 * @return user with reg ids of mail in the table if mail is not exist, null
 	 *         returns else return GcmUsers of mail
 	 */
-	public GcmUsers getRegistrationIdList(String mail) {
+	public Set<RegIds> getRegistrationIdList(String mail) {
 
 		EntityManager entityManager = JPAUtils.getEntityManager();
-		GcmUsers result = null;
+		Set<RegIds> result = null;
 		try {
 
 			Query query = entityManager
-					.createQuery("FROM GcmUsers where email= :email");
+					.createQuery("FROM GcmUserMails WHERE mail= :email");
 			query.setParameter("email", mail);
 			List results = query.getResultList();
 			if (results.size() > 0) {
-				GcmUsers gcmUsers = (GcmUsers) results.get(0);
-				result = gcmUsers;
+				GcmUsers gcmUsers = ((GcmUserMails) results.get(0)).getGcmUsers();
+				result = gcmUsers.getRegIdses();
 			}
 
 			JPAUtils.closeEntityManager();
@@ -54,23 +59,57 @@ public class UserManager {
 		try {
 			JPAUtils.beginTransaction();
 			Query query = JPAUtils.getEntityManager().createQuery(
-					"FROM GcmUsers where email= :email");
-			query.setParameter("email", mail);
-			List results = query.getResultList();
+					"FROM GcmUserMails WHERE mail IN :email");
+			
+			String[] mails = mail.split(",");
+			List<String> mailList = new ArrayList<String>(Arrays.asList(mails));
+			
+			query.setParameter("email", mailList);
+			List<GcmUserMails> results = query.getResultList();
+			
 			if (results.size() > 0) {
-				GcmUsers gcmUsers = (GcmUsers) results.get(0);
-				RegIDs regid = new RegIDs(register_id);
-				gcmUsers.addRegID(regid);
+				GcmUserMails userMail = (GcmUserMails) results.get(0);
+				RegIds regid = new RegIds(register_id);
+				result = addRegID(userMail.getGcmUsers(), regid);
+
+				if (result == true) {
+					JPAUtils.getEntityManager().persist(regid);
+				}
+				
+				//remove already existing mails from list
+				for (GcmUserMails gcmUserMail : results) {
+					mailList.remove(gcmUserMail.getMail());
+				}
+				//now, mailList have only emails that is not associated with that user
+				//add non-existing mails to mail table
+				for (int i = 0; i < mailList.size(); i++) {
+					GcmUserMails userMails = new  GcmUserMails(userMail.getGcmUsers(), mailList.get(i));
+					addGcmUserMail(userMail.getGcmUsers(), userMails);
+					JPAUtils.getEntityManager().persist(userMails);
+				}
+				
+
 			} else {
-				GcmUsers gcmUsers = new GcmUsers(mail);
-				RegIDs regid = new RegIDs(register_id);
-				gcmUsers.addRegID(regid);
+				GcmUsers gcmUsers = new GcmUsers();
 				JPAUtils.getEntityManager().persist(gcmUsers);
+				
+				
+				for (int i = 0; i < mails.length; i++) {
+					GcmUserMails userMails = new  GcmUserMails();
+					userMails.setMail(mails[i]);
+					addGcmUserMail(gcmUsers, userMails);
+					JPAUtils.getEntityManager().persist(userMails);
+				}
+				RegIds regid = new RegIds(register_id);
+				addRegID(gcmUsers, regid);
+				
+				JPAUtils.getEntityManager().persist(regid);
+				result = true;
 			}
 			JPAUtils.commit();
 			JPAUtils.closeEntityManager();
 
-			result = true;
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = false;
@@ -103,12 +142,12 @@ public class UserManager {
 				GcmUsers gcmUsers = (GcmUsers) results.get(0);
 
 				// if reg id doesnt exist for the user
-				if (gcmUsers.getRegIDs().size() == 0) {
-					RegIDs regid = new RegIDs(register_id);
-					gcmUsers.addRegID(regid);
+				if (gcmUsers.getRegIdses().size() == 0) {
+					RegIds regid = new RegIds(register_id);
+					addRegID(gcmUsers, regid);
 				} else {
 					// update the reg id of the user using the old reg id
-					for (RegIDs regid : gcmUsers.getRegIDs()) {
+					for (RegIds regid : gcmUsers.getRegIdses()) {
 						if (regid.getGcmRegId().equals(oldRegID)) {
 							regid.setGcmRegId(register_id);
 						}
@@ -117,9 +156,12 @@ public class UserManager {
 
 			} else {
 				// user doesnt exist, create user and add reg id
-				GcmUsers gcmUsers = new GcmUsers(mail);
-				RegIDs regid = new RegIDs(register_id);
-				gcmUsers.addRegID(regid);
+				GcmUsers gcmUsers = new GcmUsers();
+				GcmUserMails gMails = new GcmUserMails();
+				gMails.setMail(mail);
+				addGcmUserMail(gcmUsers, gMails);
+				RegIds regid = new RegIds(register_id);
+				addRegID(gcmUsers, regid);
 				JPAUtils.getEntityManager().persist(gcmUsers);
 			}
 
@@ -133,37 +175,18 @@ public class UserManager {
 		return result;
 
 	}
-	
-	public int getUserCount(String mail) {
 
-		int result = 0;
-		try {
 
-			Query query = JPAUtils.getEntityManager().createQuery(
-					"FROM GcmUsers where email= :email");
-			query.setParameter("email", mail);
-			List results = query.getResultList();
-			result = results.size();
-			JPAUtils.closeEntityManager();
 
-		} catch (NoResultException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return result;
-	}
-	
-	public boolean deleteUser(int userId) {
+	public boolean deleteRegId(String regId) {
 		boolean result;
 		try {
 			JPAUtils.beginTransaction();
 
-			GcmUsers foundUser = JPAUtils.getEntityManager().find(GcmUsers.class, userId);
-			
-			JPAUtils.getEntityManager().remove(foundUser);
-			
+			Query query = JPAUtils.getEntityManager().createQuery("DELETE FROM RegIds WHERE gcmRegId=:regId");
+			query.setParameter("regId", regId);
+			query.executeUpdate();
+
 			JPAUtils.commit();
 			JPAUtils.closeEntityManager();
 			result = true;
@@ -171,6 +194,92 @@ public class UserManager {
 			e.printStackTrace();
 			result = false;
 		}
+		return result;
+	}
+
+	public boolean addGcmUserMail(GcmUsers gcmUsers, GcmUserMails gMails) {
+		boolean found = false;
+		Set<GcmUserMails> gcmUserMailses = gcmUsers.getGcmUserMailses();
+		if (gcmUserMailses != null) {
+			for (GcmUserMails gcmMail : gcmUserMailses) {
+				if (gcmMail.getMail().equals(gMails.getMail())) {
+					found = true;
+					break;
+				}
+			}
+		}
+		if (found == false) {
+			gcmUsers.getGcmUserMailses().add(gMails);
+			gMails.setGcmUsers(gcmUsers);
+			return true;
+		}
+		return false;
+	}
+
+	public boolean addRegID(GcmUsers gcmUsers, RegIds regid) {
+		boolean found = false;
+		Set<RegIds> regIds = gcmUsers.getRegIdses();
+		if (regIds != null) {
+			for (RegIds regId : regIds) {
+				if (regId.getGcmRegId().equals(regid.getGcmRegId())) {
+					found = true;
+					break;
+				}
+			}
+		}
+		if (found == false) {
+			gcmUsers.getRegIdses().add(regid);
+			regid.setGcmUsers(gcmUsers);
+			return true;
+		}
+		return false;
+	}
+	
+	public GcmUsers getGcmUserByMail(String broadcasterMail) {
+		EntityManager entityManager = JPAUtils.getEntityManager();
+		GcmUsers result = null;
+		try {
+
+			Query query = entityManager
+					.createQuery("FROM GcmUserMails WHERE mail= :email");
+			query.setParameter("email", broadcasterMail);
+			List results = query.getResultList();
+			if (results.size() > 0) {
+				result = ((GcmUserMails) results.get(0)).getGcmUsers();
+				
+			}
+
+			JPAUtils.closeEntityManager();
+		} catch (NoResultException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return result;
+		
+	}
+
+	public GcmUsers getGcmUserByRegId(String regId) {
+		EntityManager entityManager = JPAUtils.getEntityManager();
+		GcmUsers result = null;
+		try {
+
+			Query query = entityManager
+					.createQuery("FROM RegIds WHERE gcmRegId= :regId");
+			query.setParameter("regId", regId);
+			List results = query.getResultList();
+			if (results.size() > 0) {
+				result = ((RegIds) results.get(0)).getGcmUsers();
+			}
+
+			JPAUtils.closeEntityManager();
+		} catch (NoResultException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		return result;
 	}
 
