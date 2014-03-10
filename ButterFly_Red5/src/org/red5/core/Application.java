@@ -133,6 +133,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 								Stream stream = streamManager.getStream(key);
 								if(stream != null)
 									streamManager.deleteStream(stream);
+								if(proxyStreams.containsKey(key))
+									proxyStreams.remove(key);
 							}
 
 						}

@@ -485,11 +485,11 @@ public class ApplicationTester {
 			f1.createNewFile();
 			f2.createNewFile();
 			f3.createNewFile();
-			boolean registered = butterflyApp.registerLiveStream("streamName", "f1", null, null, true, "tur");
+			boolean registered = butterflyApp.registerLiveStream("streamName", "f1", null, "mail1@mail.com", true, "tur");
 			assertTrue(registered);
-			registered = butterflyApp.registerLiveStream("streamName", "f2", null, null, true, "tur");
+			registered = butterflyApp.registerLiveStream("streamName", "f2", null, "mail2@mail.com", true, "tur");
 			assertTrue(registered);
-			registered = butterflyApp.registerLiveStream("streamName", "f3", null, null, true, "tur");
+			registered = butterflyApp.registerLiveStream("streamName", "f3", null, "mail3@mail.com", true, "tur");
 			assertTrue(registered);
 			
 			assertEquals(3, butterflyApp.getLiveStreamProxies().size());
