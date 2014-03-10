@@ -510,7 +510,8 @@ public class ApplicationTester {
 		assertEquals(f1.exists(), false);
 		assertEquals(f2.exists(), false);
 		assertEquals(f3.exists(), false);
-
+		
+		butterflyApp.cancelStreamDeleteTimer();
 	}
 
 	@Test
