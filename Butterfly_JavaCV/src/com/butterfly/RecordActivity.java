@@ -215,6 +215,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 			@Override
 			public void onLocationChanged(Location location) {
+
 				new RegisterLocationForStreamTask(httpGatewayURL,
 						RecordActivity.this.streamURL).execute(
 						location.getLongitude(), location.getLatitude(),

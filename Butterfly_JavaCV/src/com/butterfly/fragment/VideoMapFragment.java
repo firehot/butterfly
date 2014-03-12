@@ -4,24 +4,25 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTabHost;
 import android.view.InflateException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebView.FindListener;
 
-import com.butterfly.MediaPlayerActivity;
 import com.butterfly.MainActivity;
+import com.butterfly.MediaPlayerActivity;
 import com.butterfly.R;
 import com.butterfly.fragment.StreamListFragment.Stream;
 import com.butterfly.listeners.IStreamListUpdateListener;
+import com.butterfly.utils.LocationProvider;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
-import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -36,6 +37,8 @@ public class VideoMapFragment extends Fragment implements IStreamListUpdateListe
 	private SupportMapFragment fragment;
 	private MapView mpView;
 	private static View view;
+	LocationProvider locationProvider;
+	public static Location currentLocation = null;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -54,7 +57,11 @@ public class VideoMapFragment extends Fragment implements IStreamListUpdateListe
 		mpView = (MapView)view.findViewById(R.id.map);
 		mpView.onCreate(savedInstanceState);
 
-
+		try {
+		     MapsInitializer.initialize(this.getActivity());
+		 } catch (GooglePlayServicesNotAvailableException e) {
+		     e.printStackTrace();
+		 }
 		return view;
 	}
 
@@ -95,6 +102,21 @@ public class VideoMapFragment extends Fragment implements IStreamListUpdateListe
 					return false;
 				}
 			});
+			
+			locationProvider = new LocationProvider(this.getActivity());
+			locationProvider.getLocation(new LocationListener() {
+
+					@Override
+					public void onLocationChanged(Location location) {
+						currentLocation = location;
+						updateCameraPosition(location);
+					}
+				});
+
+			if(currentLocation != null)
+			{
+				updateCameraPosition(currentLocation);
+			}
 			ArrayList<Stream> streamList = ((MainActivity)getActivity()).getStreamList();
 			streamListUpdated(streamList);
 		}
@@ -124,6 +146,14 @@ public class VideoMapFragment extends Fragment implements IStreamListUpdateListe
 				}
 			}
 		}
+
+	}
+	
+	public void updateCameraPosition(Location location)
+	{
+		mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(
+				location.getLatitude(), location.getLongitude())));
+		mMap.animateCamera(CameraUpdateFactory.zoomTo(6));
 
 	}
 
