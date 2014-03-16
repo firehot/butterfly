@@ -39,7 +39,6 @@ public class ApplicationTester {
 
 	@Before
 	public void before() {
-
 		butterflyApp = new Application();
 
 		prepareEnvironment();
@@ -72,8 +71,6 @@ public class ApplicationTester {
 
 	@After
 	public void after() {
-
-
 		butterflyApp.getBandwidthServer().close();
 		butterflyApp = null;
 	}
@@ -206,6 +203,31 @@ public class ApplicationTester {
 
 		assertEquals(gcmUser, null);
 	}
+	
+	@Test
+	public void testUpdateCommaSeparatedMails() {
+		String id = "123132131";
+		boolean isRegistered = butterflyApp.registerUser(id, "hasan@hasan.com,salih@salih.com");
+		assertEquals(isRegistered, true);
+		
+		Query query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails WHERE mail=:mail");
+		query.setParameter("mail", "hasan@hasan.com");
+		GcmUserMails userMail = (GcmUserMails) query.getSingleResult();
+		
+		assertEquals(userMail.getGcmUsers().getRegIdses().iterator().next().getGcmRegId(), id);
+	
+		String newid = "35252828634";
+		boolean result = butterflyApp.updateUser(newid, "hasan@hasan.com,salih@salih.com", id);
+		assertEquals(result,true);
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails WHERE mail=:mail");
+		query.setParameter("mail", "hasan@hasan.com");
+		userMail = (GcmUserMails) query.getSingleResult();
+		
+		assertEquals(userMail.getGcmUsers().getRegIdses().iterator().next().getGcmRegId(), newid);
+		
+	}
+	
 	
 	@Test
 	public void testRegisterCommaSeparatedMails() {

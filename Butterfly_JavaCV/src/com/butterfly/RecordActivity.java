@@ -755,7 +755,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 				initRecorder();
 				new RegisterStreamTask().execute(httpGatewayURL, streamName,
 						streamURL,
-						CloudMessaging.getPossibleMail(RecordActivity.this));
+						CloudMessaging.getMailList(RecordActivity.this));
 			} else {
 				mProgressDialog.dismiss();
 				Toast.makeText(getApplicationContext(),

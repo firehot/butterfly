@@ -131,38 +131,53 @@ public class UserManager {
 		boolean result;
 		try {
 			JPAUtils.beginTransaction();
-
+			
 			Query query = JPAUtils.getEntityManager().createQuery(
-					"FROM GcmUsers where email= :email");
-			query.setParameter("email", mail);
-			List results = query.getResultList();
+					"FROM GcmUserMails WHERE mail IN :email");
+			
+			String[] mails = mail.split(",");
+			List<String> mailList = new ArrayList<String>(Arrays.asList(mails));
+			
+			query.setParameter("email", mailList);
+
+			List<GcmUserMails> results = query.getResultList();
 
 			// if user is found
 			if (results.size() > 0) {
-				GcmUsers gcmUsers = (GcmUsers) results.get(0);
-
-				// if reg id doesnt exist for the user
-				if (gcmUsers.getRegIdses().size() == 0) {
-					RegIds regid = new RegIds(register_id);
-					addRegID(gcmUsers, regid);
-				} else {
-					// update the reg id of the user using the old reg id
-					for (RegIds regid : gcmUsers.getRegIdses()) {
-						if (regid.getGcmRegId().equals(oldRegID)) {
-							regid.setGcmRegId(register_id);
-						}
+				GcmUserMails gcmUserMail = (GcmUserMails) results.get(0);
+				
+				Set<RegIds> regIdses = gcmUserMail.getGcmUsers().getRegIdses();
+				
+				boolean found = false;
+				// update the reg id of the user using the old reg id
+				for (RegIds regid : regIdses) {
+					if (regid.getGcmRegId().equals(oldRegID)) {
+						regid.setGcmRegId(register_id);
+						found = true;
+						break;
 					}
+				}
+				if (found == false) {
+					RegIds regid = new RegIds(register_id);
+					addRegID(gcmUserMail.getGcmUsers(), regid);
+					JPAUtils.getEntityManager().persist(regid);
 				}
 
 			} else {
-				// user doesnt exist, create user and add reg id
+				//if user does not exists
 				GcmUsers gcmUsers = new GcmUsers();
-				GcmUserMails gMails = new GcmUserMails();
-				gMails.setMail(mail);
-				addGcmUserMail(gcmUsers, gMails);
+				JPAUtils.getEntityManager().persist(gcmUsers);
+				
+				for (int i = 0; i < mails.length; i++) {
+					GcmUserMails userMails = new  GcmUserMails();
+					userMails.setMail(mails[i]);
+					addGcmUserMail(gcmUsers, userMails);
+					JPAUtils.getEntityManager().persist(userMails);
+				}
 				RegIds regid = new RegIds(register_id);
 				addRegID(gcmUsers, regid);
-				JPAUtils.getEntityManager().persist(gcmUsers);
+				
+				JPAUtils.getEntityManager().persist(regid);
 			}
 
 			JPAUtils.commit();

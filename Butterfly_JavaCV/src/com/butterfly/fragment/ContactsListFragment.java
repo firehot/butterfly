@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -193,8 +194,8 @@ public class ContactsListFragment extends Fragment {
 		String select = 
 				"(" + Email.ADDRESS + " NOTNULL " + " AND " +
 						Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "'" + " AND "
-						+ displayName + " NOTNULL" + " AND "
-						+ Data.IS_PRIMARY + "='1' ) ";
+						+ displayName + " NOTNULL AND " +
+						Data.IS_PRIMARY + " == 1 ) ";
 
 		if (constraint != null) {
 			select += " AND (" + Email.ADDRESS + " LIKE ? " + " OR "
@@ -207,8 +208,10 @@ public class ContactsListFragment extends Fragment {
 
 		return getActivity().getContentResolver().query(Data.CONTENT_URI,
 				CONTACTS_SUMMARY_PROJECTION, select, selectArgs,
-				displayName + " COLLATE LOCALIZED ASC");
-
+				Contacts.TIMES_CONTACTED + " DESC "
+				);
+				//displayName + " COLLATE LOCALIZED ASC"
+		
 	}
 
 	// These are the Contacts rows that we will retrieve.
