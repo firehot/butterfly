@@ -254,7 +254,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 		Log.i(LOG_TAG, "cameara preview start: OK");
 	}
 
-	public boolean setCameraPreviewSize(int bandwidth) {
+	public boolean setCameraPreviewSize() {
 		boolean result = false;
 		if(cameraDevice == null)
 			return result;
@@ -264,20 +264,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 		int likelyWidth = 0, likelyHeight = 0;
 
 		int type = activeNetwork.getType();
-		if ((type == ConnectivityManager.TYPE_MOBILE || type == ConnectivityManager.TYPE_MOBILE_HIPRI)
-				&& bandwidth >= 35) {
-			likelyWidth = 176;
-			likelyHeight = 144;
-		} else if (bandwidth >= 115) { // 640x480
-			likelyWidth = 640;
-			likelyHeight = 480;
-		} else if (bandwidth >= 75) { // 352x288
-			likelyWidth = 352;
-			likelyHeight = 288;
-		} else if (bandwidth >= 35) { // 176x144
-			likelyWidth = 176;
-			likelyHeight = 144;
-		}
 
 		likelyWidth = 176;
 		likelyHeight = 144;
@@ -506,9 +492,14 @@ public class RecordActivity extends Activity implements OnClickListener,
 				InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 				imm.hideSoftInputFromWindow(
 						streamNameEditText.getWindowToken(), 0);
+				
+				if (setCameraPreviewSize() == true) {
 
-				new CheckBandwidthTask()
-						.execute(getString(R.string.server_addr));
+					initRecorder();
+					new RegisterStreamTask().execute(httpGatewayURL, streamName,
+							streamURL,
+							CloudMessaging.getMailList(RecordActivity.this));
+				} 
 
 			} else {
 				AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -654,115 +645,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 			} catch (Exception e) {
 			}
 			return null;
-		}
-	}
-
-	public class CheckBandwidthTask extends AsyncTask<String, Integer, Integer> {
-
-		@Override
-		protected void onPreExecute() {
-			super.onPreExecute();
-			mProgressDialog = ProgressDialog.show(RecordActivity.this, null,
-					getString(R.string.checking_bandwidth), true);
-			mProgressDialog.setCancelable(true);
-		}
-
-		@Override
-		protected Integer doInBackground(String... params) {
-			return measureBandwidth(params);
-		}
-
-		private Integer measureBandwidth(String... params) {
-			int bandwidth = 0;
-			Socket socket = null;
-			OutputStream outputStream = null;
-			InputStream istr = null;
-			try {
-				socket = new Socket(params[0], 53000);
-
-				outputStream = socket.getOutputStream();
-				istr = socket.getInputStream();
-				byte[] data0 = new byte[1024];
-				int time0 = sendData(outputStream, istr, data0);
-
-				byte[] data1 = new byte[160 * 1024];
-				int time1 = sendData(outputStream, istr, data1);
-
-				int dataSize = data1.length - data0.length;
-				int timeDiff = time1 - time0;
-
-				bandwidth = (int) (dataSize / timeDiff);
-
-				if ((bandwidth > 75)
-						&& (activeNetwork.getType() == ConnectivityManager.TYPE_WIFI || activeNetwork
-								.getType() == ConnectivityManager.TYPE_ETHERNET)) {
-
-					byte[] data3 = new byte[480 * 1024];
-					int time3 = sendData(outputStream, istr, data3);
-
-					dataSize = data3.length - data0.length;
-					timeDiff = time3 - time0;
-
-					bandwidth = (int) (dataSize / timeDiff);
-					if (bandwidth < 0) {
-						bandwidth = 115;
-					}
-				}
-
-				outputStream.write("\n".getBytes());
-				outputStream.flush();
-
-			} catch (UnknownHostException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} finally {
-				try {
-					istr.close();
-					outputStream.close();
-					socket.close();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-
-			return bandwidth;
-		}
-
-		private int sendData(OutputStream ostream, InputStream istream,
-				byte[] data) {
-			int timeDiff = 0;
-			try {
-				long time = System.currentTimeMillis();
-				ostream.write(data);
-				ostream.write("\r".getBytes());
-				ostream.flush();
-				byte[] incomingData = new byte[10];
-				istream.read(incomingData, 0, incomingData.length);
-				timeDiff = (int) (System.currentTimeMillis() - time);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			return timeDiff;
-		}
-
-		@Override
-		protected void onPostExecute(Integer result) {
-			super.onPostExecute(result);
-		
-			if (setCameraPreviewSize(result) == true) {
-
-				initRecorder();
-				new RegisterStreamTask().execute(httpGatewayURL, streamName,
-						streamURL,
-						CloudMessaging.getMailList(RecordActivity.this));
-			} else {
-				mProgressDialog.dismiss();
-				Toast.makeText(getApplicationContext(),
-						getString(R.string.insufficient_bandwidth) + " BW:" + result + "KB",
-						Toast.LENGTH_LONG).show();
-			}
-
 		}
 	}
 

@@ -71,31 +71,54 @@ public class ApplicationTester {
 
 	@After
 	public void after() {
-		butterflyApp.getBandwidthServer().close();
 		butterflyApp = null;
 	}
 
 	@Test
 	public void testRegisterStream() {
-		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", null, "mail@mail.com", true, null);
+		
+		boolean result = butterflyApp.registerUser("ksdjfşlask9934803248omjj", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com");
+		assertEquals(true, result);
+		
+		
+		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com", "mail@mail.com", true, null);
 		assertEquals(registerLiveStream, true);
+		
+		while(butterflyApp.isNotificationSent() == false) {
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 
 		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", null, "mail@mail.com", true, null);
 		assertEquals(registerLiveStream, false);
-
-
+		
+	
 		registerLiveStream = butterflyApp.registerLiveStream("publishedName"+11, "publishUrl", null, "mail@mail.com", true, null);
 		//should return false because url is key
 		assertEquals(registerLiveStream, false);
-
-		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl" + 11, null, "mail@mail.com", true, null);
+		
+	
+		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl" + 11, "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com", "mail@mail.com", true, null);
 		//should return true because url is changed
 		assertEquals(registerLiveStream, true);
+		
+		while(butterflyApp.isNotificationSent() == false) {
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		
+	
 	}
 
 	@Test
 	public void testRemoveStream() {
-		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", null, "mail@mail.com", true, null);
+		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com", "mail@mail.com", true, null);
 		assertEquals(registerLiveStream, true);
 
 		registerLiveStream = butterflyApp.removeStream("publishUrl");
@@ -239,17 +262,23 @@ public class ApplicationTester {
 		query.setParameter("mail", "hasan@hasan.com");
 		GcmUserMails userMail = (GcmUserMails) query.getSingleResult();
 		
+		assertEquals(1, query.getResultList().size());
+		
 		assertEquals(userMail.getGcmUsers().getRegIdses().iterator().next().getGcmRegId(), id);
 		
 		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails WHERE mail=:mail");
 		query.setParameter("mail", "salih@salih.com");
 		userMail = (GcmUserMails) query.getSingleResult();
 		
+		assertEquals(1, query.getResultList().size());
+		
 		assertEquals(userMail.getGcmUsers().getRegIdses().iterator().next().getGcmRegId(), id);
 		
 		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails WHERE mail=:mail");
 		query.setParameter("mail", "okan@okan.com");
 		userMail = (GcmUserMails) query.getSingleResult();
+		
+		assertEquals(1, query.getResultList().size());
 		
 		assertEquals(userMail.getGcmUsers().getRegIdses().iterator().next().getGcmRegId(), id);
 		
@@ -372,7 +401,7 @@ public class ApplicationTester {
 		for (int i = 0; i < mail.size(); i++) {
 			mailString += mail.get(i) + ",";
 		}
-		while(butterflyApp.isMailsSent() == false) {
+		while(butterflyApp.isNotificationSent() == false) {
 			try {
 				Thread.sleep(500);
 			} catch (InterruptedException e) {
@@ -388,23 +417,6 @@ public class ApplicationTester {
 	//	{
 	//		butterflyApp.sendNotificationsOrMail("ahmetmermerkaya@gmail.com","mail;videourl","en");
 	//	}
-
-
-	@Test
-	public void testcheckClientBandwidht() {
-		byte[] data = new byte[20480];
-		long currentTimeMillis = System.currentTimeMillis();
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		int checkClientBandwidth = butterflyApp.checkClientBandwidth(currentTimeMillis, data.length, data);
-
-		System.out.println(" check client bandwidth -> " + checkClientBandwidth);
-
-	}
 
 	@Test
 	public void testBandwidthServer() {

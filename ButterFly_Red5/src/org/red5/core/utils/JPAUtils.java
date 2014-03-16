@@ -12,6 +12,7 @@ import org.red5.core.dbModel.GcmUsers;
 public class JPAUtils {
 	
 	private static EntityManager entityManager;
+	private static EntityManagerFactory entityManagerFactory;
 
 
 	public static void beginTransaction() {
@@ -20,8 +21,10 @@ public class JPAUtils {
 	
 	public static EntityManager getEntityManager() {
 		if (entityManager == null) {
-			EntityManagerFactory entityManagerFactory = Persistence
-					.createEntityManagerFactory("ButterFly_Red5");
+			if (entityManagerFactory == null || entityManagerFactory.isOpen() == false) {
+				entityManagerFactory = Persistence
+					.createEntityManagerFactory("ButterFly_Red5");			
+			}
 			entityManager = entityManagerFactory.createEntityManager();
 		}
 		return entityManager;

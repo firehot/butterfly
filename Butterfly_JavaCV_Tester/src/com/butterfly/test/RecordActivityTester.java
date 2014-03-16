@@ -1,18 +1,14 @@
 package com.butterfly.test;
 
-import java.io.IOException;
+import android.content.Intent;
+import android.test.ActivityInstrumentationTestCase2;
+import android.widget.Button;
+import android.widget.EditText;
 
 import com.butterfly.MediaPlayerActivity;
 import com.butterfly.R;
 import com.butterfly.RecordActivity;
-import com.butterfly.RecordActivity.CheckBandwidthTask;
 import com.butterfly.fragment.StreamListFragment;
-
-import android.content.Intent;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
-import android.widget.Button;
-import android.widget.EditText;
 
 public class RecordActivityTester extends ActivityInstrumentationTestCase2 {
 
