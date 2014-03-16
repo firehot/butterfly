@@ -125,38 +125,37 @@ public class CloudMessaging {
 	
 	private void sendRegistrationIdToBackend() 
 	{
-		String possibleMail = getPossibleMail(this.activity);
-		if(possibleMail != null)
+		String mails = getMailList(this.activity);
+		if(mails != null)
 		{
-			Log.e("butterfly", possibleMail);	
-			registerUser(backendServer, regid, possibleMail);
+			Log.e("butterfly", mails);	
+			registerUser(backendServer, regid, mails);
 		}
 	}
 
 	private void updateRegistrationId(String oldRegID) 
 	{
-		String possibleMail = getPossibleMail(this.activity);
-		if(possibleMail != null)
+		String mails = getMailList(this.activity);
+		if(mails != null)
 		{
-			Log.e("butterfly", possibleMail);	
-			updateUser(backendServer, regid, possibleMail,oldRegID);
+			Log.e("butterfly", mails);	
+			updateUser(backendServer, regid, mails, oldRegID);
 		}
 	}
-	public static String getPossibleMail(Activity activity) {
+	public static String getMailList(Activity activity) {
 		Pattern emailPattern = Patterns.EMAIL_ADDRESS; // API level 8+
 		Account[] accounts = AccountManager.get(activity).getAccounts();
+		String mails = new String();
 		for (Account account : accounts) {
 			if (emailPattern.matcher(account.name).matches()) {
 				String possibleEmail = account.name;
-				if (possibleEmail.contains("gmail.com"))
-				{
-					return possibleEmail;
+				if (mails.length() > 0) {
+					mails += ",";
 				}
-
+				mails += account.name;
 			}
 		}
-		
-		return null;
+		return mails;
 	}
 	
 	protected Boolean registerUser(String backendServer, String registerId, String mail) {
