@@ -5,9 +5,13 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.Data;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
@@ -23,6 +27,10 @@ public class GcmIntentService extends IntentService {
 	public static final int NOTIFICATION_ID = 1;
 	private NotificationManager mNotificationManager;
 	NotificationCompat.Builder builder;
+	
+	private static String displayName = Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ? Data.DISPLAY_NAME_PRIMARY
+			: Data.DISPLAY_NAME;
+
 
 	public GcmIntentService() {
 		super("GcmIntentService");
@@ -85,11 +93,13 @@ public class GcmIntentService extends IntentService {
 		mNotificationManager = (NotificationManager) this
 				.getSystemService(Context.NOTIFICATION_SERVICE);
 
-		// String[] strArray = msg.split(";");
-		// String sender = strArray[0];
-		// String video_url = strArray[1];
+		String displayName = getDisplayName(broadcaster);
+		if (displayName == null) {
+			String[] mail = broadcaster.split(",");
+			displayName = mail[0]; 
+		}
 
-		String text = broadcaster + " "
+		String text = displayName + " "
 				+ getString(R.string.stream_shared_with_you);
 		if (error != null) {
 			text = error;
@@ -132,4 +142,43 @@ public class GcmIntentService extends IntentService {
 		mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
 
 	}
+	
+	private String getDisplayName(String emails) {
+		
+		String[] CONTACTS_SUMMARY_PROJECTION = new String[] {
+			Data._ID,
+			// The primary display name
+			displayName,
+			// The contact's _ID, to construct a content URI
+			Data.PHOTO_THUMBNAIL_URI,
+		};
+
+		String select = 
+				"(" + Email.ADDRESS + " NOTNULL " + " AND " +
+						Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "'" + " AND "
+						+ displayName + " NOTNULL  ) ";
+
+		String[] mail = emails.split(",");
+		String mailQuery = new String();
+		for (int i = 0; i < mail.length; i++) {
+			if (i > 0) {
+				mailQuery += " OR ";
+			}
+			mailQuery += " " + Email.ADDRESS + " == '"+ mail[i] +"' " ;
+		}
+		
+		select += " AND (" + mailQuery +" )";
+
+		Cursor cursor = getContentResolver().query(Data.CONTENT_URI,
+				CONTACTS_SUMMARY_PROJECTION, select, null,
+				null
+				);
+		 
+		 cursor.moveToFirst();
+		 if (cursor.getCount() > 0) {
+			 return cursor.getString(cursor.getColumnIndex(displayName));
+		 }
+		 return null;
+	}	
+	
 }
