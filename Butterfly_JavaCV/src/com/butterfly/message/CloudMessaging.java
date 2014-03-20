@@ -148,8 +148,10 @@ public class CloudMessaging {
 		String mails = new String();
 		for (Account account : accounts) {
 			if (emailPattern.matcher(account.name).matches()) {
-				String possibleEmail = account.name;
 				if (mails.length() > 0) {
+					if (mails.contains(account.name)) {
+						continue;
+					}
 					mails += ",";
 				}
 				mails += account.name;

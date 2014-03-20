@@ -44,7 +44,7 @@ public class UserManager {
 				result = gcmUsers.getRegIdses();
 			}
 
-			JPAUtils.closeEntityManager();
+			
 		} catch (NoResultException e) {
 			e.printStackTrace();
 		} catch (Exception e) {

@@ -87,18 +87,16 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	private Map<String, StreamProxy> proxyStreams = new HashMap<String, StreamProxy>();
 	private ResourceBundle messagesTR;
 	private ResourceBundle messagesEN;
-	private BandwidthServer bandwidthServer;
 	private java.util.Timer streamDeleterTimer;
 	private static long MILLIS_IN_HOUR = 60 * 60 * 1000;
 	public UserManager userManager;
 	public StreamManager streamManager;
-	private boolean mailsSent;
+	private boolean isNotificationSent;
 
 	public Application() {
 		messagesTR = ResourceBundle.getBundle("resources/LanguageBundle",
 				new Locale("tr"));
 		messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
-		bandwidthServer = new BandwidthServer();
 		userManager = new UserManager(this);
 		streamManager = new StreamManager(this);
 
@@ -151,7 +149,6 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public void appStop(IScope arg0) {
 		log.info("app stop");
 		super.appStop(arg0);
-		getBandwidthServer().close();
 		cancelStreamDeleteTimer();
 
 	}
@@ -255,6 +252,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 					regIdSet.addAll(result);
 				}
 			}
+			JPAUtils.closeEntityManager();
 
 			if (!mailListNotifiedByMail.isEmpty())
 				sendMail(mailListNotifiedByMail, broadcasterMail, streamName,
@@ -298,7 +296,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 
 	public void sendMail(final ArrayList<String> email, String broadcasterMail,
 			String streamName, String streamURL, String deviceLanguage) {
-		setMailsSent(false);
+		setNotificationSent(false);
 		ResourceBundle messages = messagesEN;
 		if (deviceLanguage != null && deviceLanguage.equals("tur")) {
 			messages = messagesTR;
@@ -350,7 +348,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 				} catch (MessagingException e) {
 					System.out.println(e.getMessage());
 				}
-				setMailsSent(true);
+				setNotificationSent(true);
 			}
 		};
 		mailSenderThread.start();
@@ -360,6 +358,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	private void sendNotification(final Set<RegIds> regIdSet,
 			final String broadcasterMail, final String streamURL,
 			final String streamName, final String deviceLanguage) {
+		setNotificationSent(false);
 		Thread notifSender = new Thread() {
 			public void run() {
 				// Instance of com.android.gcm.server.Sender, that does the
@@ -463,6 +462,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 				// so
 				// we can display it in our form again
 				System.out.println("OK");
+				setNotificationSent(true);
 			};
 		};
 
@@ -553,10 +553,6 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		}
 		return 0;
 
-	}
-
-	public BandwidthServer getBandwidthServer() {
-		return bandwidthServer;
 	}
 
 	@Override
@@ -663,12 +659,12 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		return proxyStreams;
 	}
 
-	public boolean isMailsSent() {
-		return mailsSent;
+	public boolean isNotificationSent() {
+		return isNotificationSent;
 	}
 
-	private void setMailsSent(boolean mailsSent) {
-		this.mailsSent = mailsSent;
+	private void setNotificationSent(boolean mailsSent) {
+		this.isNotificationSent = mailsSent;
 	}
 
 	public synchronized int getViewerCount(String broadcastUrl) {
