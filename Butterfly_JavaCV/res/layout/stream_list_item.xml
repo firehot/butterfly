@@ -2,6 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:background="#FFFFFF"
     android:orientation="horizontal"
     android:padding="6dip" >
 
@@ -26,7 +27,7 @@
             android:layout_marginBottom="10dp"
             android:layout_marginLeft="10dp"
             android:text="yayin"
-            android:textColor="@android:color/white" />
+            android:textColor="@android:color/black" />
 
         <TextView
             android:id="@+id/live_now"
@@ -51,6 +52,6 @@
         android:layout_centerVertical="true"
         android:layout_margin="5dp"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:textColor="@android:color/white" />
+        android:textColor="@android:color/black" />
 
 </LinearLayout>
