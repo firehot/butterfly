@@ -1,5 +1,8 @@
 package com.butterfly.fragment;
 
+import java.util.ArrayList;
+
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -10,6 +13,8 @@ import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
 import android.support.v4.app.Fragment;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -17,10 +22,9 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
-import android.widget.FilterQueryProvider;
 import android.widget.ImageView;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.SimpleCursorAdapter.CursorToStringConverter;
@@ -37,13 +41,11 @@ public class ContactsListFragment extends Fragment {
 
 	SimpleCursorAdapter mAdapter;
 
-	private ListView selectedContactList;
+	private ListView contactList;
 
 	private SelectedContactAdapter selectedContactAdapter;
 
-	private AutoCompleteTextView autoCompleteEditText;
-
-	private RemoveContactListener removeContactListener;
+	private TextView searchEditText;
 
 	private Button startBroadcastView;
 	
@@ -51,6 +53,8 @@ public class ContactsListFragment extends Fragment {
 
 	private static String displayName = Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ? Data.DISPLAY_NAME_PRIMARY
 			: Data.DISPLAY_NAME;
+
+	private ArrayList<Contact> frequentContacts;
 
 	public class Contact {
 		public String displayName;
@@ -63,6 +67,7 @@ public class ContactsListFragment extends Fragment {
 			this.email = email;
 			this.photoUri = photoUri;
 		}
+		
 
 		@Override
 		public String toString() {
@@ -70,26 +75,12 @@ public class ContactsListFragment extends Fragment {
 		}
 	}
 
-	public class RemoveContactListener implements OnClickListener {
-
-		@Override
-		public void onClick(View view) {
-			int position = selectedContactList.getPositionForView((View) view
-					.getParent());
-
-			selectedContactAdapter.remove(selectedContactAdapter.getItem(position));
-			selectedContactAdapter.notifyDataSetChanged();
-		}
-
-	}
-
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		View v = inflater.inflate(R.layout.contact_list, container, false);
 
-		removeContactListener = new RemoveContactListener();
-		autoCompleteEditText = (AutoCompleteTextView) v.findViewById(R.id.autoCompleteTextView);
+		searchEditText = (TextView) v.findViewById(R.id.searchText);
 		startBroadcastView = (Button) v.findViewById(R.id.start_broadcast_button); 
 		startBroadcastView.setOnClickListener(new OnClickListener() {
 
@@ -107,7 +98,7 @@ public class ContactsListFragment extends Fragment {
 					if (selectedContactAdapter.getCount() > 0) {
 						String mails = new String();
 						for (int i = 0; i < count; i++) {
-							mails += selectedContactAdapter.getItem(i).email + ",";
+							mails += selectedContactAdapter.getItem(i).email  + ",";
 						}
 
 						mails = mails.substring(0, mails.length() - 1);
@@ -119,29 +110,19 @@ public class ContactsListFragment extends Fragment {
 			}
 		});
 
-		selectedContactList = (ListView) v.findViewById(R.id.selectedContactList);
+		contactList = (ListView) v.findViewById(R.id.selectedContactList);
 		selectedContactAdapter = new SelectedContactAdapter(getActivity(),
 				R.layout.contact_list_item);
-		selectedContactList.setAdapter(selectedContactAdapter);
+		contactList.setAdapter(selectedContactAdapter);
 		
 		mAdapter = new FilteredContactListAdapter(getActivity(),
 				R.layout.contact_list_item, null, new String[] {
 			displayName, displayName, Data.PHOTO_THUMBNAIL_URI }, new int[] {
 			R.id.display_name, R.id.email_address, R.id.photo_uri}, 0, true);
 
+		frequentContacts = getFrequentContacts();
+		selectedContactAdapter.addAll(frequentContacts);
 
-		autoCompleteEditText.setAdapter(mAdapter);
-
-		mAdapter.setFilterQueryProvider(new FilterQueryProvider() {
-
-			@Override
-			public Cursor runQuery(CharSequence constraint) {
-				if (constraint != null) {
-					return getCursor(constraint);
-				}
-				return null;
-			}
-		});
 		mAdapter.setCursorToStringConverter(new CursorToStringConverter() {
 
 			@Override
@@ -150,52 +131,60 @@ public class ContactsListFragment extends Fragment {
 				return cursor.getString(index);
 			}
 		});
-
-		autoCompleteEditText.setOnItemClickListener(new OnItemClickListener() {
-
+		searchEditText.addTextChangedListener(new TextWatcher() {
 			@Override
-			public void onItemClick(AdapterView<?> adapterView, View arg1,
-					int position, long id) {
-
-				int count = selectedContactAdapter.getCount();
-
-				Cursor cursor = (Cursor) adapterView
-						.getItemAtPosition(position);
-				String name = cursor.getString(cursor
-						.getColumnIndex(displayName));
-				String mail = cursor.getString(cursor
-						.getColumnIndex(Email.ADDRESS));
-
-				String photoUri = cursor.getString(cursor.getColumnIndex(Data.PHOTO_THUMBNAIL_URI));
-
-				boolean found = false;
-				for (int i = 0; i < count; i++) {
-					if (selectedContactAdapter.getItem(i).email.equals(mail)) {
-						found = true;
-						break;
-					}
+			public void onTextChanged(CharSequence s, int start, int before, int count) {			}
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count,int after) {}
+			@Override
+			public void afterTextChanged(Editable s) {
+				String text = searchEditText.getText().toString();
+				if (text.length() > 1) {
+					contactList.setAdapter(mAdapter);
+					mAdapter.changeCursor(getFilteredContacts(text));
+					System.out.println(" text :" + text);
 				}
-				if (found == false) {
-					selectedContactAdapter.add(new Contact(name, mail, photoUri));
-					selectedContactAdapter.notifyDataSetChanged();
+				else {
+					contactList.setAdapter(selectedContactAdapter);					
 				}
-				autoCompleteEditText.setText("");
+				
 			}
 		});
 		
+		contactList.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> arg0, View view, int position,
+					long id) {
+				ListAdapter adapter = contactList.getAdapter();
+				String email;
+				if (adapter.equals(mAdapter)) {
+					Cursor cursor = (Cursor) mAdapter.getItem(position);
+					email = cursor.getString(cursor.getColumnIndex(Email.ADDRESS));
+				}
+				else {
+					Contact contact = selectedContactAdapter.getItem(position);
+					email = contact.email;
+				}
+				
+				Intent intent = new Intent(getActivity(), RecordActivity.class);
+				intent.putExtra(MAILS_TO_BE_NOTIFIED, email);
+				startActivity(intent);
+			}
+			
+		});
 		
 		fragmentView = v;
 		return v;
 	}
 
-	private Cursor getCursor(CharSequence constraint) {
+	private Cursor getFilteredContacts(CharSequence constraint) {
 		String[] selectArgs = null;
 
 		String select = 
 				"(" + Email.ADDRESS + " NOTNULL " + " AND " +
 						Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "'" + " AND "
-						+ displayName + " NOTNULL AND " +
-						Data.IS_PRIMARY + " == 1 ) ";
+						+ displayName + " NOTNULL ) ";
 
 		if (constraint != null) {
 			select += " AND (" + Email.ADDRESS + " LIKE ? " + " OR "
@@ -203,15 +192,74 @@ public class ContactsListFragment extends Fragment {
 			selectArgs = new String[2];
 			selectArgs[0] = "%" + constraint + "%";
 			selectArgs[1] = "%" + constraint + "%";
-			;
 		}
 
-		return getActivity().getContentResolver().query(Data.CONTENT_URI,
-				CONTACTS_SUMMARY_PROJECTION, select, selectArgs,
-				Contacts.TIMES_CONTACTED + " DESC "
-				);
-				//displayName + " COLLATE LOCALIZED ASC"
 		
+		Cursor cursor = getActivity().getContentResolver().query(Data.CONTENT_URI,
+				CONTACTS_SUMMARY_PROJECTION, select, selectArgs,
+				Contacts.TIMES_CONTACTED + " DESC"				
+				);
+		
+		
+		return cursor;
+				
+	}
+	
+	public ArrayList<Contact> getFrequentContacts() {
+
+		String[] CONTACTS_SUMMARY_PROJECTION = new String[] {
+			Contacts._ID,
+			// The primary display name
+			displayName,
+			Contacts.PHOTO_THUMBNAIL_URI,
+		};
+		
+		ContentResolver resolver = getActivity().getContentResolver();
+		Cursor cursor = resolver.query(Contacts.CONTENT_STREQUENT_URI,
+				CONTACTS_SUMMARY_PROJECTION, null, null, null 	
+				);
+		
+		cursor.moveToFirst();
+		int displayNameIndex = cursor.getColumnIndex(displayName);
+		int photoIndex = cursor.getColumnIndex(Contacts.PHOTO_THUMBNAIL_URI);
+		int idIndex = cursor.getColumnIndex(Contacts._ID);
+		
+		String[] EMAIL_PROJECTION = new String[] {
+				Email.ADDRESS
+		};
+		String email, displayName, photoUri;
+		ArrayList<Contact> frequentContacts = new ArrayList<Contact>();
+		String allMails = new String();
+		while (cursor.isAfterLast() == false) 
+		{
+			String select = Data.MIMETYPE + " = '"+ Email.CONTENT_ITEM_TYPE +"' AND " + 
+					Email.ADDRESS + " NOTNULL AND " 
+    				+ Data.CONTACT_ID + "= " + cursor.getInt(idIndex) + " ";
+			 
+			displayName = cursor.getString(displayNameIndex);
+		    Cursor emailCursor = resolver.query(Data.CONTENT_URI, EMAIL_PROJECTION, 
+		    				select, 
+		    				null, Email.TYPE + " ASC ");
+		    emailCursor.moveToFirst();
+		    String userMails = new String();
+		    while(emailCursor.isAfterLast() == false) {
+		    	email = emailCursor.getString(emailCursor.getColumnIndex(Email.ADDRESS));
+		    	if (allMails.contains(email) == false) {
+		    		allMails += email;
+		    		userMails += email + ",";
+		    	}
+		    	emailCursor.moveToNext();
+		    }
+		    if (userMails.length()>0) {
+		    	displayName = cursor.getString(displayNameIndex);
+	    		photoUri = cursor.getString(photoIndex);
+	    		frequentContacts.add(new Contact(displayName, userMails.substring(0, userMails.length()-1) , photoUri));
+		    }
+	    	cursor.moveToNext();
+		}
+		
+		
+		return frequentContacts;
 	}
 
 	// These are the Contacts rows that we will retrieve.
@@ -233,7 +281,6 @@ public class ContactsListFragment extends Fragment {
 		TextView displayNameView;
 		TextView emailView;
 		ImageView photoView;
-		ImageView deleteView;
 	}
 
 	public class SelectedContactAdapter extends ArrayAdapter<Contact> {
@@ -251,15 +298,13 @@ public class ContactsListFragment extends Fragment {
 				holder.displayNameView = (TextView) convertView.findViewById(R.id.display_name);
 				holder.emailView = (TextView) convertView.findViewById(R.id.email_address);
 				holder.photoView = (ImageView) convertView.findViewById(R.id.photo_uri);
-				holder.deleteView = (ImageView) convertView.findViewById(R.id.remove_contact);
 				convertView.setTag(holder);
 			} else {
 				holder = (ViewHolder) convertView.getTag();
 			}
 			Contact item = getItem(position);
 			holder.displayNameView.setText(item.displayName);
-			holder.emailView.setText(item.email);
-			holder.deleteView.setOnClickListener(removeContactListener);
+			//holder.emailView.setText(item.email);
 			if (item.photoUri != null) {
 				holder.photoView.setImageURI(Uri.parse(item.photoUri));
 			}
@@ -294,7 +339,6 @@ public class ContactsListFragment extends Fragment {
 				holder.displayNameView = (TextView) convertView.findViewById(R.id.display_name);
 				holder.emailView = (TextView) convertView.findViewById(R.id.email_address);
 				holder.photoView = (ImageView) convertView.findViewById(R.id.photo_uri);
-				holder.deleteView = (ImageView) convertView.findViewById(R.id.remove_contact);
 				convertView.setTag(holder);
 
 				emailColumnIndex = cursor.getColumnIndex(Email.ADDRESS);
@@ -304,7 +348,10 @@ public class ContactsListFragment extends Fragment {
 				holder = (ViewHolder) convertView.getTag();
 			}
 
-			String email = cursor.getString(emailColumnIndex);
+			String email = "";
+			if (emailColumnIndex != -1) {
+				email = cursor.getString(emailColumnIndex);
+			}
 			holder.emailView.setText(email);
 
 			String displayName = cursor.getString(displayNameColumnIndex);
@@ -317,7 +364,6 @@ public class ContactsListFragment extends Fragment {
 			else {
 				holder.photoView.setImageResource(R.drawable.ic_action_user);
 			}
-			holder.deleteView.setVisibility(View.GONE);
 
 			return convertView;
 		}
