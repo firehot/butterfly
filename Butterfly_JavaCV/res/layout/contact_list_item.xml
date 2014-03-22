@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
+    android:background="?android:attr/selectableItemBackground"
     android:padding="2dp" >
 
     <ImageView
@@ -11,7 +11,7 @@
         android:layout_width="50dp"
         android:layout_height="50dp"
 		android:adjustViewBounds="true"
-        android:src="@drawable/ic_action_user"
+        android:src="@drawable/ic_contact_picture_2"
         android:layout_centerVertical="true"/>
 
     <TextView

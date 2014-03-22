@@ -47,8 +47,6 @@ public class ContactsListFragment extends Fragment {
 
 	private TextView searchEditText;
 
-	private Button startBroadcastView;
-	
 	public View fragmentView;
 
 	private static String displayName = Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ? Data.DISPLAY_NAME_PRIMARY
@@ -81,35 +79,6 @@ public class ContactsListFragment extends Fragment {
 		View v = inflater.inflate(R.layout.contact_list, container, false);
 
 		searchEditText = (TextView) v.findViewById(R.id.searchText);
-		startBroadcastView = (Button) v.findViewById(R.id.start_broadcast_button); 
-		startBroadcastView.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				int batteryLevel = ((MainActivity)getActivity()).getBatteryLevel();
-				if(batteryLevel > 0 && batteryLevel < 10)
-				{
-					Toast.makeText(getActivity(), getString(R.string.batteryLow), Toast.LENGTH_LONG).show();
-				}
-				else {
-					int count = selectedContactAdapter.getCount();
-					Intent intent = new Intent(getActivity(), RecordActivity.class);
-
-					if (selectedContactAdapter.getCount() > 0) {
-						String mails = new String();
-						for (int i = 0; i < count; i++) {
-							mails += selectedContactAdapter.getItem(i).email  + ",";
-						}
-
-						mails = mails.substring(0, mails.length() - 1);
-						intent.putExtra(MAILS_TO_BE_NOTIFIED, mails);
-
-					}
-					startActivity(intent);
-				}
-			}
-		});
-
 		contactList = (ListView) v.findViewById(R.id.selectedContactList);
 		selectedContactAdapter = new SelectedContactAdapter(getActivity(),
 				R.layout.contact_list_item);
@@ -309,7 +278,7 @@ public class ContactsListFragment extends Fragment {
 				holder.photoView.setImageURI(Uri.parse(item.photoUri));
 			}
 			else {
-				holder.photoView.setImageResource(R.drawable.ic_action_user);
+				holder.photoView.setImageResource(R.drawable.ic_contact_picture_2);
 			}
 			return convertView;
 		}
@@ -362,7 +331,7 @@ public class ContactsListFragment extends Fragment {
 				holder.photoView.setImageURI(Uri.parse(photoUri));
 			}
 			else {
-				holder.photoView.setImageResource(R.drawable.ic_action_user);
+				holder.photoView.setImageResource(R.drawable.ic_contact_picture_2);
 			}
 
 			return convertView;
