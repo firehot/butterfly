@@ -51,7 +51,7 @@
             android:id="@+id/recorder_control"
             android:layout_width="50dp"
             android:layout_height="wrap_content"
-            android:background="@drawable/bt_order" />
+            android:background="@drawable/bt_start_record" />
 
         <View
             android:layout_width="1dp"

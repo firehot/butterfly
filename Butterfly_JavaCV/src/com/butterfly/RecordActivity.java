@@ -232,7 +232,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 		
 		/* add control button: start and stop */
 		btnRecorderControl = (Button) findViewById(R.id.recorder_control);
-		btnRecorderControl.setBackgroundResource(R.drawable.ic_start_record);
+		btnRecorderControl.setBackgroundResource(R.drawable.bt_start_record);
 		btnRecorderControl.setOnClickListener(this);
 
 		viewerCountView = (TextView) findViewById(R.id.viewerCountView);
@@ -512,7 +512,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 			// This will trigger the audio recording loop to stop and then set
 			// isRecorderStart = false;
 			btnRecorderControl
-					.setBackgroundResource(R.drawable.ic_start_record);
+					.setBackgroundResource(R.drawable.bt_start_record);
 			streamNameEditText.setVisibility(View.VISIBLE);
 			publicVideoCheckBox.setVisibility(View.VISIBLE);
 			stopRecording();
@@ -580,7 +580,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 				streamNameEditText.setVisibility(View.GONE);
 				publicVideoCheckBox.setVisibility(View.GONE);
 				btnRecorderControl
-						.setBackgroundResource(R.drawable.ic_stop_record);
+						.setBackgroundResource(R.drawable.bt_stop_record);
 			} else {
 				Toast.makeText(getApplicationContext(),
 						getString(R.string.stream_registration_failed),
