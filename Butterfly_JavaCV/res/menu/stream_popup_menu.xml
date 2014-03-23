@@ -1,0 +1,6 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/menu_stream_popup_delete"
+          android:title="Delete" />
+    <item android:id="@+id/menu_stream_popup_share"
+          android:title="Share" />
+</menu>
