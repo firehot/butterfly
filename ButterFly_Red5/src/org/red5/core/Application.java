@@ -680,9 +680,9 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		return count;
 	}
 	
-	public void deleteStream(String url)
+	public boolean deleteStream(String url)
 	{
 		Stream stream = streamManager.getStream(url);
-		streamManager.deleteStream(stream);
+		return streamManager.deleteStream(stream);
 	}
 }
