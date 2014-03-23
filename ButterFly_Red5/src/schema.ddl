@@ -1,7 +1,7 @@
 
     create table butterflydb.gcm_user_mails (
         id integer not null auto_increment unique,
-        mail varchar(45),
+        mail varchar(45) unique,
         user_id integer,
         primary key (id)
     );
