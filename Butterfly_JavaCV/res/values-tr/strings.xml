@@ -46,4 +46,5 @@
     <string name="hint">İpucu: Arkadaşlarınızı seçin ve kamera basarak canlı yayın yapın</string>
     <string name="list">List</string>
     <string name="map">Map</string>
+    <string name="group_broadcast">Grup Yayını</string>
 </resources>

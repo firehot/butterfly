@@ -158,8 +158,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		Bundle extras = getIntent().getExtras();
 		if (extras != null
-				&& extras
-						.containsKey(ContactsListFragment.MAILS_TO_BE_NOTIFIED)) {
+				&& extras.containsKey(ContactsListFragment.MAILS_TO_BE_NOTIFIED)) {
 			mailsToBeNotified = getIntent().getExtras().getString(
 					ContactsListFragment.MAILS_TO_BE_NOTIFIED);
 		}

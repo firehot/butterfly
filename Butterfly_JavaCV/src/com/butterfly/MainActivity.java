@@ -103,7 +103,7 @@ public class MainActivity extends FragmentActivity implements
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.activity_client, menu);
+		getMenuInflater().inflate(R.menu.activity_main_menu, menu);
 		return true;
 	}
 
@@ -121,7 +121,12 @@ public class MainActivity extends FragmentActivity implements
 				getStreamListTask.execute(httpGatewayURL);
 			}
 			return true;
-
+		case R.id.record:
+			Intent intent = new Intent(this, RecordActivity.class);
+			startActivity(intent);
+			return true;
+		case R.id.group_broadcast:
+			startActivity(new Intent(this, ContactsGroupActivity.class));
 		default:
 			break;
 		}

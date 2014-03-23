@@ -41,10 +41,12 @@
     <string name="streamListTitle">Streams Shared With Me</string>
     <string name="contactListTitle">Contacts</string>
     <string name="batteryLow">Battery is low,cant start recording</string>
+
     <plurals name="viewers_count">
         <item quantity="one">%d Viewer</item>
         <item quantity="other">%d Viewers</item>
     </plurals>
+
     <string name="accept_privacy_and_terms"><u>By clicking I agree you are accepting the Terms and Privacy</u></string>
     <string name="terms_of_service_url">http://www.butterflytv.net/privacy-and-terms/</string>
     <string name="checking_bandwidth">Checking internet speed...</string>
@@ -52,5 +54,7 @@
     <string name="hint">Hint: Choose friends and press camera for live broadcasting</string>
     <string name="list">List</string>
     <string name="map">Map</string>
+    <string name="group_broadcast">Group Broadcast</string>
+    <string name="title_activity_contact_chooser">Choose Contacts</string>
 
 </resources>

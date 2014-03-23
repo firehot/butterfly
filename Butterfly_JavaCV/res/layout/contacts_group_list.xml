@@ -4,8 +4,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
-    <EditText
-        android:id="@+id/searchText"
+        <AutoCompleteTextView
+        android:id="@+id/autoCompleteTextView"
         style="?android:attr/textAppearanceMedium"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -18,10 +18,9 @@
         android:id="@+id/selectedContactList"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/searchText"
+        android:layout_below="@id/autoCompleteTextView"
        >
     </ListView>
-    
 
 
 </RelativeLayout>
