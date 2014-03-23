@@ -148,9 +148,9 @@ OnClickListener{
 	            	DeleteStreamTask deleteTask = new DeleteStreamTask(fragment);
 	            	deleteTask.execute(fragment.getActivity().getString(R.string.http_gateway_url),v.getTag().toString());
 	             return true;
-	            case R.id.menu_stream_popup_share:
-	              Toast.makeText(StreamListFragment.this.getActivity(), "Share!", Toast.LENGTH_SHORT).show();
-	              return true;
+//	            case R.id.menu_stream_popup_share:
+//	              Toast.makeText(StreamListFragment.this.getActivity(), "Share!", Toast.LENGTH_SHORT).show();
+//	              return true;
 	            default:
 	              return false;
 	            }
