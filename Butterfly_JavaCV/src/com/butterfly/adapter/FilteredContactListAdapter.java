@@ -56,6 +56,8 @@ public class FilteredContactListAdapter extends SimpleCursorAdapter {
 			}
 		});
 	}
+	
+	
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
@@ -172,8 +174,8 @@ public class FilteredContactListAdapter extends SimpleCursorAdapter {
 					photoUri = cursor.getString(photoIndex);
 					frequentContacts.add(new ContactAdapter.Contact(displayName, email, photoUri));
 				}
-				emailCursor.close();
 			}
+			emailCursor.close();
 			cursor.moveToNext();
 		}
 		cursor.close();

@@ -152,12 +152,14 @@ public class ContactsGroupFragment extends Fragment {
 		}
 		startActivity(intent);
 	}
-
-
-
-
-
-
-
+	
+	@Override
+	public void onPause() {
+		Cursor cursor = mAdapter.getCursor();
+		if (cursor != null && cursor.isClosed() == false) {
+			cursor.close();
+		}
+		super.onPause();
+	}
 	
 }
