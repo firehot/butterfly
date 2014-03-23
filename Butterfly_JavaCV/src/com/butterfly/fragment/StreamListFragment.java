@@ -22,6 +22,7 @@ import com.butterfly.R;
 import com.butterfly.adapter.StreamListAdapter;
 import com.butterfly.listeners.IStreamListUpdateListener;
 import com.butterfly.message.CloudMessaging;
+import com.butterfly.tasks.DeleteStreamTask;
 
 public class StreamListFragment extends ListFragment implements IStreamListUpdateListener,
 OnClickListener{
@@ -131,17 +132,20 @@ OnClickListener{
 	}
 
 	// Display anchored popup menu based on view selected
-	  private void showStreamPopup(View v) {
+	  private void showStreamPopup(final View v) {
 	    PopupMenu popup = new PopupMenu(this.getActivity(), v);
 	    // Inflate the menu from xml
 	    popup.getMenuInflater().inflate(R.menu.stream_popup_menu, popup.getMenu());
 	    // Setup menu item selection
 	    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+	    	
 	        public boolean onMenuItemClick(MenuItem item) {
 	            switch (item.getItemId()) {
-	            case R.id.menu_stream_popup_delete:
-	              Toast.makeText(StreamListFragment.this.getActivity(), "Delete!", Toast.LENGTH_SHORT).show();
-	              return true;
+	            case R.id.menu_stream_popup_delete: 
+	            	StreamListFragment fragment = StreamListFragment.this;
+	            	DeleteStreamTask deleteTask = new DeleteStreamTask(fragment);
+	            	deleteTask.execute(fragment.getActivity().getString(R.string.http_gateway_url),v.getTag().toString());
+	             return true;
 	            case R.id.menu_stream_popup_share:
 	              Toast.makeText(StreamListFragment.this.getActivity(), "Share!", Toast.LENGTH_SHORT).show();
 	              return true;
@@ -153,5 +157,25 @@ OnClickListener{
 	    // Handle dismissal with: popup.setOnDismissListener(...);
 	    // Show the menu
 	    popup.show();
+	  }
+	  
+	  public void removeStream(String streamUrl)
+	  {
+		  int count = adapter.getCount();
+		  Stream stream = null;
+		  for(int i = 0; i < count;i++)
+		  {
+			  stream = adapter.getItem(i);
+			  if(stream.url.equals(streamUrl))
+			  {
+				  break;
+			  }
+		  }
+		  
+		  if(stream != null)
+		  {
+			  adapter.remove(stream);
+			  adapter.notifyDataSetChanged();
+		  }
 	  }
 }

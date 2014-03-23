@@ -55,6 +55,8 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 		Stream s = getItem(position);
 		String streamname = s.name;
 		
+		holder.overflowButton.setTag(s.url);
+		
 		if(s.name.length() > 17)
 			streamname = s.name.substring(0, 17)+"...";
 
