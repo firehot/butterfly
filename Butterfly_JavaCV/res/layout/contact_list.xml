@@ -5,51 +5,26 @@
     android:background="#FFFFFF"
     android:orientation="vertical" >
 
-    <TextView 
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/hint"
-        android:text="@string/hint"
-        android:textSize="12sp"
-        android:padding="5dp"
-        android:lines="1"
-        />
-
-    <AutoCompleteTextView
-        android:id="@+id/autoCompleteTextView"
+    <EditText
+        android:id="@+id/searchText"
         style="?android:attr/textAppearanceMedium"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/hint"
         android:hint="@string/write_contact_name_or_email_addr"
         android:lines="1"
         android:textColor="@android:color/black" 
         android:textCursorDrawable="@null"/>
 
-	<FrameLayout  android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:background="@color/common_signin_btn_light_text_default"
-         >
-    <Button
-        android:adjustViewBounds="true"
-        android:id="@+id/start_broadcast_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:drawableLeft="@drawable/ic_record"
-        android:text="@string/broadcast_live"
-        android:layout_gravity="center_horizontal"
-       	android:padding="3dp"
-     	android:background="?android:attr/selectableItemBackground"
-		/>
-   </FrameLayout> 
-
     <ListView
         android:id="@+id/selectedContactList"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/autoCompleteTextView"
+        android:layout_below="@id/searchText"
+        android:cacheColorHint="#FFFFFF"
+        android:divider="#EEEEEE"
+        android:dividerHeight="1dp"
+      
+        
          >
     </ListView>
 
