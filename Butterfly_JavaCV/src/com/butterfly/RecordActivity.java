@@ -307,11 +307,11 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		Log.w(LOG_TAG, "init recorder");
 		// if link is set, dont set it again
-		if (ffmpeg_link.equals(getString(R.string.rtmp_url))) {
-			streamURL = String.valueOf((int) (Math.random() * 100000)
+		ffmpeg_link= getString(R.string.rtmp_url);
+		streamURL = String.valueOf((int) (Math.random() * 100000)
 					+ System.currentTimeMillis());
-			ffmpeg_link += streamURL;
-		}
+		ffmpeg_link += streamURL;
+		
 		Log.i(LOG_TAG, "ffmpeg_url: " + ffmpeg_link);
 
 		createRecorder();
