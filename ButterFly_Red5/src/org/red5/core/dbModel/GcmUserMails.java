@@ -53,7 +53,7 @@ public class GcmUserMails implements java.io.Serializable {
 		this.gcmUsers = gcmUsers;
 	}
 
-	@Column(name = "mail", length = 45)
+	@Column(name = "mail",unique = true, length = 45)
 	public String getMail() {
 		return this.mail;
 	}
