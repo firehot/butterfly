@@ -6,20 +6,26 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.Button;
+import android.widget.PopupMenu;
 import android.widget.Toast;
 
-import com.butterfly.MediaPlayerActivity;
 import com.butterfly.MainActivity;
+import com.butterfly.MediaPlayerActivity;
 import com.butterfly.R;
 import com.butterfly.adapter.StreamListAdapter;
 import com.butterfly.listeners.IStreamListUpdateListener;
 import com.butterfly.message.CloudMessaging;
+import com.butterfly.tasks.DeleteStreamTask;
 
-public class StreamListFragment extends ListFragment implements IStreamListUpdateListener{
+public class StreamListFragment extends ListFragment implements IStreamListUpdateListener,
+OnClickListener{
 
 	public static final String STREAM_PUBLISHED_NAME = "stream-name";
 	public static final String STREAM_IS_LIVE = "is-live";
@@ -88,11 +94,11 @@ public class StreamListFragment extends ListFragment implements IStreamListUpdat
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 		streamList = ((MainActivity)getActivity()).getStreamList();
-		adapter = new StreamListAdapter(getActivity());
+		adapter = new StreamListAdapter(this);
 
 		setListAdapter(adapter);
 		getListView().setOnItemClickListener(itemClickListener);
-
+		
 		streamListUpdated(streamList);
 	}
 
@@ -119,4 +125,57 @@ public class StreamListFragment extends ListFragment implements IStreamListUpdat
 		}
 	}
 
+	@Override
+	public void onClick(View v) {
+		showStreamPopup(v);
+		
+	}
+
+	// Display anchored popup menu based on view selected
+	  private void showStreamPopup(final View v) {
+	    PopupMenu popup = new PopupMenu(this.getActivity(), v);
+	    // Inflate the menu from xml
+	    popup.getMenuInflater().inflate(R.menu.stream_popup_menu, popup.getMenu());
+	    // Setup menu item selection
+	    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+	    	
+	        public boolean onMenuItemClick(MenuItem item) {
+	            switch (item.getItemId()) {
+	            case R.id.menu_stream_popup_delete: 
+	            	StreamListFragment fragment = StreamListFragment.this;
+	            	DeleteStreamTask deleteTask = new DeleteStreamTask(fragment);
+	            	deleteTask.execute(fragment.getActivity().getString(R.string.http_gateway_url),v.getTag().toString());
+	             return true;
+	            case R.id.menu_stream_popup_share:
+	              Toast.makeText(StreamListFragment.this.getActivity(), "Share!", Toast.LENGTH_SHORT).show();
+	              return true;
+	            default:
+	              return false;
+	            }
+	        }
+	    });
+	    // Handle dismissal with: popup.setOnDismissListener(...);
+	    // Show the menu
+	    popup.show();
+	  }
+	  
+	  public void removeStream(String streamUrl)
+	  {
+		  int count = adapter.getCount();
+		  Stream stream = null;
+		  for(int i = 0; i < count;i++)
+		  {
+			  stream = adapter.getItem(i);
+			  if(stream.url.equals(streamUrl))
+			  {
+				  break;
+			  }
+		  }
+		  
+		  if(stream != null)
+		  {
+			  adapter.remove(stream);
+			  adapter.notifyDataSetChanged();
+		  }
+	  }
 }

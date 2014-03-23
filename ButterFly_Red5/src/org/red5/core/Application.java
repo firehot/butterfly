@@ -679,4 +679,10 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		}
 		return count;
 	}
+	
+	public void deleteStream(String url)
+	{
+		Stream stream = streamManager.getStream(url);
+		streamManager.deleteStream(stream);
+	}
 }

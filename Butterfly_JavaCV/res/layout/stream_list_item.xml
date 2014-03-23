@@ -1,20 +1,23 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:background="#FFFFFF"
-    android:orientation="horizontal"
-    android:padding="6dip" >
+    android:padding="6dip" 
+    >
 
     <com.loopj.android.image.SmartImageView
         android:id="@+id/stream_image"
         android:layout_width="70dp"
         android:layout_height="70dp"
+        android:layout_alignParentLeft="true"
         android:src="@drawable/ic_launcher" />
 
     <RelativeLayout
+        android:id="@+id/video_info"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_toRightOf="@id/stream_image" >
 
         <TextView
             android:id="@+id/stream_name"
@@ -43,15 +46,25 @@
 
     </RelativeLayout>
 
+    <Button
+        android:id="@+id/streamOverflow"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_alignParentRight="true"
+        android:background="@drawable/ic_action_overflow" 
+        android:focusable="false"/>
+
     <TextView
         android:id="@+id/stream_viewer_count"
         style="?android:attr/textAppearanceSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
+        android:layout_below="@id/streamOverflow"
         android:layout_centerVertical="true"
         android:layout_margin="5dp"
+        android:text="1 Viewer"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:textColor="@android:color/black" />
 
-</LinearLayout>
+</RelativeLayout>
