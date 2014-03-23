@@ -38,6 +38,7 @@ import com.butterfly.debug.BugSense;
 import com.butterfly.fragment.StreamListFragment.Stream;
 import com.butterfly.listeners.IStreamListUpdateListener;
 import com.butterfly.message.CloudMessaging;
+import com.butterfly.utils.Utils;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
@@ -288,7 +289,8 @@ public class MainActivity extends FragmentActivity implements
 			try {
 				System.out.println(params[0]);
 				amfConnection.connect(params[0]);
-				streams = (String) amfConnection.call("getLiveStreams");
+				String mails = Utils.getMailList(MainActivity.this);
+				streams = (String) amfConnection.call("getLiveStreams",mails);
 			} catch (ClientStatusException e) {
 				e.printStackTrace();
 			} catch (ServerStatusException e) {
@@ -327,7 +329,10 @@ public class MainActivity extends FragmentActivity implements
 									.parseDouble(jsonObject
 											.getString("altitude")), Boolean
 									.parseBoolean(jsonObject
-											.getString("isLive"))));
+											.getString("isLive")),Boolean
+									.parseBoolean(jsonObject
+											.getString("isDeletable"))));
+							
 
 						}
 					} else {

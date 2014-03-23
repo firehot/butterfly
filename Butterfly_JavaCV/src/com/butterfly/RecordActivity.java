@@ -2,11 +2,6 @@ package com.butterfly;
 
 import static com.googlecode.javacv.cpp.avcodec.AV_CODEC_ID_H264;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.nio.Buffer;
 import java.nio.ShortBuffer;
 import java.util.List;
@@ -19,7 +14,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
@@ -50,11 +44,11 @@ import android.widget.Toast;
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.debug.BugSense;
 import com.butterfly.fragment.ContactsListFragment;
-import com.butterfly.message.CloudMessaging;
 import com.butterfly.message.GcmIntentService;
 import com.butterfly.recorder.FFmpegFrameRecorder;
 import com.butterfly.tasks.SendPreviewTask;
 import com.butterfly.utils.LocationProvider;
+import com.butterfly.utils.Utils;
 import com.butterfly.view.CameraView;
 import com.google.android.gms.location.LocationListener;
 import com.googlecode.javacpp.BytePointer;
@@ -497,7 +491,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 					initRecorder();
 					new RegisterStreamTask().execute(httpGatewayURL, streamName,
 							streamURL,
-							CloudMessaging.getMailList(RecordActivity.this));
+							Utils.getMailList(RecordActivity.this));
 				} 
 
 			} else {

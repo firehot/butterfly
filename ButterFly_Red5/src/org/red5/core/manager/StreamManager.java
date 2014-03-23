@@ -1,6 +1,8 @@
 package org.red5.core.manager;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
@@ -28,7 +30,7 @@ public class StreamManager {
 		this.red5App = red5App;
 	}
 
-	public String getLiveStreams( Map<String, StreamProxy> entrySet) {
+	public String getLiveStreams( Map<String, StreamProxy> entrySet,List<String> mailList) {
 
 		JSONArray jsonArray = new JSONArray();
 		JSONObject jsonObject;
@@ -50,6 +52,7 @@ public class StreamManager {
 				jsonObject.put("longitude", stream.longitude);
 				jsonObject.put("altitude", stream.altitude);
 				jsonObject.put("isLive", stream.isLive);
+				jsonObject.put("isDeletable", isDeletable(stream, mailList));
 				jsonArray.add(jsonObject);
 			}
 		}
@@ -57,6 +60,15 @@ public class StreamManager {
 		return jsonArray.toString();
 	}
 
+	public boolean isDeletable(Stream stream,List<String> mailList)
+	{
+		for (String mail : mailList) {
+			if(mail.equals(stream.broadcasterMail))
+				return true;
+		}
+		
+		return false;
+	}
 	private void removeGhostStreams(Map<String, StreamProxy> entrySet,
 			Timestamp currentTime) {
 		List<Stream> streamList = getAllStreamList();
@@ -98,7 +110,8 @@ public class StreamManager {
 		if (registeredStreams.containsKey(url) == false) {
 			
 			Stream stream = new Stream(streamName, url, Calendar.getInstance().getTime(), isPublic);
-			stream.setBroadcasterMail(broadcasterMail);
+			String[] mailArray = broadcasterMail.split(",");
+			stream.setBroadcasterMail(mailArray[0]);
 			saveStream(stream);
 			
 			StreamProxy proxy = new StreamProxy(url, stream.getId());
