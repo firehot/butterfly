@@ -1,6 +1,8 @@
 package org.red5.core.manager;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
@@ -15,8 +17,10 @@ import javax.persistence.Query;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.red5.core.Application;
-import org.red5.core.dbModel.Stream;
+import org.red5.core.dbModel.GcmUserMails;
 import org.red5.core.dbModel.StreamProxy;
+import org.red5.core.dbModel.StreamViewers;
+import org.red5.core.dbModel.Streams;
 import org.red5.core.utils.JPAUtils;
 
 public class StreamManager {
@@ -36,20 +40,20 @@ public class StreamManager {
 		java.util.Date date = new java.util.Date();
 		Timestamp currentTime = new Timestamp(date.getTime());
 		
-		List<Stream> streamList;
+		List<Streams> streamList;
 		removeGhostStreams(entrySet, currentTime);
 
 		streamList = getAllStreamList();
-		for (Stream stream : streamList) {
-			if (stream.isPublic) {
+		for (Streams stream : streamList) {
+			if (stream.getIsPublic()) {
 				jsonObject = new JSONObject();
-				jsonObject.put("url", stream.streamUrl);
-				jsonObject.put("name", stream.streamName);
-				jsonObject.put("viewerCount", this.red5App.getViewerCount(stream.streamUrl));
-				jsonObject.put("latitude", stream.latitude);
-				jsonObject.put("longitude", stream.longitude);
-				jsonObject.put("altitude", stream.altitude);
-				jsonObject.put("isLive", stream.isLive);
+				jsonObject.put("url", stream.getStreamUrl());
+				jsonObject.put("name", stream.getStreamName());
+				jsonObject.put("viewerCount", this.red5App.getViewerCount(stream.getStreamUrl()));
+				jsonObject.put("latitude", stream.getLatitude());
+				jsonObject.put("longitude", stream.getLongitude());
+				jsonObject.put("altitude", stream.getAltitude());
+				jsonObject.put("isLive", stream.getIsLive());
 				jsonArray.add(jsonObject);
 			}
 		}
@@ -59,20 +63,20 @@ public class StreamManager {
 
 	private void removeGhostStreams(Map<String, StreamProxy> entrySet,
 			Timestamp currentTime) {
-		List<Stream> streamList = getAllStreamList();
-		for (Stream stream : streamList) {
+		List<Streams> streamList = getAllStreamList();
+		for (Streams stream : streamList) {
 			
 			StreamProxy streamProxy = null;
-			if(entrySet.containsKey(stream.streamUrl))
+			if(entrySet.containsKey(stream.getStreamUrl()))
 			{
-				streamProxy = entrySet.get(stream.streamUrl);
+				streamProxy = entrySet.get(stream.getStreamUrl());
 				
 				if (streamProxy.timeReceived != null) {
 					
 					long diff = currentTime.getTime() - streamProxy.timeReceived.getTime();
 					if ( diff > 5000) {
 						
-						removeStream(stream.streamUrl);
+						removeStream(stream.getStreamUrl());
 					}
 				}
 			}
@@ -96,13 +100,31 @@ public class StreamManager {
 
 		boolean result = false;
 		if (registeredStreams.containsKey(url) == false) {
+			JPAUtils.beginTransaction();
+			Streams stream = new Streams(broadcasterMail, Calendar.getInstance().getTime(), streamName, url);
+			stream.setIsPublic(isPublic);
+			JPAUtils.getEntityManager().persist(stream);
+
+			//saveStream(stream);
 			
-			Stream stream = new Stream(streamName, url, Calendar.getInstance().getTime(), isPublic);
-			stream.setBroadcasterMail(broadcasterMail);
-			saveStream(stream);
+//			String[] mails = mailsToBeNotified.split(",");
+//			List<String> mailList = new ArrayList<String>(Arrays.asList(mails));
+//			
+//			Query query = JPAUtils.getEntityManager().createQuery(
+//					"FROM GcmUserMails WHERE mail IN :email");
+//			query.setParameter("email", mailList);
+//			
+//			List<GcmUserMails> results = query.getResultList();
+//			
+//			for (GcmUserMails gcmUserMails : results) {
+//				JPAUtils.getEntityManager().persist(new StreamViewers(stream, gcmUserMails.getGcmUsers()));
+//			}
+			
+			JPAUtils.commit();
+			JPAUtils.closeEntityManager();
+			
 			
 			StreamProxy proxy = new StreamProxy(url, stream.getId());
-
 
 			registeredStreams.put(url, proxy);
 			this.red5App.sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url,
@@ -118,14 +140,14 @@ public class StreamManager {
 	public boolean registerLocationForStream(String url, double longitude,
 			double latitude, double altitude) {
 
-		Stream stream = getStream(url);
+		Streams stream = getStream(url);
 		
 		boolean result = false;
 		if (stream  != null) {
 			
-			stream.latitude = latitude;
-			stream.longitude = longitude;
-			stream.altitude = altitude;
+			stream.setLatitude(latitude);
+			stream.setLongitude(longitude);
+			stream.setAltitude(altitude);
 			
 			updateStream(stream);
 			result = true;
@@ -141,8 +163,8 @@ public class StreamManager {
 			StreamProxy stream = registeredLiveStreams.remove(streamUrl);
 			stream.close();
 			
-			Stream strm = getStream(streamUrl);
-			strm.isLive = false;
+			Streams strm = getStream(streamUrl);
+			strm.setIsLive(false);
 			updateStream(strm);
 			
 			if (stream != null) {
@@ -153,7 +175,7 @@ public class StreamManager {
 		return result;
 	}
 	
-	public boolean saveStream(Stream stream) {
+	public boolean saveStream(Streams stream) {
 		boolean result;
 		try {
 			
@@ -171,7 +193,7 @@ public class StreamManager {
 
 	}
 	
-	public boolean updateStream(Stream stream) {
+	public boolean updateStream(Streams stream) {
 		boolean result;
 		try {
 			
@@ -189,7 +211,7 @@ public class StreamManager {
 
 	}
 	
-	public boolean deleteStream(Stream stream) {
+	public boolean deleteStream(Streams stream) {
 		boolean result;
 		try {
 			EntityManager em = JPAUtils.getEntityManager();
@@ -206,15 +228,15 @@ public class StreamManager {
 	}
 	
 	
-	public Stream getStream(String streamUrl) {
+	public Streams getStream(String streamUrl) {
 
-		Stream resultStream = null;
+		Streams resultStream = null;
 		try {
 
 			Query query = JPAUtils.getEntityManager().createQuery(
-					"FROM Stream where streamUrl= :streamUrl");
+					"FROM Streams where streamUrl= :streamUrl");
 			query.setParameter("streamUrl", streamUrl);
-			resultStream = (Stream)query.getSingleResult();
+			resultStream = (Streams)query.getSingleResult();
 			JPAUtils.closeEntityManager();
 
 		} catch (NoResultException e) {
@@ -226,11 +248,11 @@ public class StreamManager {
 		return resultStream;
 	}
 	
-	public List<Stream> getAllStreamList() {
-		List<Stream> results = null;
+	public List<Streams> getAllStreamList() {
+		List<Streams> results = null;
 		try {
 			Query query = JPAUtils.getEntityManager().
-					createQuery("FROM Stream");
+					createQuery("FROM Streams");
 			
 			results = query.getResultList();
 			

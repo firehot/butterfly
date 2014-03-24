@@ -30,7 +30,7 @@ import org.red5.core.Application;
 import org.red5.core.dbModel.GcmUserMails;
 import org.red5.core.dbModel.GcmUsers;
 import org.red5.core.dbModel.RegIds;
-import org.red5.core.dbModel.Stream;
+import org.red5.core.dbModel.Streams;
 import org.red5.core.utils.JPAUtils;
 
 public class ApplicationTester {
@@ -56,13 +56,15 @@ public class ApplicationTester {
 			delete(webappsDir);
 		}
 		JPAUtils.beginTransaction();
-		Query query = JPAUtils.getEntityManager().createQuery("Delete FROM RegIds");
+		Query query = JPAUtils.getEntityManager().createQuery("Delete FROM StreamViewers");
+		query.executeUpdate();	
+		query = JPAUtils.getEntityManager().createQuery("Delete FROM RegIds");
 		query.executeUpdate();
 		query = JPAUtils.getEntityManager().createQuery("Delete FROM GcmUserMails");
 		query.executeUpdate();
 		query = JPAUtils.getEntityManager().createQuery("Delete FROM GcmUsers");
 		query.executeUpdate();
-		query = JPAUtils.getEntityManager().createQuery("Delete FROM Stream");
+		query = JPAUtils.getEntityManager().createQuery("Delete FROM Streams");
 		query.executeUpdate();		
 		JPAUtils.commit();
 		JPAUtils.closeEntityManager();
@@ -367,11 +369,11 @@ public class ApplicationTester {
 
 	@Test
 	public void testRegisterLocationForStream() {
-		List<Stream> streamList = butterflyApp.streamManager.getAllStreamList();
+		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList();
 		assertEquals(0, streamList.size());
 		
-		Stream strm =  new Stream("location_test", "video_url", Calendar.getInstance().getTime(), true);
-		strm.setBroadcasterMail("mail@mail.com");
+		Streams strm =  new Streams("mail@mail.com", Calendar.getInstance().getTime(), "location_test", "video_url");
+		strm.setIsPublic(true);
 		butterflyApp.streamManager.saveStream(strm);
 
 		streamList = butterflyApp.streamManager.getAllStreamList();
@@ -382,11 +384,11 @@ public class ApplicationTester {
 		streamList = butterflyApp.streamManager.getAllStreamList();
 		assertEquals(1, streamList.size());
 
-		Stream stream = butterflyApp.streamManager.getStream("video_url");
+		Streams stream = butterflyApp.streamManager.getStream("video_url");
 		assertNotNull(stream);
-		assertEquals(23.4566, stream.longitude, 1e-8);
-		assertEquals(34.667, stream.latitude, 1e-8);
-		assertEquals(100, stream.altitude, 1e-8);
+		assertEquals(23.4566, stream.getLongitude(), 1e-8);
+		assertEquals(34.667, stream.getLatitude(), 1e-8);
+		assertEquals(100, stream.getAltitude(), 1e-8);
 
 	}
 
@@ -551,19 +553,19 @@ public class ApplicationTester {
 	@Test
 	public void testSaveUpdateDeleteStream()
 	{
-		Stream strm = new Stream("deneme", "denemeurl", Calendar.getInstance().getTime(), true);
-		strm.broadcasterMail = "fdsf";
+		Streams strm = new Streams("fdsf", Calendar.getInstance().getTime(), "deneme", "denemeurl");
+		strm.setIsPublic(true);
 		butterflyApp.streamManager.saveStream(strm);
 
-		Stream createdStream = butterflyApp.streamManager.getStream("denemeurl");
+		Streams createdStream = butterflyApp.streamManager.getStream("denemeurl");
 		assertNotNull(createdStream);
 
-		strm.altitude = 1300;
+		strm.setAltitude((double) 1300);
 		butterflyApp.streamManager.updateStream(strm);
 
 		createdStream = butterflyApp.streamManager.getStream("denemeurl");
 		assertNotNull(createdStream);
-		assertEquals(createdStream.altitude, 1300,1);
+		assertEquals(createdStream.getAltitude(), 1300,1);
 
 		butterflyApp.streamManager.deleteStream(strm);
 		createdStream = butterflyApp.streamManager.getStream("denemeurl");
@@ -574,17 +576,17 @@ public class ApplicationTester {
 	@Test
 	public void testGetAllStreamList()
 	{
-		List<Stream> streamList = butterflyApp.streamManager.getAllStreamList();
+		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList();
 		int streamCount = streamList.size();
 		
-		Stream strm1 = new Stream("stream1", "stream1url", Calendar.getInstance().getTime(), true);
-		strm1.broadcasterMail = "stream1mail";
+		Streams strm1 = new Streams("stream1mail", Calendar.getInstance().getTime(), "stream1", "stream1url");
+		strm1.setIsPublic(true);
 		butterflyApp.streamManager.saveStream(strm1);	
-		Stream createdStream = butterflyApp.streamManager.getStream("stream1url");
+		Streams createdStream = butterflyApp.streamManager.getStream("stream1url");
 		assertNotNull(createdStream);
 		
-		Stream strm2 = new Stream("stream2", "stream2url", Calendar.getInstance().getTime(), true);
-		strm2.broadcasterMail = "stream2mail";
+		Streams strm2 = new Streams("stream2mail", Calendar.getInstance().getTime(), "stream2", "stream2url");
+		strm2.setIsPublic(true);
 		butterflyApp.streamManager.saveStream(strm2);
 		createdStream = butterflyApp.streamManager.getStream("stream2url");
 		assertNotNull(createdStream);
@@ -595,8 +597,78 @@ public class ApplicationTester {
 		
 	}
 
-	
+	@Test
+	public void testStreamViewer() {
+		boolean result = butterflyApp.registerUser("ksdjfşlask9934803248omjj", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com");
+		assertEquals(true, result);
+		
+		
+		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com", "mail@mail.com", true, null);
+		assertEquals(registerLiveStream, true);
+		
+		while(butterflyApp.isNotificationSent() == false) {
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList();
+		assertEquals(streamList.size(), 1);
+		Integer id = streamList.get(0).getId();
+		
+		Query query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers  WHERE streams.id =:id");
+		query.setParameter("id", id);
+		assertEquals(query.getResultList().size(),1);
+		
+		
+		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl1", "ahmetmermerkaya@gmail.com", "mail@mail.com", true, null);
+		assertEquals(registerLiveStream, true);
+		
+		while(butterflyApp.isNotificationSent() == false) {
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		streamList = butterflyApp.streamManager.getAllStreamList();
+		assertEquals(streamList.size(), 2);
+		id = streamList.get(1).getId();
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers WHERE streams.id = :id");
+		query.setParameter("id", id);
+		assertEquals(query.getResultList().size(), 1);
+		
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers WHERE gcmusers.gcmUserMails.mail = :mail");
+		query.setParameter("mail", "ahmetmermerkaya@gmail.com");
+		assertEquals(query.getResultList().size(), 2);
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers WHERE gcmusers.gcmUserMails.mail = :mail");
+		query.setParameter("mail", "ahmetmermerkaya@hotmail.com");
+		assertEquals(query.getResultList().size(), 1);
+		
+		
+	}
 
+	@Test
+	public void testStreamNameTurkishChar() {
+		
+		String tmpName = "işoıolilişliüğıİçÇöÖĞÜü";
+		boolean registerLiveStream = butterflyApp.registerLiveStream(tmpName, "publishUrl", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com", "mail@mail.com", true, null);
+		assertEquals(registerLiveStream, true);
+
+		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList();
+		assertEquals(streamList.size(), 1);
+		Integer id = streamList.get(0).getId();
+
+		assertEquals(tmpName, streamList.get(0).getStreamName());
+	}
+
+	
 	public static void delete(File file) {
 
 		if(file.isDirectory()){
@@ -635,6 +707,9 @@ public class ApplicationTester {
 			System.out.println("File is deleted : " + file.getAbsolutePath());
 		}
 	}
+	
+	
+
 
 
 

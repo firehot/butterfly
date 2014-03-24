@@ -1,18 +1,14 @@
 package org.red5.core.dbModel;
 // default package
-// Generated Mar 9, 2014 1:16:35 PM by Hibernate Tools 4.0.0
+// Generated Mar 23, 2014 11:32:49 PM by Hibernate Tools 4.0.0
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
-
 import static javax.persistence.GenerationType.IDENTITY;
-
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -26,13 +22,16 @@ public class GcmUsers implements java.io.Serializable {
 
 	private Integer id;
 	private Set<GcmUserMails> gcmUserMailses = new HashSet<GcmUserMails>(0);
+	private Set<StreamViewers> streamViewerses = new HashSet<StreamViewers>(0);
 	private Set<RegIds> regIdses = new HashSet<RegIds>(0);
 
 	public GcmUsers() {
 	}
 
-	public GcmUsers(Set<GcmUserMails> gcmUserMailses, Set<RegIds> regIdses) {
+	public GcmUsers(Set<GcmUserMails> gcmUserMailses,
+			Set<StreamViewers> streamViewerses, Set<RegIds> regIdses) {
 		this.gcmUserMailses = gcmUserMailses;
+		this.streamViewerses = streamViewerses;
 		this.regIdses = regIdses;
 	}
 
@@ -57,6 +56,15 @@ public class GcmUsers implements java.io.Serializable {
 	}
 
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "gcmUsers")
+	public Set<StreamViewers> getStreamViewerses() {
+		return this.streamViewerses;
+	}
+
+	public void setStreamViewerses(Set<StreamViewers> streamViewerses) {
+		this.streamViewerses = streamViewerses;
+	}
+
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "gcmUsers")
 	public Set<RegIds> getRegIdses() {
 		return this.regIdses;
 	}
@@ -64,6 +72,5 @@ public class GcmUsers implements java.io.Serializable {
 	public void setRegIdses(Set<RegIds> regIdses) {
 		this.regIdses = regIdses;
 	}
-
 
 }

@@ -100,7 +100,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 	private CheckBox publicVideoCheckBox;
 
 	private static ProgressDialog mProgressDialog;
-	private String mailsToBeNotified;
+	private String mailsToBeNotified = null;
 	private Size previewSize;
 	private BytePointer bytePointer;
 	private boolean snapshotSent = false;
@@ -156,12 +156,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		ffmpeg_link = getString(R.string.rtmp_url);
 
-		Bundle extras = getIntent().getExtras();
-		if (extras != null
-				&& extras.containsKey(ContactsListFragment.MAILS_TO_BE_NOTIFIED)) {
-			mailsToBeNotified = getIntent().getExtras().getString(
-					ContactsListFragment.MAILS_TO_BE_NOTIFIED);
-		}
+
 
 		setContentView(R.layout.activity_record);
 
@@ -174,6 +169,21 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		activeNetwork = cm.getActiveNetworkInfo();
 		initLayout();
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		Bundle extras = getIntent().getExtras();
+		
+		publicVideoCheckBox.setChecked(true);
+		if (extras != null
+				&& extras.containsKey(ContactsListFragment.MAILS_TO_BE_NOTIFIED)) {
+			mailsToBeNotified = getIntent().getExtras().getString(
+					ContactsListFragment.MAILS_TO_BE_NOTIFIED);
+			publicVideoCheckBox.setChecked(false);
+		}
+		
 	}
 
 	@Override

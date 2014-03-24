@@ -49,8 +49,8 @@ import javax.mail.internet.MimeMessage;
 import org.red5.core.dbModel.GcmUserMails;
 import org.red5.core.dbModel.GcmUsers;
 import org.red5.core.dbModel.RegIds;
-import org.red5.core.dbModel.Stream;
 import org.red5.core.dbModel.StreamProxy;
+import org.red5.core.dbModel.Streams;
 import org.red5.core.manager.StreamManager;
 import org.red5.core.manager.UserManager;
 import org.red5.core.utils.JPAUtils;
@@ -128,7 +128,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 									f.getName().indexOf(".flv"));
 							if ((timeMillis - f.lastModified()) > deleteTime) {
 								f.delete();
-								Stream stream = streamManager.getStream(key);
+								Streams stream = streamManager.getStream(key);
 								if(stream != null)
 									streamManager.deleteStream(stream);
 								if(proxyStreams.containsKey(key))
@@ -484,10 +484,10 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			StreamProxy streamProxy = getLiveStreamProxies().get(name);
 			streamProxy.addViewer(subscriberStream.getName());
 			
-			Stream stream = streamManager.getStream(name);
+			Streams stream = streamManager.getStream(name);
 			
-			notifyUserAboutViewerCount(getViewerCount(stream.streamUrl),
-					this.getRegistrationIdList(stream.broadcasterMail));
+			notifyUserAboutViewerCount(getViewerCount(stream.getStreamUrl()),
+					this.getRegistrationIdList(stream.getBroadcasterMail()));
 		}
 
 	}
@@ -527,10 +527,10 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			if (value.containsViewer(subcriberStream.getName())) {
 				value.removeViewer(subcriberStream.getName());
 				
-				Stream stream = streamManager.getStream(value.streamUrl);
+				Streams stream = streamManager.getStream(value.streamUrl);
 				
-				notifyUserAboutViewerCount(getViewerCount(stream.streamUrl),
-						this.getRegistrationIdList(stream.broadcasterMail));
+				notifyUserAboutViewerCount(getViewerCount(stream.getStreamUrl()),
+						this.getRegistrationIdList(stream.getBroadcasterMail()));
 				break;
 			}
 
@@ -682,7 +682,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	
 	public boolean deleteStream(String url)
 	{
-		Stream stream = streamManager.getStream(url);
+		Streams stream = streamManager.getStream(url);
 		return streamManager.deleteStream(stream);
 	}
 }

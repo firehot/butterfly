@@ -6,13 +6,15 @@
 		<class>org.red5.core.dbModel.GcmUserMails</class>
 		<class>org.red5.core.dbModel.GcmUsers</class>
 		<class>org.red5.core.dbModel.RegIds</class>
-		<class>org.red5.core.dbModel.Stream</class>
+		<class>org.red5.core.dbModel.StreamViewers</class>
+		<class>org.red5.core.dbModel.Streams</class>
 		<properties>
 			<property name="hibernate.connection.username" value="root" />
 			<property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/butterflydb" />
 			<property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver" />
-			<property name="hibernate.default_schema" value="butterflydb"/>
-			<property name="hibernate.connection.password" value=""/>
+			<property name="hibernate.default_schema" value="butterflydb" />
+			<property name="hibernate.connection.password" value="" />
+
 		</properties>
 
 	</persistence-unit>

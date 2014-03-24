@@ -1,6 +1,6 @@
 package org.red5.core.dbModel;
 // default package
-// Generated Mar 9, 2014 1:16:35 PM by Hibernate Tools 4.0.0
+// Generated Mar 23, 2014 11:32:49 PM by Hibernate Tools 4.0.0
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
