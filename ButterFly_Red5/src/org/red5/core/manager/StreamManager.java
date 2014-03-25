@@ -42,20 +42,25 @@ public class StreamManager {
 		removeGhostStreams(entrySet, currentTime);
 
 		streamList = getAllStreamList();
-		for (Stream stream : streamList) {
-			if (stream.isPublic) {
-				jsonObject = new JSONObject();
-				jsonObject.put("url", stream.streamUrl);
-				jsonObject.put("name", stream.streamName);
-				jsonObject.put("viewerCount", this.red5App.getViewerCount(stream.streamUrl));
-				jsonObject.put("latitude", stream.latitude);
-				jsonObject.put("longitude", stream.longitude);
-				jsonObject.put("altitude", stream.altitude);
-				jsonObject.put("isLive", stream.isLive);
-				jsonObject.put("isDeletable", isDeletable(stream, mailList));
-				jsonArray.add(jsonObject);
+		
+		if(streamList != null)
+		{
+			for (Stream stream : streamList) {
+				if (stream.isPublic) {
+					jsonObject = new JSONObject();
+					jsonObject.put("url", stream.streamUrl);
+					jsonObject.put("name", stream.streamName);
+					jsonObject.put("viewerCount", this.red5App.getViewerCount(stream.streamUrl));
+					jsonObject.put("latitude", stream.latitude);
+					jsonObject.put("longitude", stream.longitude);
+					jsonObject.put("altitude", stream.altitude);
+					jsonObject.put("isLive", stream.isLive);
+					jsonObject.put("isDeletable", isDeletable(stream, mailList));
+					jsonArray.add(jsonObject);
+				}
 			}
 		}
+		
 
 		return jsonArray.toString();
 	}
@@ -72,23 +77,28 @@ public class StreamManager {
 	private void removeGhostStreams(Map<String, StreamProxy> entrySet,
 			Timestamp currentTime) {
 		List<Stream> streamList = getAllStreamList();
-		for (Stream stream : streamList) {
-			
-			StreamProxy streamProxy = null;
-			if(entrySet.containsKey(stream.streamUrl))
-			{
-				streamProxy = entrySet.get(stream.streamUrl);
+		
+		if(streamList != null)
+		{
+			for (Stream stream : streamList) {
 				
-				if (streamProxy.timeReceived != null) {
+				StreamProxy streamProxy = null;
+				if(entrySet.containsKey(stream.streamUrl))
+				{
+					streamProxy = entrySet.get(stream.streamUrl);
 					
-					long diff = currentTime.getTime() - streamProxy.timeReceived.getTime();
-					if ( diff > 5000) {
+					if (streamProxy.timeReceived != null) {
 						
-						removeStream(stream.streamUrl);
+						long diff = currentTime.getTime() - streamProxy.timeReceived.getTime();
+						if ( diff > 5000) {
+							
+							removeStream(stream.streamUrl);
+						}
 					}
 				}
 			}
 		}
+
 	}
 
 	public boolean isLiveStreamExist(String url,Set<String> streamNames) {
