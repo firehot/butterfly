@@ -8,10 +8,7 @@ import io.vov.utils.Log;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Pattern;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -19,8 +16,8 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Patterns;
 
+import com.butterfly.utils.Utils;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 public class CloudMessaging {
@@ -125,7 +122,7 @@ public class CloudMessaging {
 	
 	private void sendRegistrationIdToBackend() 
 	{
-		String mails = getMailList(this.activity);
+		String mails = Utils.getMailList(this.activity);
 		if(mails != null)
 		{
 			Log.e("butterfly", mails);	
@@ -135,30 +132,14 @@ public class CloudMessaging {
 
 	private void updateRegistrationId(String oldRegID) 
 	{
-		String mails = getMailList(this.activity);
+		String mails =  Utils.getMailList(this.activity);
 		if(mails != null)
 		{
 			Log.e("butterfly", mails);	
 			updateUser(backendServer, regid, mails, oldRegID);
 		}
 	}
-	public static String getMailList(Activity activity) {
-		Pattern emailPattern = Patterns.EMAIL_ADDRESS; // API level 8+
-		Account[] accounts = AccountManager.get(activity).getAccounts();
-		String mails = new String();
-		for (Account account : accounts) {
-			if (emailPattern.matcher(account.name).matches()) {
-				if (mails.length() > 0) {
-					if (mails.contains(account.name)) {
-						continue;
-					}
-					mails += ",";
-				}
-				mails += account.name;
-			}
-		}
-		return mails;
-	}
+	
 	
 	protected Boolean registerUser(String backendServer, String registerId, String mail) {
 		Boolean isRegistered = false;

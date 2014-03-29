@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -166,8 +167,13 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		super.disconnect(conn, scope);
 	}
 
-	public String getLiveStreams() {
-		return streamManager.getLiveStreams(getLiveStreamProxies());
+	public String getLiveStreams(String mails) {
+		List<String> mailList = null;
+		if (mails != null) {
+			String[] mailArray = mails.split(",");
+			mailList = new ArrayList<String>(Arrays.asList(mailArray));
+		}
+		return streamManager.getLiveStreams(getLiveStreamProxies(),mailList);
 	}
 
 	public boolean isLiveStreamExist(String url) {
@@ -682,7 +688,13 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	
 	public boolean deleteStream(String url)
 	{
+		log.info("Stream to be deleted url is "+url);
 		Streams stream = streamManager.getStream(url);
+		if(stream == null)
+		{
+			log.info("Stream to be deleted is null");
+			return false;
+		}
 		return streamManager.deleteStream(stream);
 	}
 }

@@ -40,9 +40,10 @@ OnClickListener{
 		public double longitude;
 		public double altitude;
 		public boolean isLive;
+		public boolean isDeletable;
 
 		public Stream(String name, String url, int viewerCount, double latitude, double longitude, double altitude
-				,boolean isLive) {
+				,boolean isLive,boolean isDeletable) {
 			super();
 			this.name = name;
 			this.url = url;
@@ -51,6 +52,7 @@ OnClickListener{
 			this.longitude = longitude;
 			this.altitude = altitude;
 			this.isLive = isLive;
+			this.isDeletable = isDeletable;
 		}
 
 		@Override
@@ -146,9 +148,9 @@ OnClickListener{
 	            	DeleteStreamTask deleteTask = new DeleteStreamTask(fragment);
 	            	deleteTask.execute(fragment.getActivity().getString(R.string.http_gateway_url),v.getTag().toString());
 	             return true;
-	            case R.id.menu_stream_popup_share:
-	              Toast.makeText(StreamListFragment.this.getActivity(), "Share!", Toast.LENGTH_SHORT).show();
-	              return true;
+//	            case R.id.menu_stream_popup_share:
+//	              Toast.makeText(StreamListFragment.this.getActivity(), "Share!", Toast.LENGTH_SHORT).show();
+//	              return true;
 	            default:
 	              return false;
 	            }

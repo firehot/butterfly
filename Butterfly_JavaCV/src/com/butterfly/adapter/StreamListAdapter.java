@@ -63,9 +63,16 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 		holder.textStreamName.setText(streamname);
 		String image_url = this.fragment.getActivity().getString(R.string.http_url)+s.url+".png";
 		holder.imageView.setImageUrl(image_url);
+		
+		if(!s.isDeletable)
+			holder.overflowButton.setVisibility(View.GONE);
+		else
+			holder.overflowButton.setVisibility(View.VISIBLE);
 
 		if(!s.isLive)
 			holder.liveNowView.setText("");
+		else
+			holder.liveNowView.setText("Live Now");
 		
 		if (s.viewerCount > 0) {
 			holder.textStreamViewerCount.setText(this.fragment.getActivity().getResources()

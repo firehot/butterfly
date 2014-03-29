@@ -13,6 +13,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
@@ -120,14 +121,28 @@ public class ApplicationTester {
 
 	@Test
 	public void testRemoveStream() {
+		boolean result = butterflyApp.registerUser("ksdjfşlask9934803248omjj", "ahmetmermerkaya@gmail.com");
+		assertEquals(true, result);
+		
+		result = butterflyApp.registerUser("ksdjfşlask9934803248omjasdfşasdfjj", "ahmetmermerkaya@hotmail.com");
+		assertEquals(true, result);
+		
+		
 		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com", "mail@mail.com", true, null);
 		assertEquals(registerLiveStream, true);
+		
+		Query query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers");
+		assertEquals(2, query.getResultList().size());
 
 		registerLiveStream = butterflyApp.removeStream("publishUrl");
 		assertEquals(registerLiveStream, true);
 
 		registerLiveStream = butterflyApp.removeStream("publishUrl" + 1234);
 		assertEquals(registerLiveStream, false);
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers");
+		assertEquals(2, query.getResultList().size());
+		
 	}
 
 	@Test
@@ -343,17 +358,28 @@ public class ApplicationTester {
 	{
 		int t = (int) (Math.random()*1000);
 		String mail = "murat@mailc.com" + t;
+		
+		
+		
 		boolean result = butterflyApp.registerUser(String.valueOf(t), mail);
 		assertEquals(result, true);
 
+		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", mail, "mail@mail.com", true, null);
+		assertEquals(registerLiveStream, true);
+		
+		Query query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers");
+		assertEquals(1, query.getResultList().size());
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM Streams");
+		assertEquals(1, query.getResultList().size());
+		
 		GcmUsers user = butterflyApp.userManager.getGcmUserByMail(mail);
 
 		boolean opResult = butterflyApp.deleteRegId(String.valueOf(t));
 		assertEquals(true, opResult);
 
 		user = butterflyApp.userManager.getGcmUserByRegId(String.valueOf(t));
-				
-
+	
 		assertEquals(user, null);
 	}
 
@@ -369,19 +395,19 @@ public class ApplicationTester {
 
 	@Test
 	public void testRegisterLocationForStream() {
-		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList();
+		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList(null);
 		assertEquals(0, streamList.size());
 		
 		Streams strm =  new Streams("mail@mail.com", Calendar.getInstance().getTime(), "location_test", "video_url");
 		strm.setIsPublic(true);
 		butterflyApp.streamManager.saveStream(strm);
 
-		streamList = butterflyApp.streamManager.getAllStreamList();
+		streamList = butterflyApp.streamManager.getAllStreamList(null);
 		assertEquals(1, streamList.size());
 
 		butterflyApp.registerLocationForStream("video_url", 23.4566, 34.667, 100);
 
-		streamList = butterflyApp.streamManager.getAllStreamList();
+		streamList = butterflyApp.streamManager.getAllStreamList(null);
 		assertEquals(1, streamList.size());
 
 		Streams stream = butterflyApp.streamManager.getStream("video_url");
@@ -421,44 +447,6 @@ public class ApplicationTester {
 	//	}
 
 	@Test
-	public void testBandwidthServer() {
-		try {
-			Thread.sleep(100);
-			Socket socket = new Socket("127.0.0.1", 53000);
-			socket.setTcpNoDelay(true);
-
-			OutputStream outputStream = socket.getOutputStream();
-			byte[] data = new byte[2048000];
-			String time = String.valueOf(System.currentTimeMillis()) + ";";
-			outputStream.write(time.getBytes(), 0, time.getBytes().length);
-			outputStream.write(data, 0, data.length);
-			outputStream.write("\n".getBytes());			
-			outputStream.flush();
-
-			InputStream istr = socket.getInputStream();
-			int length = 0;
-			while ((length = istr.read(data, 0, data.length)) > 0) {
-				String bandwidth = new String(data, 0, length);
-				System.out.println("**************** bandwidth -> " + bandwidth);
-				if (data[length-1] == '\n') {
-					break;
-				}
-			}
-
-			istr.close();
-			outputStream.close();
-			socket.close();
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-
-	}
-
-	@Test
 	public void testStreamDeleter() {
 		butterflyApp.cancelStreamDeleteTimer();
 		File webApps = new File("webapps");
@@ -483,13 +471,23 @@ public class ApplicationTester {
 			f1.createNewFile();
 			f2.createNewFile();
 			f3.createNewFile();
-			boolean registered = butterflyApp.registerLiveStream("streamName", "f1", null, "mail@mail.com", true, "tur");
+			boolean result = butterflyApp.registerUser("ksdjfşlask9934803248omjj", "ahmetmermerkaya@gmail.com");
+			assertEquals(true, result);
+			
+			result = butterflyApp.registerUser("ksdjfşlask9934803248omjasdfşasdfjj", "ahmetmermerkaya@hotmail.com");
+			assertEquals(true, result);
+			
+			boolean registered = butterflyApp.registerLiveStream("streamName", "f1", "ahmetmermerkaya@hotmail.com,ahmetmermerkaya@gmail.com", "mail@mail.com", true, "tur");
 			assertTrue(registered);
-			registered = butterflyApp.registerLiveStream("streamName", "f2", null, "mail@mail.com", true, "tur");
+			registered = butterflyApp.registerLiveStream("streamName", "f2", "ahmetmermerkaya@hotmail.com,ahmetmermerkaya@gmail.com", "mail@mail.com", true, "tur");
 			assertTrue(registered);
-			registered = butterflyApp.registerLiveStream("streamName", "f3", null, "mail@mail.com", true, "tur");
+			registered = butterflyApp.registerLiveStream("streamName", "f3", "ahmetmermerkaya@hotmail.com,ahmetmermerkaya@gmail.com", "mail@mail.com", true, "tur");
 			assertTrue(registered);
 			assertEquals(3, butterflyApp.getLiveStreamProxies().size());
+			
+			Query query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers");
+			assertEquals(6, query.getResultList().size());
+			
 
 		} catch (IOException e1) {
 			e1.printStackTrace();
@@ -514,6 +512,9 @@ public class ApplicationTester {
 		assertEquals(f1.exists(), false);
 		assertEquals(f2.exists(), false);
 		assertEquals(f3.exists(), false);
+		
+		Query query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers");
+		assertEquals(0, query.getResultList().size());
 
 		assertEquals(0, butterflyApp.getLiveStreamProxies().size());
 
@@ -576,7 +577,7 @@ public class ApplicationTester {
 	@Test
 	public void testGetAllStreamList()
 	{
-		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList();
+		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList(null);
 		int streamCount = streamList.size();
 		
 		Streams strm1 = new Streams("stream1mail", Calendar.getInstance().getTime(), "stream1", "stream1url");
@@ -591,7 +592,7 @@ public class ApplicationTester {
 		createdStream = butterflyApp.streamManager.getStream("stream2url");
 		assertNotNull(createdStream);
 		
-		streamList = butterflyApp.streamManager.getAllStreamList();
+		streamList = butterflyApp.streamManager.getAllStreamList(null);
 		assertEquals(streamCount+2, streamList.size());
 		
 		
@@ -614,11 +615,11 @@ public class ApplicationTester {
 			}
 		}
 		
-		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList();
+		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList(null);
 		assertEquals(streamList.size(), 1);
 		Integer id = streamList.get(0).getId();
 		
-		Query query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers  WHERE streams.id =:id");
+		Query query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers WHERE streams.id =:id");
 		query.setParameter("id", id);
 		assertEquals(query.getResultList().size(),1);
 		
@@ -634,7 +635,7 @@ public class ApplicationTester {
 			}
 		}
 		
-		streamList = butterflyApp.streamManager.getAllStreamList();
+		streamList = butterflyApp.streamManager.getAllStreamList(null);
 		assertEquals(streamList.size(), 2);
 		id = streamList.get(1).getId();
 		
@@ -643,13 +644,13 @@ public class ApplicationTester {
 		assertEquals(query.getResultList().size(), 1);
 		
 		
-		query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers WHERE gcmusers.gcmUserMails.mail = :mail");
+		query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers AS viewer JOIN viewer.gcmUsers AS user JOIN user.gcmUserMailses AS userMail WHERE userMail.mail = :mail");
 		query.setParameter("mail", "ahmetmermerkaya@gmail.com");
 		assertEquals(query.getResultList().size(), 2);
 		
-		query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers WHERE gcmusers.gcmUserMails.mail = :mail");
+		query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers AS viewer JOIN viewer.gcmUsers AS user JOIN user.gcmUserMailses AS userMail WHERE userMail.mail = :mail");
 		query.setParameter("mail", "ahmetmermerkaya@hotmail.com");
-		assertEquals(query.getResultList().size(), 1);
+		assertEquals(query.getResultList().size(), 2);
 		
 		
 	}
@@ -661,11 +662,40 @@ public class ApplicationTester {
 		boolean registerLiveStream = butterflyApp.registerLiveStream(tmpName, "publishUrl", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com", "mail@mail.com", true, null);
 		assertEquals(registerLiveStream, true);
 
-		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList();
+		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList(null);
 		assertEquals(streamList.size(), 1);
 		Integer id = streamList.get(0).getId();
 
 		assertEquals(tmpName, streamList.get(0).getStreamName());
+	}
+	
+	@Test 
+	public void testStreamPrivacy() {
+		
+		boolean registerUser = butterflyApp.registerUser("deneme", "ahmetmermerkaya@gmail.com");
+		assertTrue(registerUser);
+		
+		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl1", "ahmetmermerkaya@gmail.com", "mail@mail.com", false, null);
+		assertEquals(registerLiveStream, true);
+		
+		List<Streams> allStreamList = butterflyApp.streamManager.getAllStreamList(null);
+		assertEquals(0, allStreamList.size());
+		
+		ArrayList<String> mailList = new ArrayList<String>(Arrays.asList(new String[] {"ahmetmermerkaya@gmail.com"}));
+		allStreamList = butterflyApp.streamManager.getAllStreamList(mailList);
+		assertEquals(1, allStreamList.size());
+		
+		registerUser = butterflyApp.registerUser("deneme123131", "ahmetmermerkaya@hotmail.com,ahmetmermerkaya@gmail.com");
+		assertTrue(registerUser);
+		
+		mailList = new ArrayList<String>(Arrays.asList(new String[] {"ahmetmermerkaya@gmail.com"}));
+		allStreamList = butterflyApp.streamManager.getAllStreamList(mailList);
+		assertEquals(1, allStreamList.size());
+		
+		mailList = new ArrayList<String>(Arrays.asList(new String[] {"ahmetmermerkaya@hotmail.com"}));
+		allStreamList = butterflyApp.streamManager.getAllStreamList(mailList);
+		assertEquals(1, allStreamList.size());
+		
 	}
 
 	

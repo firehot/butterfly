@@ -1,6 +1,6 @@
 package org.red5.core.dbModel;
 // default package
-// Generated Mar 23, 2014 11:32:49 PM by Hibernate Tools 4.0.0
+// Generated Mar 29, 2014 3:32:38 PM by Hibernate Tools 4.0.0
 
 import java.util.Date;
 import java.util.HashSet;
@@ -26,10 +26,10 @@ public class Streams implements java.io.Serializable {
 	private Integer id;
 	private Double altitude;
 	private String broadcasterMail;
-	private Double latitude;
 	private Boolean isLive;
-	private Double longitude;
 	private Boolean isPublic;
+	private Double latitude;
+	private Double longitude;
 	private Date registerTime;
 	private String streamName;
 	private String streamUrl;
@@ -46,16 +46,16 @@ public class Streams implements java.io.Serializable {
 		this.streamUrl = streamUrl;
 	}
 
-	public Streams(Double altitude, String broadcasterMail, Double latitude,
-			Boolean isLive, Double longitude, Boolean isPublic,
+	public Streams(Double altitude, String broadcasterMail, Boolean isLive,
+			Boolean isPublic, Double latitude, Double longitude,
 			Date registerTime, String streamName, String streamUrl,
 			Set<StreamViewers> streamViewerses) {
 		this.altitude = altitude;
 		this.broadcasterMail = broadcasterMail;
-		this.latitude = latitude;
 		this.isLive = isLive;
-		this.longitude = longitude;
 		this.isPublic = isPublic;
+		this.latitude = latitude;
+		this.longitude = longitude;
 		this.registerTime = registerTime;
 		this.streamName = streamName;
 		this.streamUrl = streamUrl;
@@ -91,15 +91,6 @@ public class Streams implements java.io.Serializable {
 		this.broadcasterMail = broadcasterMail;
 	}
 
-	@Column(name = "latitude", precision = 22, scale = 0)
-	public Double getLatitude() {
-		return this.latitude;
-	}
-
-	public void setLatitude(Double latitude) {
-		this.latitude = latitude;
-	}
-
 	@Column(name = "isLive")
 	public Boolean getIsLive() {
 		return this.isLive;
@@ -109,15 +100,6 @@ public class Streams implements java.io.Serializable {
 		this.isLive = isLive;
 	}
 
-	@Column(name = "longitude", precision = 22, scale = 0)
-	public Double getLongitude() {
-		return this.longitude;
-	}
-
-	public void setLongitude(Double longitude) {
-		this.longitude = longitude;
-	}
-
 	@Column(name = "isPublic")
 	public Boolean getIsPublic() {
 		return this.isPublic;
@@ -125,6 +107,24 @@ public class Streams implements java.io.Serializable {
 
 	public void setIsPublic(Boolean isPublic) {
 		this.isPublic = isPublic;
+	}
+
+	@Column(name = "latitude", precision = 22, scale = 0)
+	public Double getLatitude() {
+		return this.latitude;
+	}
+
+	public void setLatitude(Double latitude) {
+		this.latitude = latitude;
+	}
+
+	@Column(name = "longitude", precision = 22, scale = 0)
+	public Double getLongitude() {
+		return this.longitude;
+	}
+
+	public void setLongitude(Double longitude) {
+		this.longitude = longitude;
 	}
 
 	@Temporal(TemporalType.TIMESTAMP)
