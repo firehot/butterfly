@@ -57,6 +57,7 @@ public class StreamManager {
 			jsonObject.put("isDeletable", isDeletable(stream, mailList));
 			jsonArray.add(jsonObject);
 		}
+		
 
 		return jsonArray.toString();
 	}
@@ -80,16 +81,19 @@ public class StreamManager {
 			{
 				streamProxy = entrySet.get(stream.getStreamUrl());
 
-				if (streamProxy.timeReceived != null) {
+				
+				if(entrySet.containsKey(stream.getStreamUrl()))
+				{
+					streamProxy = entrySet.get(stream.getStreamUrl());
 
-					long diff = currentTime.getTime() - streamProxy.timeReceived.getTime();
-					if ( diff > 5000) {
+					if (streamProxy.timeReceived != null) {
 
 						removeStream(stream.getStreamUrl());
 					}
 				}
 			}
 		}
+
 	}
 
 	public boolean isLiveStreamExist(String url,Set<String> streamNames) {

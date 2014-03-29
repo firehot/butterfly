@@ -20,7 +20,8 @@ public class JPAUtils {
 	}
 	
 	public static EntityManager getEntityManager() {
-		if (entityManager == null) {
+		
+		if (entityManager == null || entityManager.isOpen() == false) {
 			if (entityManagerFactory == null || entityManagerFactory.isOpen() == false) {
 				entityManagerFactory = Persistence
 					.createEntityManagerFactory("ButterFly_Red5");			
