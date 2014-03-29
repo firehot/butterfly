@@ -165,8 +165,12 @@ public class StreamManager {
 			stream.close();
 			
 			Stream strm = getStream(streamUrl);
-			strm.isLive = false;
-			updateStream(strm);
+			if(strm != null)
+			{
+				strm.isLive = false;
+				updateStream(strm);
+			}
+
 			
 			if (stream != null) {
 				result = true;

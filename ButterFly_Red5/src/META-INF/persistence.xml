@@ -11,8 +11,22 @@
 			<property name="hibernate.connection.username" value="root" />
 			<property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/butterflydb" />
 			<property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver" />
-			<property name="hibernate.default_schema" value="butterflydb"/>
-			<property name="hibernate.connection.password" value=""/>
+			<property name="hibernate.default_schema" value="butterflydb" />
+			<property name="hibernate.connection.password" value="" />
+			<property name="connection.provider_class"
+				value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="c3p0.acquire_increment" value="1" />
+			<property name="c3p0.idle_test_period" value="120" /> <!-- seconds -->
+			<property name="c3p0.max_size" value="100" />
+			<property name="c3p0.max_statements" value="0" />
+			<property name="c3p0.min_size" value="10" />
+			<property name="c3p0.timeout" value="180" /> <!-- seconds -->
+			<property name="connection.autoReconnect" value="true" />
+			<property name="connection.autoReconnectForPools" value="true" />
+			<property name="connection.is-connection-validation-required"
+				value="true" />
+			<property name="c3p0.preferredTestQuery" value="select 1;" />
+
 		</properties>
 
 	</persistence-unit>
