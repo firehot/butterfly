@@ -96,10 +96,11 @@ public class ContactsListFragment extends Fragment {
 			@Override
 			public void onItemClick(AdapterView<?> arg0, View view, int position,
 					long id) {
+				
 				ListAdapter adapter = contactList.getAdapter();
 				String email;
 				if (adapter.equals(mAdapter)) {
-					Cursor cursor = (Cursor) mAdapter.getItem(position);
+					Cursor cursor = (Cursor) contactList.getItemAtPosition(position);
 					email = cursor.getString(cursor.getColumnIndex(Email.ADDRESS));
 				}
 				else {
@@ -117,17 +118,4 @@ public class ContactsListFragment extends Fragment {
 		return v;
 	}
 	
-	@Override
-	public void onPause() {
-		Cursor cursor = mAdapter.getCursor();
-		if (cursor != null && cursor.isClosed() == false) {
-			cursor.close();
-		}
-		super.onPause();
-	}
-
-
-
-
-
 }
