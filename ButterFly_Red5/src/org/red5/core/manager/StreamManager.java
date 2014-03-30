@@ -114,7 +114,9 @@ public class StreamManager {
 		boolean result = false;
 		if (registeredStreams.containsKey(url) == false) {
 			JPAUtils.beginTransaction();
-			Streams stream = new Streams(broadcasterMail, Calendar.getInstance().getTime(), streamName, url);
+			String[] mailArray = broadcasterMail.split(",");
+
+			Streams stream = new Streams(mailArray[0], Calendar.getInstance().getTime(), streamName, url);
 			stream.setIsPublic(isPublic);
 			JPAUtils.getEntityManager().persist(stream);
 
