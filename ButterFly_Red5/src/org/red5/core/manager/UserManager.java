@@ -59,7 +59,7 @@ public class UserManager {
 		try {
 			JPAUtils.beginTransaction();
 			Query query = JPAUtils.getEntityManager().createQuery(
-					"FROM GcmUserMails WHERE mail IN :email");
+					"FROM GcmUserMails WHERE mail IN (:email)");
 			
 			String[] mails = mail.split(",");
 			List<String> mailList = new ArrayList<String>(Arrays.asList(mails));

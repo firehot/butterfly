@@ -281,12 +281,12 @@ public class StreamManager {
 			if (mailList != null) {
 				query = JPAUtils.getEntityManager().
 						createQuery("SELECT str FROM Streams AS str "
-								+ "JOIN str.streamViewerses AS viewer "
-								+ "JOIN viewer.gcmUsers AS user "
-								+ "JOIN user.gcmUserMailses as userMails "
-								+ "WHERE (str.isPublic = :isPublic) "
-								+ " OR (userMails.mail IN :mailList)");
-				query.setParameter("mailList", mailList);
+								+ "LEFT JOIN str.streamViewerses AS viewer "
+								+ "WHERE ( (str.isPublic = :isPublic) " 
+								+ 			" OR (viewer.gcmUsers.id IN "
+								+ 			"		( SELECT gcmUsers.id FROM GcmUserMails userMails WHERE userMails.mail IN (:mails)))"
+								+ 		")");
+				query.setParameter("mails", mailList);
 			}
 			else {
 				query = JPAUtils.getEntityManager().

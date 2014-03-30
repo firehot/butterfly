@@ -674,27 +674,44 @@ public class ApplicationTester {
 		
 		boolean registerUser = butterflyApp.registerUser("deneme", "ahmetmermerkaya@gmail.com");
 		assertTrue(registerUser);
-		
 		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl1", "ahmetmermerkaya@gmail.com", "mail@mail.com", false, null);
 		assertEquals(registerLiveStream, true);
-		
+	
+		//get public videos
 		List<Streams> allStreamList = butterflyApp.streamManager.getAllStreamList(null);
+		//it should be zero because there is no public video
 		assertEquals(0, allStreamList.size());
 		
 		ArrayList<String> mailList = new ArrayList<String>(Arrays.asList(new String[] {"ahmetmermerkaya@gmail.com"}));
 		allStreamList = butterflyApp.streamManager.getAllStreamList(mailList);
+		//it should be one because video is shared with that email
 		assertEquals(1, allStreamList.size());
 		
+		//register same user with other email address
 		registerUser = butterflyApp.registerUser("deneme123131", "ahmetmermerkaya@hotmail.com,ahmetmermerkaya@gmail.com");
 		assertTrue(registerUser);
 		
-		mailList = new ArrayList<String>(Arrays.asList(new String[] {"ahmetmermerkaya@gmail.com"}));
-		allStreamList = butterflyApp.streamManager.getAllStreamList(mailList);
-		assertEquals(1, allStreamList.size());
-		
 		mailList = new ArrayList<String>(Arrays.asList(new String[] {"ahmetmermerkaya@hotmail.com"}));
 		allStreamList = butterflyApp.streamManager.getAllStreamList(mailList);
+		//check tthat registered second mail get the shared video
 		assertEquals(1, allStreamList.size());
+		
+		//register public live stream with not shared with explicitly
+		registerLiveStream = butterflyApp.registerLiveStream("publishedNamesdfdsf", "publishUrl1sdsdfs", null, "mail@mail.com", true, null);
+		assertEquals(registerLiveStream, true);
+		
+		mailList = new ArrayList<String>(Arrays.asList(new String[] {"ahmetmermerkaya@hotmail.com", "ahmetmermerkaya@gmail.com"}));
+		allStreamList = butterflyApp.streamManager.getAllStreamList(mailList);
+		//check that multiple email address gets the public and private videos
+		assertEquals(2, allStreamList.size());
+		
+		//register a public live stream with shared some mail explicitly
+		registerLiveStream = butterflyApp.registerLiveStream("publishedsfsfNamesdfdsf", "publishUrl1sdsdfs32424", "ahmetmermerkaya@hotmail.com", "mail@mail.com", true, null);
+		assertEquals(registerLiveStream, true);
+		
+		mailList = new ArrayList<String>(Arrays.asList(new String[] {"ahmetmermerkaya@hotmail.com", "ahmetmermerkaya@gmail.com"}));
+		allStreamList = butterflyApp.streamManager.getAllStreamList(mailList);
+		assertEquals(3, allStreamList.size());
 		
 	}
 
