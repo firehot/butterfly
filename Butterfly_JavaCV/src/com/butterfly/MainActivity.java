@@ -317,21 +317,27 @@ public class MainActivity extends FragmentActivity implements
 
 						for (int i = 0; i < length; i++) {
 							jsonObject = (JSONObject) jsonArray.get(i);
-							streamList.add(new Stream(jsonObject
-									.getString("name"), jsonObject
-									.getString("url"), Integer
-									.parseInt(jsonObject
-											.getString("viewerCount")), Double
-									.parseDouble(jsonObject
-											.getString("latitude")), Double
-									.parseDouble(jsonObject
-											.getString("longitude")), Double
-									.parseDouble(jsonObject
-											.getString("altitude")), Boolean
-									.parseBoolean(jsonObject
-											.getString("isLive")),Boolean
-									.parseBoolean(jsonObject
-											.getString("isDeletable"))));
+							
+							String tmp = jsonObject.getString("latitude");
+							if (tmp.equals("null")) { tmp = "0"; }
+							Double latitude = Double.parseDouble(tmp);
+							
+							tmp = jsonObject.getString("longitude");
+							if (tmp.equals("null")) { tmp = "0"; }
+							Double longitude = Double.parseDouble(tmp);
+							
+							tmp = jsonObject.getString("altitude");
+							if (tmp.equals("null")) { tmp = "0"; }
+							Double altitude = Double.parseDouble(tmp);
+
+							streamList.add(new Stream(jsonObject.getString("name"), 
+											jsonObject.getString("url"), 
+											Integer.parseInt(jsonObject.getString("viewerCount")), 
+											latitude, 
+											longitude, 
+											altitude, 
+											Boolean.parseBoolean(jsonObject.getString("isLive")),
+											Boolean.parseBoolean(jsonObject.getString("isDeletable"))));
 							
 
 						}

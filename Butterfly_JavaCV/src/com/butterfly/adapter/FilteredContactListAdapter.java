@@ -90,7 +90,12 @@ public class FilteredContactListAdapter extends SimpleCursorAdapter {
 		holder.emailView.setText(email);
 
 		String displayName = cursor.getString(displayNameColumnIndex);
-		holder.displayNameView.setText(displayName);
+		if (displayName != null && displayName.length() > 0) {
+			holder.displayNameView.setText(displayName);
+		}
+		else {
+			holder.displayNameView.setText("");
+		}
 
 		String photoUri = cursor.getString(photoUriColumnIndex);
 		if (photoUri != null) {
@@ -109,8 +114,8 @@ public class FilteredContactListAdapter extends SimpleCursorAdapter {
 		String select = 
 				"(" + Email.ADDRESS + " NOTNULL " + " AND " +
 						Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "'" + " AND "
-						+ ContactAdapter.DISPLAY_NAME + " NOTNULL AND " +
-						Data.IS_PRIMARY + " == 1 ) ";
+						+ ContactAdapter.DISPLAY_NAME + " NOTNULL " +
+				 " ) ";
 
 		if (constraint != null) {
 			select += " AND (" + Email.ADDRESS + " LIKE ? " + " OR "
@@ -125,8 +130,6 @@ public class FilteredContactListAdapter extends SimpleCursorAdapter {
 				CONTACTS_SUMMARY_PROJECTION, select, selectArgs,
 				Contacts.TIMES_CONTACTED + " DESC "
 				);
-				//displayName + " COLLATE LOCALIZED ASC"
-		
 	}
 	
 	public ArrayList<ContactAdapter.Contact> getFrequentContacts() {
@@ -160,7 +163,6 @@ public class FilteredContactListAdapter extends SimpleCursorAdapter {
 					Email.ADDRESS + " NOTNULL AND " 
 					+ Data.CONTACT_ID + "= " + cursor.getInt(idIndex) + " ";
 
-			displayName = cursor.getString(displayNameIndex);
 			Cursor emailCursor = resolver.query(Data.CONTENT_URI, EMAIL_PROJECTION, 
 					select, 
 					null, Email.TYPE + " ASC ");
