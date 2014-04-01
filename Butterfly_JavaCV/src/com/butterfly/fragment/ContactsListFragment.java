@@ -2,36 +2,26 @@ package com.butterfly.fragment;
 
 import java.util.ArrayList;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract.CommonDataKinds.Email;
-import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ImageView;
+import android.widget.EditText;
 import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
-import android.widget.SimpleCursorAdapter.CursorToStringConverter;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.butterfly.MainActivity;
 import com.butterfly.R;
 import com.butterfly.RecordActivity;
 import com.butterfly.adapter.ContactAdapter;
@@ -47,7 +37,7 @@ public class ContactsListFragment extends Fragment {
 
 	private ContactAdapter selectedContactAdapter;
 
-	private TextView searchEditText;
+	private EditText searchEditText;
 
 	private ArrayList<ContactAdapter.Contact> frequentContacts;
 
@@ -56,7 +46,7 @@ public class ContactsListFragment extends Fragment {
 			Bundle savedInstanceState) {
 		View v = inflater.inflate(R.layout.contact_list, container, false);
 
-		searchEditText = (TextView) v.findViewById(R.id.searchText);
+		searchEditText = (EditText) v.findViewById(R.id.searchText);
 		contactList = (ListView) v.findViewById(R.id.selectedContactList);
 		selectedContactAdapter = new ContactAdapter(getActivity(),
 				R.layout.contact_list_item);

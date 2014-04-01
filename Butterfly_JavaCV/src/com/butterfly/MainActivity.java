@@ -375,14 +375,10 @@ public class MainActivity extends FragmentActivity implements
 			//Camera var ise item count 2 oluyor(contactlist,streamlist ve mapfragment)
 			if(mAppSectionsPagerAdapter.getCount() == 2)
 			{
-				if(mViewPager.getCurrentItem() == 0)
+				if(mViewPager.getCurrentItem() == 1)
 				{
-					//Contactlistfragment secili ise klavye goster
-					showHideKeyboard(true, mViewPager);
-				}
-				else
-				{
-					showHideKeyboard(false, mViewPager);
+					//hide keyboard when showing the video list
+					showHideKeyboard(false, mViewPager);					
 				}
 			}
 

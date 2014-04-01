@@ -11,6 +11,7 @@
         android:layout_height="wrap_content"
         android:hint="@string/write_contact_name_or_email_addr"
         android:lines="1"
+        android:maxLines="1"
         android:textColor="@android:color/black" 
         android:textCursorDrawable="@null"/>
 
