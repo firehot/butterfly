@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.butterfly.R;
@@ -25,6 +26,7 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 		public SmartImageView imageView;
 		public TextView liveNowView;
 		public Button overflowButton;
+		public ImageView privacyImage;
 	}
 
 	public StreamListAdapter(StreamListFragment fragment) {
@@ -46,6 +48,7 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 			viewHolder.imageView = (SmartImageView) rowView
 					.findViewById(R.id.stream_image);
 			viewHolder.liveNowView = (TextView) rowView.findViewById(R.id.live_now);
+			viewHolder.privacyImage = (ImageView) rowView.findViewById(R.id.privacy_image);
 			viewHolder.overflowButton = (Button) rowView.findViewById(R.id.streamOverflow);
 			viewHolder.overflowButton.setOnClickListener(this.fragment);
 			rowView.setTag(viewHolder);
@@ -82,6 +85,15 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 		} else {
 			holder.textStreamViewerCount.setVisibility(View.INVISIBLE);
 		}
+		
+		if (s.isPublic) {
+			holder.privacyImage.setImageResource(R.drawable.ic_public_sign);
+		}
+		else {
+			holder.privacyImage.setImageResource(R.drawable.ic_private);
+		}
+		
+		
 
 		return rowView;
 	}

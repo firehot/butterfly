@@ -39,28 +39,38 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:textColor="#FF0000"
             android:textStyle="bold" />
+        
+         <TextView
+        android:id="@+id/stream_viewer_count"
+        style="?android:attr/textAppearanceSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:text="1 Viewer"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@android:color/black" />
 
     </LinearLayout>
 
     <Button
         android:id="@+id/streamOverflow"
-        android:layout_width="30dp"
+        android:layout_width="40dp"
         android:layout_height="30dp"
         android:layout_alignParentRight="true"
         android:background="@drawable/ic_action_overflow" 
         android:focusable="false"/>
-
-    <TextView
-        android:id="@+id/stream_viewer_count"
-        style="?android:attr/textAppearanceSmall"
+    
+    <ImageView  
+        android:id="@+id/privacy_image"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
-        android:layout_below="@id/streamOverflow"
-        android:layout_centerVertical="true"
-        android:layout_margin="5dp"
-        android:text="1 Viewer"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:textColor="@android:color/black" />
+        android:layout_alignParentBottom="true"
+        android:focusable="false"
+        android:adjustViewBounds="true"
+        android:contentDescription="Privacy"
+        android:src="@drawable/ic_public_sign"/>
+
+   
 
 </RelativeLayout>

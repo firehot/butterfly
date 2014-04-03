@@ -54,6 +54,7 @@ public class StreamManager {
 			jsonObject.put("longitude", stream.getLongitude());
 			jsonObject.put("altitude", stream.getAltitude());
 			jsonObject.put("isLive", stream.getIsLive());
+			jsonObject.put("isPublic", stream.getIsPublic());
 			jsonObject.put("isDeletable", isDeletable(stream, mailList));
 			jsonArray.add(jsonObject);
 		}

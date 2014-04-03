@@ -41,9 +41,10 @@ OnClickListener{
 		public double altitude;
 		public boolean isLive;
 		public boolean isDeletable;
+		public boolean isPublic;
 
 		public Stream(String name, String url, int viewerCount, double latitude, double longitude, double altitude
-				,boolean isLive,boolean isDeletable) {
+				,boolean isLive,boolean isDeletable, boolean isPublic) {
 			super();
 			this.name = name;
 			this.url = url;
@@ -53,6 +54,7 @@ OnClickListener{
 			this.altitude = altitude;
 			this.isLive = isLive;
 			this.isDeletable = isDeletable;
+			this.isPublic = isPublic;
 		}
 
 		@Override
