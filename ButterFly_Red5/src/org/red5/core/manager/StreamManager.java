@@ -76,25 +76,29 @@ public class StreamManager {
 	private void removeGhostStreams(Map<String, StreamProxy> entrySet,
 			Timestamp currentTime) {
 		List<Streams> streamList = getAllStreamList(null);
-		for (Streams stream : streamList) {
+		if(streamList != null)
+		{
+			for (Streams stream : streamList) {
 
-			StreamProxy streamProxy = null;
-			if(entrySet.containsKey(stream.getStreamUrl()))
-			{
-				streamProxy = entrySet.get(stream.getStreamUrl());
-
-				
+				StreamProxy streamProxy = null;
 				if(entrySet.containsKey(stream.getStreamUrl()))
 				{
 					streamProxy = entrySet.get(stream.getStreamUrl());
 
-					if (streamProxy.timeReceived != null) {
+					
+					if(entrySet.containsKey(stream.getStreamUrl()))
+					{
+						streamProxy = entrySet.get(stream.getStreamUrl());
 
-						removeStream(stream.getStreamUrl());
+						if (streamProxy.timeReceived != null) {
+
+							removeStream(stream.getStreamUrl());
+						}
 					}
 				}
 			}
 		}
+		
 
 	}
 

@@ -11,7 +11,7 @@
 		<properties>
 			<property name="hibernate.connection.username" value="root" />
 			<property name="hibernate.connection.url"
-				value="jdbc:mysql://localhost:3306/butterflydb/?autoReconnect=true" />
+				value="jdbc:mysql://localhost:3306/butterflydb" />
 			<property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver" />
 			<property name="hibernate.default_schema" value="butterflydb" />
 			<property name="hibernate.connection.password" value="" />
