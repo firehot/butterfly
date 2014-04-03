@@ -3,6 +3,7 @@ package com.butterfly.adapter;
 import org.w3c.dom.Text;
 
 import android.app.Activity;
+import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +28,7 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 		public TextView liveNowView;
 		public Button overflowButton;
 		public ImageView privacyImage;
+		public TextView publishedTime;
 	}
 
 	public StreamListAdapter(StreamListFragment fragment) {
@@ -50,6 +52,7 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 			viewHolder.liveNowView = (TextView) rowView.findViewById(R.id.live_now);
 			viewHolder.privacyImage = (ImageView) rowView.findViewById(R.id.privacy_image);
 			viewHolder.overflowButton = (Button) rowView.findViewById(R.id.streamOverflow);
+			viewHolder.publishedTime = (TextView) rowView.findViewById(R.id.publish_time);
 			viewHolder.overflowButton.setOnClickListener(this.fragment);
 			rowView.setTag(viewHolder);
 		}
@@ -93,7 +96,7 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 			holder.privacyImage.setImageResource(R.drawable.ic_private);
 		}
 		
-		
+		holder.publishedTime.setText(DateUtils.getRelativeTimeSpanString(s.registerTime));
 
 		return rowView;
 	}

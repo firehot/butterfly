@@ -330,12 +330,10 @@ public class MainActivity extends FragmentActivity implements
 							if (tmp.equals("null")) { tmp = "0"; }
 							Double altitude = Double.parseDouble(tmp);
 
-							tmp = null;
+							boolean isPublic = true;
 							if (jsonObject.has("isPublic")) {
-								tmp = jsonObject.getString("isPublic");
+								isPublic = jsonObject.getBoolean("isPublic");
 							}
-							if (tmp == null || tmp.equals("null")) { tmp = "true"; }
-							Boolean isPublic = Boolean.parseBoolean(tmp);
 							
 							long registerTime = 0;
 							if (jsonObject.has("registerTime")) {

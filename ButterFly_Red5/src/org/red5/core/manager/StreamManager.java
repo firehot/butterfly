@@ -66,9 +66,11 @@ public class StreamManager {
 
 	public boolean isDeletable(Streams stream,List<String> mailList)
 	{
+		if (mailList != null) { 
 		for (String mail : mailList) {
 			if(mail.equals(stream.getBroadcasterMail()))
 				return true;
+		}
 		}
 
 		return false;

@@ -712,8 +712,10 @@ public class ApplicationTester {
 
 	}
 
-	public void testIsPublicWorking() {
+	@Test
+	public void testIsPublicWorkingAndRegisterTime() {
 		try {
+			long currentTimeMillis = System.currentTimeMillis();
 			boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com", "mail@mail.com", true, null);
 			assertEquals(registerLiveStream, true);
 
@@ -728,13 +730,21 @@ public class ApplicationTester {
 			assertTrue(jsonObject.has("isPublic"));
 
 			assertTrue(jsonObject.getBoolean("isPublic"));
+			
+			assertTrue(jsonObject.has("registerTime"));
+			
+			System.out.println(jsonObject.getLong("registerTime"));
+			assertTrue(jsonObject.getLong("registerTime") - currentTimeMillis < 5 );
 
+			currentTimeMillis = System.currentTimeMillis();
 			boolean result = butterflyApp.registerUser("skjşsalkdfj908098", "ahmetmermerkaya@gmail.com");
 			assertTrue(result);
 			registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl9898", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com", "mail@mail.com", false, null);
 			assertEquals(registerLiveStream, true);
 
 			liveStreams = butterflyApp.getLiveStreams("ahmetmermerkaya@gmail.com");
+			
+			jsonArray = new JSONArray(liveStreams);
 
 			length = jsonArray.length();
 			assertEquals(2, length);
@@ -744,12 +754,14 @@ public class ApplicationTester {
 
 
 			assertTrue(!jsonObject.getBoolean("isPublic"));
+			
+			assertTrue(jsonObject.has("registerTime"));
+			
+			System.out.println(jsonObject.getLong("registerTime"));
+			assertTrue(jsonObject.getLong("registerTime") - currentTimeMillis < 5 );
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-
-
-
 	}
 
 
