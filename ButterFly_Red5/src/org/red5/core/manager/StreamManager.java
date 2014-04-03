@@ -56,6 +56,7 @@ public class StreamManager {
 			jsonObject.put("isLive", stream.getIsLive());
 			jsonObject.put("isPublic", stream.getIsPublic());
 			jsonObject.put("isDeletable", isDeletable(stream, mailList));
+			jsonObject.put("registerTime", stream.getRegisterTime().getTime());
 			jsonArray.add(jsonObject);
 		}
 		

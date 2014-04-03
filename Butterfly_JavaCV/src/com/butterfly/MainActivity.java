@@ -337,6 +337,11 @@ public class MainActivity extends FragmentActivity implements
 							if (tmp == null || tmp.equals("null")) { tmp = "true"; }
 							Boolean isPublic = Boolean.parseBoolean(tmp);
 							
+							long registerTime = 0;
+							if (jsonObject.has("registerTime")) {
+								registerTime = jsonObject.getLong("registerTime");
+							}
+							
 							streamList.add(new Stream(jsonObject.getString("name"), 
 											jsonObject.getString("url"), 
 											Integer.parseInt(jsonObject.getString("viewerCount")), 
@@ -345,7 +350,8 @@ public class MainActivity extends FragmentActivity implements
 											altitude, 
 											Boolean.parseBoolean(jsonObject.getString("isLive")),
 											Boolean.parseBoolean(jsonObject.getString("isDeletable")),
-											isPublic));
+											isPublic,
+											registerTime));
 							
 
 						}

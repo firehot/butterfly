@@ -42,9 +42,10 @@ OnClickListener{
 		public boolean isLive;
 		public boolean isDeletable;
 		public boolean isPublic;
+		public long registerTime;
 
 		public Stream(String name, String url, int viewerCount, double latitude, double longitude, double altitude
-				,boolean isLive,boolean isDeletable, boolean isPublic) {
+				,boolean isLive,boolean isDeletable, boolean isPublic, long registerTime) {
 			super();
 			this.name = name;
 			this.url = url;
@@ -55,6 +56,7 @@ OnClickListener{
 			this.isLive = isLive;
 			this.isDeletable = isDeletable;
 			this.isPublic = isPublic;
+			this.registerTime = registerTime;
 		}
 
 		@Override
