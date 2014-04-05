@@ -13,7 +13,7 @@ import org.red5.server.api.stream.IStreamPacket;
 
 public class StreamProxy {
 
-	public Timestamp timeReceived;
+	public long lastPacketReceivedTime;
 	public FLVWriter flvWriter;
 	public String streamUrl;
 	public int id;
@@ -38,6 +38,7 @@ public class StreamProxy {
 				e.printStackTrace();
 			}
 		}
+		lastPacketReceivedTime = System.currentTimeMillis();
 		flvWriter = new FLVWriter(file, false);
 	}
 	

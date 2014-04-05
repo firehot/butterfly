@@ -8,6 +8,7 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -29,6 +30,7 @@ import org.red5.core.dbModel.GcmUserMails;
 import org.red5.core.dbModel.GcmUsers;
 import org.red5.core.dbModel.RegIds;
 import org.red5.core.dbModel.Streams;
+import org.red5.core.manager.StreamManager;
 import org.red5.core.utils.JPAUtils;
 
 public class ApplicationTester {
@@ -91,6 +93,9 @@ public class ApplicationTester {
 				e.printStackTrace();
 			}
 		}
+		
+		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList(null);
+		assertTrue(streamList.get(0).getIsLive());
 
 		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", null, "mail@mail.com", true, null);
 		assertEquals(registerLiveStream, false);
@@ -731,6 +736,10 @@ public class ApplicationTester {
 
 			assertTrue(jsonObject.getBoolean("isPublic"));
 			
+			assertTrue(jsonObject.has("isLive"));
+			
+			assertTrue(jsonObject.getBoolean("isLive"));
+			
 			assertTrue(jsonObject.has("registerTime"));
 			
 			System.out.println(jsonObject.getLong("registerTime"));
@@ -764,6 +773,70 @@ public class ApplicationTester {
 		}
 	}
 
+	@Test
+	public void testRemoveGhostStream() {
+		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", null, "mail@mail.com", true, null);
+		assertEquals(registerLiveStream, true);
+		
+		String liveStreams = butterflyApp.getLiveStreams("ahmetmermerkaya@gmail.com");
+		
+		JSONArray jsonArray;
+		try {
+			jsonArray = new JSONArray(liveStreams);
+			int length = jsonArray.length();
+			assertEquals(1, length);
+
+			JSONObject jsonObject = (JSONObject) jsonArray.get(0);
+			assertTrue(jsonObject.has("isLive"));
+			assertTrue(jsonObject.getBoolean("isLive"));
+			
+			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis());
+			
+			liveStreams = butterflyApp.getLiveStreams(null);
+			
+			jsonArray = new JSONArray(liveStreams);
+			length = jsonArray.length();
+			assertEquals(1, length);
+
+			jsonObject = (JSONObject) jsonArray.get(0);
+			assertTrue(jsonObject.has("isLive"));
+			assertTrue(jsonObject.getBoolean("isLive"));
+			
+			Thread.sleep(5000);
+			
+			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis());
+			
+			liveStreams = butterflyApp.getLiveStreams(null);
+			
+			jsonArray = new JSONArray(liveStreams);
+			length = jsonArray.length();
+			assertEquals(1, length);
+
+			jsonObject = (JSONObject) jsonArray.get(0);
+			assertTrue(jsonObject.has("isLive"));
+			assertTrue(jsonObject.getBoolean("isLive"));
+			
+			Thread.sleep(StreamManager.MAX_TIME_INTERVAL_BETWEEN_PACKETS);
+			
+			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis());
+			
+			liveStreams = butterflyApp.getLiveStreams(null);
+			
+			jsonArray = new JSONArray(liveStreams);
+			length = jsonArray.length();
+			assertEquals(1, length);
+
+			jsonObject = (JSONObject) jsonArray.get(0);
+			assertTrue(jsonObject.has("isLive"));
+			assertTrue(jsonObject.getBoolean("isLive") == false);
+			
+			
+		} catch (JSONException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public static void delete(File file) {
 

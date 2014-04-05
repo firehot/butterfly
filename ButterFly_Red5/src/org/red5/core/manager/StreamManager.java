@@ -26,6 +26,7 @@ import org.red5.core.utils.JPAUtils;
 
 public class StreamManager {
 
+	public static final int MAX_TIME_INTERVAL_BETWEEN_PACKETS = 20000;
 	Application red5App;
 
 	public StreamManager(Application red5App)
@@ -39,10 +40,9 @@ public class StreamManager {
 		JSONObject jsonObject;
 
 		java.util.Date date = new java.util.Date();
-		Timestamp currentTime = new Timestamp(date.getTime());
-
+		
 		List<Streams> streamList;
-		removeGhostStreams(entrySet, currentTime);
+		removeGhostStreams(entrySet, date.getTime());
 
 		streamList = getAllStreamList(mailList);
 		for (Streams stream : streamList) {
@@ -75,8 +75,8 @@ public class StreamManager {
 
 		return false;
 	}
-	private void removeGhostStreams(Map<String, StreamProxy> entrySet,
-			Timestamp currentTime) {
+	public void removeGhostStreams(Map<String, StreamProxy> entrySet,
+			long currentTime) {
 		List<Streams> streamList = getAllStreamList(null);
 		if(streamList != null)
 		{
@@ -92,7 +92,7 @@ public class StreamManager {
 					{
 						streamProxy = entrySet.get(stream.getStreamUrl());
 
-						if (streamProxy.timeReceived != null) {
+						if ((currentTime - streamProxy.lastPacketReceivedTime) > MAX_TIME_INTERVAL_BETWEEN_PACKETS ) {
 
 							removeStream(stream.getStreamUrl());
 						}
@@ -126,6 +126,7 @@ public class StreamManager {
 
 			Streams stream = new Streams(mailArray[0], Calendar.getInstance().getTime(), streamName, url);
 			stream.setIsPublic(isPublic);
+			stream.setIsLive(true);
 			JPAUtils.getEntityManager().persist(stream);
 
 			//saveStream(stream);
@@ -295,7 +296,8 @@ public class StreamManager {
 								+ "WHERE ( (str.isPublic = :isPublic) " 
 								+ 			" OR (viewer.gcmUsers.id IN "
 								+ 			"		( SELECT gcmUsers.id FROM GcmUserMails userMails WHERE userMails.mail IN (:mails)))"
-								+ 		")");
+								+ 		")"
+								+  " ORDER BY str.registerTime DESC ");
 				query.setParameter("mails", mailList);
 			}
 			else {

@@ -303,6 +303,7 @@ public class MainActivity extends FragmentActivity implements
 
 		@Override
 		protected void onPostExecute(String streams) {
+			
 			streamList.clear();
 
 			if (streams != null) {

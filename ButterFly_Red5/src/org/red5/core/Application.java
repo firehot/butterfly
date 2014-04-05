@@ -568,7 +568,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		if (proxyStreams.containsKey(streamUrl)) {
 			StreamProxy streamTemp = proxyStreams.get(streamUrl);
 			java.util.Date date = new java.util.Date();
-			streamTemp.timeReceived = new Timestamp(date.getTime());
+			streamTemp.lastPacketReceivedTime = date.getTime();
 
 			streamTemp.write(packet);
 		}
@@ -593,73 +593,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		}
 	}
 
-	/**
-	 * Gets the file name list in the path that the videos are recorded
-	 * 
-	 * @return file name list in json
-	 */
-	// public String getRecordedVideoFileList() {
-	//
-	// String path = "webapps/ButterFly_Red5/";
-	// String fileName;
-	// List<String> validFileNames = new ArrayList<String>();
-	// File folder = new File(path);
-	// File[] listOfFiles = folder.listFiles();
-	//
-	// for (int i = 0; i < listOfFiles.length; i++) {
-	//
-	// if (listOfFiles[i].isFile()) {
-	// fileName = listOfFiles[i].getName();
-	// if (fileName.endsWith(".png") || fileName.endsWith(".PNG")) {
-	//
-	// // a file is valid if both flv and png files are exist
-	// if (isFlvFileExist(listOfFiles,
-	// fileName.substring(0, fileName.length() - 3)
-	// + "flv")) {
-	// validFileNames.add(fileName);
-	// }
-	//
-	// }
-	// }
-	// }
-	//
-	// JSONArray jsonArray = new JSONArray();
-	// JSONObject jsonObject;
-	// for (String streamName : validFileNames) {
-	//
-	// jsonObject = new JSONObject();
-	// jsonObject.put("streamName", streamName);
-	// jsonArray.add(jsonObject);
-	//
-	// }
-	//
-	// return jsonArray.toString();
-	//
-	// }
-
-	/**
-	 * Checks whether a corresponding flv file is exist for a png
-	 * 
-	 * @param listOfFiles
-	 * @param flvFileName
-	 * @return
-	 */
-	// public boolean isFlvFileExist(File[] listOfFiles, String flvFileName) {
-	// String fileName;
-	//
-	// for (int i = 0; i < listOfFiles.length; i++) {
-	//
-	// if (listOfFiles[i].isFile()) {
-	// fileName = listOfFiles[i].getName();
-	// if (fileName.equals(flvFileName)) {
-	//
-	// return true;
-	// }
-	// }
-	// }
-	//
-	// return false;
-	// }
+	
 
 	public Map<String, StreamProxy> getLiveStreamProxies() {
 		return proxyStreams;
