@@ -7,6 +7,7 @@ import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 import io.vov.vitamio.MediaPlayer;
 import io.vov.vitamio.MediaPlayer.OnBufferingUpdateListener;
 import io.vov.vitamio.MediaPlayer.OnErrorListener;
+import io.vov.vitamio.widget.MediaController;
 import io.vov.vitamio.widget.VideoView;
 import android.app.Activity;
 import android.content.Intent;
@@ -76,6 +77,7 @@ public class MediaPlayerActivity extends Activity implements
 				videoURL = rtmpUrl;
 			}
 			else {
+				enableMediaController();
 				videoURL = httpURL;
 			}
 			
@@ -84,6 +86,7 @@ public class MediaPlayerActivity extends Activity implements
 			videoView.setVideoQuality(MediaPlayer.VIDEOQUALITY_HIGH);
 			//videoView.setBufferSize(1024 * 10);
 
+			videoView.requestFocus();
 			videoView
 					.setOnBufferingUpdateListener(new OnBufferingUpdateListener() {
 						int i = 0;
@@ -130,6 +133,12 @@ public class MediaPlayerActivity extends Activity implements
 
 		}
 
+	}
+
+	private void enableMediaController() {
+		MediaController mediaController = new MediaController(this);
+		mediaController.setMediaPlayer(videoView);
+		videoView.setMediaController(mediaController);
 	}
 
 	@Override
@@ -210,6 +219,7 @@ public class MediaPlayerActivity extends Activity implements
 			if (result == false) {
 				//loadingView.setText(R.string.missed_the_stream);
 				videoView.stopPlayback();
+				enableMediaController();
 				videoView.setVideoPath(httpURL);
 				videoView.start();
 			}
