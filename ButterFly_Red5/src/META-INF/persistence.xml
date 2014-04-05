@@ -11,7 +11,7 @@
 		<properties>
 			<property name="hibernate.connection.username" value="root" />
 			<property name="hibernate.connection.url"
-				value="jdbc:mysql://localhost:3306/butterflydb" />
+				value="jdbc:mysql://localhost:3306/butterflydb?autoReconnect=true" />
 			<property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver" />
 			<property name="hibernate.default_schema" value="butterflydb" />
 			<property name="hibernate.connection.password" value="" />
@@ -32,7 +32,7 @@
 			<property name="connection.is-connection-validation-required"
 				value="true" />
 			<property name="c3p0.preferredTestQuery" value="select 1;" />
-			<property name="c3p0.testConnectionOnCheckin" value="false" />
+			<property name="c3p0.testConnectionOnCheckin" value="true" />
 			<property name="c3p0.testConnectionOnCheckout" value="true" />
 		</properties>
 
