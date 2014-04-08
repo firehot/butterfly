@@ -514,10 +514,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 				
 				Crouton.showText(this,R.string.write_name_of_stream, Style.INFO);
 				btnRecorderControl.setClickable(true);
-//				AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//				// builder.setPositiveButton(R.string.ok, this);
-//				builder.setTitle(R.string.error);
-//				builder.setMessage(R.string.write_name_of_stream).show();
 			}
 
 		} else {
