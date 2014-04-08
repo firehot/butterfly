@@ -484,7 +484,10 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 	@Override
 	public void onClick(View v) {
+		
 		if (!recording) {
+			
+			btnRecorderControl.setClickable(false);
 
 			streamName = streamNameEditText.getText().toString();
 
@@ -535,7 +538,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 			if (mProgressDialog == null) {
 				mProgressDialog = ProgressDialog.show(RecordActivity.this,
 						null, getString(R.string.initializing), true);
-				mProgressDialog.setCancelable(true);
+
 			} else {
 				mProgressDialog.setMessage(getString(R.string.initializing));
 			}
@@ -577,7 +580,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		@Override
 		protected void onPostExecute(Boolean result) {
-			mProgressDialog.dismiss();
+			if(mProgressDialog != null)
+				mProgressDialog.dismiss();
 			if (result == true) {
 				Log.w(LOG_TAG, "Start Button Pushed");
 				streamNameEditText.setVisibility(View.GONE);
@@ -592,6 +596,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 				publicVideoCheckBox.setVisibility(View.VISIBLE);
 			}
 
+			mProgressDialog = null;
+			btnRecorderControl.setClickable(true);
 			RecordActivity.this.getLocation();
 			super.onPostExecute(result);
 
