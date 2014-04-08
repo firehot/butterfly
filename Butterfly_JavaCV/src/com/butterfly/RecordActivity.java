@@ -53,6 +53,8 @@ import com.butterfly.view.CameraView;
 import com.google.android.gms.location.LocationListener;
 import com.googlecode.javacpp.BytePointer;
 
+import de.keyboardsurfer.android.widget.crouton.Crouton;
+import de.keyboardsurfer.android.widget.crouton.Style;
 import flex.messaging.io.MessageIOConstants;
 import flex.messaging.io.amf.client.AMFConnection;
 import flex.messaging.io.amf.client.exceptions.ClientStatusException;
@@ -209,6 +211,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 			recorder = null;
 		}
 		BugSenseHandler.closeSession(this);
+		Crouton.cancelAllCroutons();
 
 	}
 
@@ -508,10 +511,13 @@ public class RecordActivity extends Activity implements OnClickListener,
 				} 
 
 			} else {
-				AlertDialog.Builder builder = new AlertDialog.Builder(this);
-				// builder.setPositiveButton(R.string.ok, this);
-				builder.setTitle(R.string.error);
-				builder.setMessage(R.string.write_name_of_stream).show();
+				
+				Crouton.showText(this,R.string.write_name_of_stream, Style.INFO);
+				btnRecorderControl.setClickable(true);
+//				AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//				// builder.setPositiveButton(R.string.ok, this);
+//				builder.setTitle(R.string.error);
+//				builder.setMessage(R.string.write_name_of_stream).show();
 			}
 
 		} else {
