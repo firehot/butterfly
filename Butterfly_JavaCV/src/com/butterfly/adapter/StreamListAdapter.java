@@ -1,8 +1,9 @@
 package com.butterfly.adapter;
 
-import org.w3c.dom.Text;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
-import android.app.Activity;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,6 +16,7 @@ import android.widget.TextView;
 import com.butterfly.R;
 import com.butterfly.fragment.StreamListFragment;
 import com.butterfly.fragment.StreamListFragment.Stream;
+import com.butterfly.view.VerticalProgressBar;
 import com.loopj.android.image.SmartImageView;
 
 public class StreamListAdapter extends ArrayAdapter<Stream> {
@@ -29,6 +31,7 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 		public Button overflowButton;
 		public ImageView privacyImage;
 		public TextView publishedTime;
+		public VerticalProgressBar progressBar;
 	}
 
 	public StreamListAdapter(StreamListFragment fragment) {
@@ -49,6 +52,7 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 					.findViewById(R.id.stream_viewer_count);
 			viewHolder.imageView = (SmartImageView) rowView
 					.findViewById(R.id.stream_image);
+			viewHolder.progressBar = (VerticalProgressBar)rowView.findViewById(R.id.verticalProgressBar);
 			viewHolder.liveNowView = (TextView) rowView.findViewById(R.id.live_now);
 			viewHolder.privacyImage = (ImageView) rowView.findViewById(R.id.privacy_image);
 			viewHolder.overflowButton = (Button) rowView.findViewById(R.id.streamOverflow);
@@ -96,8 +100,23 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 			holder.privacyImage.setImageResource(R.drawable.ic_private);
 		}
 		
+		holder.progressBar.setProgress(24-(int)getTimeDifference(s.registerTime));
 		holder.publishedTime.setText(DateUtils.getRelativeTimeSpanString(s.registerTime));
 
 		return rowView;
+	}
+	
+	public long getTimeDifference(long registerTime)
+	{
+	    
+	    Date currentTime = Calendar.getInstance().getTime();
+	    currentTime.getTime();
+	    long diff = currentTime.getTime()-registerTime;
+	    long diff_sec = TimeUnit.MILLISECONDS.toSeconds(diff);
+	    diff_sec/= 60;
+	    diff_sec /= 60;
+	    long hours = diff_sec % 24;
+	    
+	    return hours;
 	}
 }

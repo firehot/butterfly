@@ -1,14 +1,27 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<RelativeLayout xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="match_parent"
-    android:padding="6dip" >
+    android:padding="6dip" xmlns:android="http://schemas.android.com/apk/res/android">
+
+<com.butterfly.view.VerticalProgressBar
+    android:id="@+id/verticalProgressBar"
+    style="@android:style/Widget.ProgressBar.Horizontal"
+    android:layout_width="wrap_content"
+    android:layout_height="70dp"
+    android:layout_alignParentLeft="true"
+    android:layout_marginRight="5dp"
+    android:max="24"
+    android:maxWidth="5dip"
+    android:minWidth="5dip"
+    android:progress="24"
+    android:progressDrawable="@drawable/progress2" />
 
     <com.loopj.android.image.SmartImageView
         android:id="@+id/stream_image"
         android:layout_width="70dp"
         android:layout_height="70dp"
-        android:layout_alignParentLeft="true"
+        
+        android:layout_toRightOf="@id/verticalProgressBar"
         android:src="@drawable/ic_launcher" />
 
     <LinearLayout
