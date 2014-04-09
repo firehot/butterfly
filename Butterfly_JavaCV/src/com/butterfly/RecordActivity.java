@@ -525,6 +525,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 			publicVideoCheckBox.setVisibility(View.VISIBLE);
 			stopRecording();
 			runAudioThread = false;
+			snapshotSent = false;
 			Log.w(LOG_TAG, "Stop Button Pushed");
 		}
 	}
