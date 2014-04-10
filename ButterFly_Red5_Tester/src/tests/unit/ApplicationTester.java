@@ -79,7 +79,7 @@ public class ApplicationTester {
 	@Test
 	public void testRegisterStream() {
 
-		boolean result = butterflyApp.registerUser("ksdjfşlask9934803248omjj", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com");
+		boolean result = butterflyApp.registerUser("ksdjfÅŸlask9934803248omjj", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com");
 		assertEquals(true, result);
 
 
@@ -123,10 +123,10 @@ public class ApplicationTester {
 
 	@Test
 	public void testRemoveStream() {
-		boolean result = butterflyApp.registerUser("ksdjfşlask9934803248omjj", "ahmetmermerkaya@gmail.com");
+		boolean result = butterflyApp.registerUser("ksdjfÅŸlask9934803248omjj", "ahmetmermerkaya@gmail.com");
 		assertEquals(true, result);
 
-		result = butterflyApp.registerUser("ksdjfşlask9934803248omjasdfşasdfjj", "ahmetmermerkaya@hotmail.com");
+		result = butterflyApp.registerUser("ksdjfÅŸlask9934803248omjasdfÅŸasdfjj", "ahmetmermerkaya@hotmail.com");
 		assertEquals(true, result);
 
 
@@ -469,14 +469,20 @@ public class ApplicationTester {
 		File f1 = new File(streamsFolder, "f1.flv");
 		File f2 = new File(streamsFolder, "f2.flv");
 		File f3 = new File(streamsFolder, "f3.flv");
+		File f1p = new File(butterFly, "f1.png");
+		File f2p = new File(butterFly, "f2.png");
+		File f3p = new File(butterFly, "f3.png");
 		try {
 			f1.createNewFile();
 			f2.createNewFile();
 			f3.createNewFile();
-			boolean result = butterflyApp.registerUser("ksdjfşlask9934803248omjj", "ahmetmermerkaya@gmail.com");
+			f1p.createNewFile();
+			f2p.createNewFile();
+			f3p.createNewFile();
+			boolean result = butterflyApp.registerUser("ksdjfÅŸlask9934803248omjj", "ahmetmermerkaya@gmail.com");
 			assertEquals(true, result);
 
-			result = butterflyApp.registerUser("ksdjfşlask9934803248omjasdfşasdfjj", "ahmetmermerkaya@hotmail.com");
+			result = butterflyApp.registerUser("ksdjfÅŸlask9934803248omjasdfÅŸasdfjj", "ahmetmermerkaya@hotmail.com");
 			assertEquals(true, result);
 
 			boolean registered = butterflyApp.registerLiveStream("streamName", "f1", "ahmetmermerkaya@hotmail.com,ahmetmermerkaya@gmail.com", "mail@mail.com", true, "tur");
@@ -497,6 +503,9 @@ public class ApplicationTester {
 		assertEquals(f1.exists(), true);
 		assertEquals(f2.exists(), true);
 		assertEquals(f3.exists(), true);
+		assertEquals(f1p.exists(), true);
+		assertEquals(f2p.exists(), true);
+		assertEquals(f3p.exists(), true);
 
 		try {
 			Thread.sleep(1000);
@@ -514,6 +523,9 @@ public class ApplicationTester {
 		assertEquals(f1.exists(), false);
 		assertEquals(f2.exists(), false);
 		assertEquals(f3.exists(), false);
+		assertEquals(f1p.exists(), false);
+		assertEquals(f2p.exists(), false);
+		assertEquals(f3p.exists(), false);
 
 		Query query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers");
 		assertEquals(0, query.getResultList().size());
@@ -524,6 +536,9 @@ public class ApplicationTester {
 			f1.createNewFile();
 			f2.createNewFile();
 			f3.createNewFile();
+			f1p.createNewFile();
+			f2p.createNewFile();
+			f3p.createNewFile();
 			boolean registered = butterflyApp.registerLiveStream("streamName", "f1", null, "mail1@mail.com", true, "tur");
 			assertTrue(registered);
 			registered = butterflyApp.registerLiveStream("streamName", "f2", null, "mail2@mail.com", true, "tur");
@@ -539,6 +554,9 @@ public class ApplicationTester {
 		assertEquals(f1.exists(), true);
 		assertEquals(f2.exists(), true);
 		assertEquals(f3.exists(), true);
+		assertEquals(f1p.exists(), true);
+		assertEquals(f2p.exists(), true);
+		assertEquals(f3p.exists(), true);
 
 		try {
 			Thread.sleep(2000);
@@ -549,6 +567,9 @@ public class ApplicationTester {
 		assertEquals(f1.exists(), false);
 		assertEquals(f2.exists(), false);
 		assertEquals(f3.exists(), false);
+		assertEquals(f1p.exists(), false);
+		assertEquals(f2p.exists(), false);
+		assertEquals(f3p.exists(), false);
 
 		butterflyApp.cancelStreamDeleteTimer();
 	}
@@ -602,7 +623,7 @@ public class ApplicationTester {
 
 	@Test
 	public void testStreamViewer() {
-		boolean result = butterflyApp.registerUser("ksdjfşlask9934803248omjj", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com");
+		boolean result = butterflyApp.registerUser("ksdjfÅŸlask9934803248omjj", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com");
 		assertEquals(true, result);
 
 
@@ -660,7 +681,7 @@ public class ApplicationTester {
 	@Test
 	public void testStreamNameTurkishChar() {
 
-		String tmpName = "işoıolilişliüğıİçÇöÖĞÜü";
+		String tmpName = "iÅŸoÄ±oliliÅŸliÃ¼ÄŸÄ±Ä°Ã§Ã‡Ã¶Ã–Ä�ÃœÃ¼";
 		boolean registerLiveStream = butterflyApp.registerLiveStream(tmpName, "publishUrl", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com", "mail@mail.com", true, null);
 		assertEquals(registerLiveStream, true);
 
@@ -743,10 +764,10 @@ public class ApplicationTester {
 			assertTrue(jsonObject.has("registerTime"));
 			
 			System.out.println(jsonObject.getLong("registerTime"));
-			assertTrue(jsonObject.getLong("registerTime") - currentTimeMillis < 5 );
+			assertTrue(jsonObject.getLong("registerTime") - currentTimeMillis < 1000 );
 
 			currentTimeMillis = System.currentTimeMillis();
-			boolean result = butterflyApp.registerUser("skjşsalkdfj908098", "ahmetmermerkaya@gmail.com");
+			boolean result = butterflyApp.registerUser("skjÅŸsalkdfj908098", "ahmetmermerkaya@gmail.com");
 			assertTrue(result);
 			registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl9898", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com", "mail@mail.com", false, null);
 			assertEquals(registerLiveStream, true);
@@ -767,7 +788,7 @@ public class ApplicationTester {
 			assertTrue(jsonObject.has("registerTime"));
 			
 			System.out.println(jsonObject.getLong("registerTime"));
-			assertTrue(jsonObject.getLong("registerTime") - currentTimeMillis < 5 );
+			assertTrue(jsonObject.getLong("registerTime") - currentTimeMillis < 1000 );
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}

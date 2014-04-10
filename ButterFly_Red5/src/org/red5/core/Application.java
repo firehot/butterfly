@@ -128,11 +128,13 @@ public class Application extends MultiThreadedApplicationAdapter implements
 							String key = f.getName().substring(0,
 									f.getName().indexOf(".flv"));
 							if ((timeMillis - f.lastModified()) > deleteTime) {
-								f.delete();
+	
+								deleteStreamFiles(key);
+								
 								Streams stream = streamManager.getStream(key);
-								if(stream != null)
+								if (stream != null)
 									streamManager.deleteStream(stream);
-								if(proxyStreams.containsKey(key))
+								if (proxyStreams.containsKey(key))
 									proxyStreams.remove(key);
 							}
 
@@ -173,7 +175,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			String[] mailArray = mails.split(",");
 			mailList = new ArrayList<String>(Arrays.asList(mailArray));
 		}
-		return streamManager.getLiveStreams(getLiveStreamProxies(),mailList);
+		return streamManager.getLiveStreams(getLiveStreamProxies(), mailList);
 	}
 
 	public boolean isLiveStreamExist(String url) {
@@ -279,12 +281,11 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		return userManager.getRegistrationIdList(mail);
 	}
 
-
 	@Override
 	public void streamBroadcastClose(IBroadcastStream stream) {
 		String streamUrl = stream.getPublishedName();
 		// getPublishedName means streamurl to us
-		
+
 		removeStream(streamUrl);
 		super.streamBroadcastClose(stream);
 	}
@@ -403,13 +404,12 @@ public class Application extends MultiThreadedApplicationAdapter implements
 					for (RegIds regIds : regIdSet) {
 						targetRegIDList.add(regIds.getGcmRegId());
 					}
-							
+
 					MulticastResult result = sender.send(message,
 							targetRegIDList, 1);
 
 					List<Result> resultList = result.getResults();
-					if (resultList != null) 
-					{
+					if (resultList != null) {
 						int canonicalRegId = result.getCanonicalIds();
 						for (int i = 0; i < resultList.size(); i++) {
 							Result innerResult = resultList.get(i);
@@ -419,13 +419,18 @@ public class Application extends MultiThreadedApplicationAdapter implements
 									String canoID = innerResult
 											.getCanonicalRegistrationId();
 									String oldRegID = targetRegIDList.get(i);
-									GcmUsers user = userManager.getGcmUserByRegId(oldRegID);
-									
-									Set<GcmUserMails> gcmUserMailses = user.getGcmUserMailses();
-									GcmUserMails userMail = gcmUserMailses.iterator().next();
-									
-									if (userMail != null && userMail.getMail() != null) {
-										updateUser(canoID, userMail.getMail(), oldRegID);
+									GcmUsers user = userManager
+											.getGcmUserByRegId(oldRegID);
+
+									Set<GcmUserMails> gcmUserMailses = user
+											.getGcmUserMailses();
+									GcmUserMails userMail = gcmUserMailses
+											.iterator().next();
+
+									if (userMail != null
+											&& userMail.getMail() != null) {
+										updateUser(canoID, userMail.getMail(),
+												oldRegID);
 									}
 								}
 
@@ -437,14 +442,20 @@ public class Application extends MultiThreadedApplicationAdapter implements
 									// -
 									// unregister database
 									String oldRegID = targetRegIDList.get(i);
-									GcmUsers user = userManager.getGcmUserByRegId(oldRegID);
-									Set<GcmUserMails> gcmUserMailses = user.getGcmUserMailses();
-									GcmUserMails userMail = gcmUserMailses.iterator().next();
-									
-									if (userMail != null && userMail.getMail() != null) {
-										if (!failedNotificationMails.contains(userMail.getMail()))
-											failedNotificationMails.add(userMail.getMail());
-										}
+									GcmUsers user = userManager
+											.getGcmUserByRegId(oldRegID);
+									Set<GcmUserMails> gcmUserMailses = user
+											.getGcmUserMailses();
+									GcmUserMails userMail = gcmUserMailses
+											.iterator().next();
+
+									if (userMail != null
+											&& userMail.getMail() != null) {
+										if (!failedNotificationMails
+												.contains(userMail.getMail()))
+											failedNotificationMails
+													.add(userMail.getMail());
+									}
 									deleteRegId(oldRegID);
 								}
 							}
@@ -489,9 +500,9 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		if (getLiveStreamProxies().containsKey(name)) {
 			StreamProxy streamProxy = getLiveStreamProxies().get(name);
 			streamProxy.addViewer(subscriberStream.getName());
-			
+
 			Streams stream = streamManager.getStream(name);
-			
+
 			notifyUserAboutViewerCount(getViewerCount(stream.getStreamUrl()),
 					this.getRegistrationIdList(stream.getBroadcasterMail()));
 		}
@@ -513,7 +524,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 				regIds.add(regIDs.getGcmRegId());
 			}
 			if (regIds.size() >= 0) {
-				MulticastResult result = sender.send(message,regIds, 1);
+				MulticastResult result = sender.send(message, regIds, 1);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -525,17 +536,19 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public void streamSubscriberClose(ISubscriberStream subcriberStream) {
 		super.streamSubscriberClose(subcriberStream);
 
-		Set<Entry<String, StreamProxy>> entrySet = getLiveStreamProxies().entrySet();
+		Set<Entry<String, StreamProxy>> entrySet = getLiveStreamProxies()
+				.entrySet();
 		for (Iterator iterator = entrySet.iterator(); iterator.hasNext();) {
 			Entry<String, StreamProxy> entry = (Entry<String, StreamProxy>) iterator
 					.next();
 			StreamProxy value = entry.getValue();
 			if (value.containsViewer(subcriberStream.getName())) {
 				value.removeViewer(subcriberStream.getName());
-				
+
 				Streams stream = streamManager.getStream(value.streamUrl);
-				
-				notifyUserAboutViewerCount(getViewerCount(stream.getStreamUrl()),
+
+				notifyUserAboutViewerCount(
+						getViewerCount(stream.getStreamUrl()),
 						this.getRegistrationIdList(stream.getBroadcasterMail()));
 				break;
 			}
@@ -575,7 +588,6 @@ public class Application extends MultiThreadedApplicationAdapter implements
 
 	}
 
-
 	/**
 	 * This methods gets image in byte array and saves as a file in the server
 	 * 
@@ -592,8 +604,6 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			e.printStackTrace();
 		}
 	}
-
-	
 
 	public Map<String, StreamProxy> getLiveStreamProxies() {
 		return proxyStreams;
@@ -613,13 +623,13 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		try {
 			count = conn.getScope().getBroadcastScope(broadcastUrl)
 					.getConsumers().size();
-			log.info("viewer number for "+broadcastUrl+" is "+count);
+			log.info("viewer number for " + broadcastUrl + " is " + count);
 		} catch (Exception e) {
 			log.debug(e.getMessage());
 		}
 		return count;
 	}
-	
+
 	public boolean deleteStream(String url)
 	{
 		log.info("Stream to be deleted url is "+url);
@@ -629,6 +639,26 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			log.info("Stream to be deleted is null");
 			return false;
 		}
-		return streamManager.deleteStream(stream);
+		boolean result = streamManager.deleteStream(stream);
+		if(result)
+		{
+			deleteStreamFiles(url);
+		}
+		return result;
+	}
+
+	public void deleteStreamFiles(String url) {
+		File dirStream = new File("webapps/ButterFly_Red5/streams");
+		File dirPreview = new File("webapps/ButterFly_Red5");
+
+		File fStream = new File(dirStream, url + ".flv");
+		File fPreview = new File(dirPreview, url + ".png");
+		if (fStream.isFile() == true && fStream.exists() == true) {
+			fStream.delete();
+		}
+		
+		if (fPreview.isFile() == true && fPreview.exists() == true) {
+			fPreview.delete();
+		}
 	}
 }
