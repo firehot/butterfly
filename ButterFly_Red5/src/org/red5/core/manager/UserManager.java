@@ -298,4 +298,24 @@ public class UserManager {
 		return result;
 	}
 
+	public GcmUsers getGcmUserByEmails(String emails)
+	{
+		Query query = JPAUtils.getEntityManager().createQuery(
+				"FROM GcmUserMails WHERE mail IN :email");
+		
+		String[] mails = emails.split(",");
+		List<String> mailList = new ArrayList<String>(Arrays.asList(mails));
+		
+		query.setParameter("email", mailList);
+
+		List<GcmUserMails> results = query.getResultList();
+
+		// if user is found
+		if (results.size() > 0) {
+			GcmUserMails gcmUserMail = (GcmUserMails) results.get(0);
+			return gcmUserMail.getGcmUsers();
+		}
+		
+		return null;
+	}
 }

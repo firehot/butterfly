@@ -100,7 +100,11 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 			holder.privacyImage.setImageResource(R.drawable.ic_private);
 		}
 		
-		holder.progressBar.setProgress(24-(int)getTimeDifference(s.registerTime));
+		int progress = 24-(int)getTimeDifference(s.registerTime);
+		if(progress < 0)
+			progress = 1;
+		
+		holder.progressBar.setProgress(progress);
 		holder.publishedTime.setText(DateUtils.getRelativeTimeSpanString(s.registerTime));
 
 		return rowView;

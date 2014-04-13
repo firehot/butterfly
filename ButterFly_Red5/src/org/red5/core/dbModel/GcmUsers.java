@@ -24,7 +24,8 @@ public class GcmUsers implements java.io.Serializable {
 	private Set<GcmUserMails> gcmUserMailses = new HashSet<GcmUserMails>(0);
 	private Set<StreamViewers> streamViewerses = new HashSet<StreamViewers>(0);
 	private Set<RegIds> regIdses = new HashSet<RegIds>(0);
-
+	private Set<Streams> streams = new HashSet<Streams>(0);
+	
 	public GcmUsers() {
 	}
 
@@ -72,5 +73,16 @@ public class GcmUsers implements java.io.Serializable {
 	public void setRegIdses(Set<RegIds> regIdses) {
 		this.regIdses = regIdses;
 	}
+
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "gcmUsers")
+	public Set<Streams> getStreams() {
+		return streams;
+	}
+
+	public void setStreams(Set<Streams> streams) {
+		this.streams = streams;
+	}
+	
+	
 
 }

@@ -1,23 +1,24 @@
 package org.red5.core.manager;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
+import org.hibernate.Hibernate;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.hibernate.cfg.AnnotationConfiguration;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.red5.core.Application;
-import org.red5.core.dbModel.GcmUserMails;
 import org.red5.core.dbModel.GcmUsers;
 import org.red5.core.dbModel.StreamProxy;
 import org.red5.core.dbModel.StreamViewers;
@@ -29,27 +30,28 @@ public class StreamManager {
 	public static final int MAX_TIME_INTERVAL_BETWEEN_PACKETS = 20000;
 	Application red5App;
 
-	public StreamManager(Application red5App)
-	{
+	public StreamManager(Application red5App) {
 		this.red5App = red5App;
 	}
 
-	public String getLiveStreams( Map<String, StreamProxy> entrySet,List<String> mailList) {
+	public String getLiveStreams(Map<String, StreamProxy> entrySet,
+			List<String> mailList) {
 
 		JSONArray jsonArray = new JSONArray();
 		JSONObject jsonObject;
 
 		java.util.Date date = new java.util.Date();
-		
+
 		List<Streams> streamList;
 		removeGhostStreams(entrySet, date.getTime());
 
-		streamList = getAllStreamList(mailList);
+		streamList = getAllStreamList(mailList,true);
 		for (Streams stream : streamList) {
 			jsonObject = new JSONObject();
 			jsonObject.put("url", stream.getStreamUrl());
 			jsonObject.put("name", stream.getStreamName());
-			jsonObject.put("viewerCount", this.red5App.getViewerCount(stream.getStreamUrl()));
+			jsonObject.put("viewerCount",
+					this.red5App.getViewerCount(stream.getStreamUrl()));
 			jsonObject.put("latitude", stream.getLatitude());
 			jsonObject.put("longitude", stream.getLongitude());
 			jsonObject.put("altitude", stream.getAltitude());
@@ -59,40 +61,29 @@ public class StreamManager {
 			jsonObject.put("registerTime", stream.getRegisterTime().getTime());
 			jsonArray.add(jsonObject);
 		}
-		
 
 		return jsonArray.toString();
 	}
 
-	public boolean isDeletable(Streams stream,List<String> mailList)
-	{
-		if (mailList != null) { 
-		for (String mail : mailList) {
-			if(mail.equals(stream.getBroadcasterMail()))
-				return true;
-		}
-		}
+	public boolean isDeletable(Streams stream, List<String> mailList) {
+		return stream.isDeletable(mailList);
 
-		return false;
 	}
+
 	public void removeGhostStreams(Map<String, StreamProxy> entrySet,
 			long currentTime) {
-		List<Streams> streamList = getAllStreamList(null);
-		if(streamList != null)
-		{
+		List<Streams> streamList = getAllStreamList(null,false);
+		if (streamList != null) {
 			for (Streams stream : streamList) {
 
 				StreamProxy streamProxy = null;
-				if(entrySet.containsKey(stream.getStreamUrl()))
-				{
+				if (entrySet.containsKey(stream.getStreamUrl())) {
 					streamProxy = entrySet.get(stream.getStreamUrl());
 
-					
-					if(entrySet.containsKey(stream.getStreamUrl()))
-					{
+					if (entrySet.containsKey(stream.getStreamUrl())) {
 						streamProxy = entrySet.get(stream.getStreamUrl());
 
-						if ((currentTime - streamProxy.lastPacketReceivedTime) > MAX_TIME_INTERVAL_BETWEEN_PACKETS ) {
+						if ((currentTime - streamProxy.lastPacketReceivedTime) > MAX_TIME_INTERVAL_BETWEEN_PACKETS) {
 
 							removeStream(stream.getStreamUrl());
 						}
@@ -100,11 +91,10 @@ public class StreamManager {
 				}
 			}
 		}
-		
 
 	}
 
-	public boolean isLiveStreamExist(String url,Set<String> streamNames) {
+	public boolean isLiveStreamExist(String url, Set<String> streamNames) {
 
 		boolean result = false;
 		if (streamNames.contains(url)) {
@@ -117,23 +107,27 @@ public class StreamManager {
 			String mailsToBeNotified, String broadcasterMail, boolean isPublic,
 			String deviceLanguage) {
 
-		Map<String, StreamProxy> registeredStreams = this.red5App.getLiveStreamProxies();
+		Map<String, StreamProxy> registeredStreams = this.red5App
+				.getLiveStreamProxies();
 
 		boolean result = false;
 		if (registeredStreams.containsKey(url) == false) {
-			JPAUtils.beginTransaction();
-			String[] mailArray = broadcasterMail.split(",");
+			GcmUsers user = this.red5App.userManager
+					.getGcmUserByEmails(broadcasterMail);
 
-			Streams stream = new Streams(mailArray[0], Calendar.getInstance().getTime(), streamName, url);
+			JPAUtils.beginTransaction();
+			Streams stream = new Streams(user,
+					Calendar.getInstance().getTime(), streamName, url);
 			stream.setIsPublic(isPublic);
 			stream.setIsLive(true);
 			JPAUtils.getEntityManager().persist(stream);
 
-			//saveStream(stream);
+			// saveStream(stream);
 
 			if (mailsToBeNotified != null) {
 				String[] mails = mailsToBeNotified.split(",");
-				List<String> mailList = new ArrayList<String>(Arrays.asList(mails));
+				List<String> mailList = new ArrayList<String>(
+						Arrays.asList(mails));
 
 				Query query = JPAUtils.getEntityManager().createQuery(
 						"SELECT DISTINCT user FROM GcmUsers AS user "
@@ -143,26 +137,24 @@ public class StreamManager {
 				List<GcmUsers> results = query.getResultList();
 
 				for (GcmUsers gcmUserMails : results) {
-					JPAUtils.getEntityManager().persist(new StreamViewers(stream, gcmUserMails));
+					JPAUtils.getEntityManager().persist(
+							new StreamViewers(stream, gcmUserMails));
 				}
 			}
 
 			JPAUtils.commit();
 			JPAUtils.closeEntityManager();
 
-
 			StreamProxy proxy = new StreamProxy(url, stream.getId());
 
 			registeredStreams.put(url, proxy);
-			this.red5App.sendNotificationsOrMail(mailsToBeNotified, broadcasterMail, url,
-					streamName, deviceLanguage);
+			this.red5App.sendNotificationsOrMail(mailsToBeNotified,
+					broadcasterMail, url, streamName, deviceLanguage);
 			// return true even if stream is not public
 			result = true;
 		}
 		return result;
 	}
-
-
 
 	public boolean registerLocationForStream(String url, double longitude,
 			double latitude, double altitude) {
@@ -170,7 +162,7 @@ public class StreamManager {
 		Streams stream = getStream(url);
 
 		boolean result = false;
-		if (stream  != null) {
+		if (stream != null) {
 
 			stream.setLatitude(latitude);
 			stream.setLongitude(longitude);
@@ -183,10 +175,10 @@ public class StreamManager {
 	}
 
 	public boolean removeStream(String streamUrl) {
-		Map<String, StreamProxy> registeredLiveStreams = this.red5App.getLiveStreamProxies();
+		Map<String, StreamProxy> registeredLiveStreams = this.red5App
+				.getLiveStreamProxies();
 		boolean result = false;
-		if (registeredLiveStreams.containsKey(streamUrl)) 
-		{
+		if (registeredLiveStreams.containsKey(streamUrl)) {
 			StreamProxy stream = registeredLiveStreams.remove(streamUrl);
 			stream.close();
 
@@ -242,8 +234,8 @@ public class StreamManager {
 		boolean result;
 		try {
 			EntityManager em = JPAUtils.getEntityManager();
-			JPAUtils.beginTransaction();	
-			em.remove(em.contains(stream) ? stream : em.merge(stream));	
+			JPAUtils.beginTransaction();
+			em.remove(em.contains(stream) ? stream : em.merge(stream));
 			JPAUtils.commit();
 			JPAUtils.closeEntityManager();
 			result = true;
@@ -254,7 +246,6 @@ public class StreamManager {
 		return result;
 	}
 
-
 	public Streams getStream(String streamUrl) {
 
 		Streams resultStream = null;
@@ -263,7 +254,7 @@ public class StreamManager {
 			Query query = JPAUtils.getEntityManager().createQuery(
 					"FROM Streams where streamUrl= :streamUrl");
 			query.setParameter("streamUrl", streamUrl);
-			resultStream = (Streams)query.getSingleResult();
+			resultStream = (Streams) query.getSingleResult();
 			JPAUtils.closeEntityManager();
 
 		} catch (NoResultException e) {
@@ -276,38 +267,45 @@ public class StreamManager {
 	}
 
 	/**
-	 * Function to get public and private streams from database. 
+	 * Function to get public and private streams from database.
 	 * 
 	 * @param mailList
-	 * list of mails that stream is shared with
-
-	 * @return 
-	 * public streams and private streams shared with the mailList
-	 * if mailList is null then it returns only public streams
+	 *            list of mails that stream is shared with
+	 * 
+	 * @return public streams and private streams shared with the mailList if
+	 *         mailList is null then it returns only public streams
 	 */
-	public List<Streams> getAllStreamList(List<String> mailList) {
+	public List<Streams> getAllStreamList(List<String> mailList,boolean initialize) {
 		List<Streams> results = null;
 		try {
-			Query query = null; 
+			Query query = null;
 			if (mailList != null) {
-				query = JPAUtils.getEntityManager().
-						createQuery("SELECT str FROM Streams AS str "
-								+ "LEFT JOIN str.streamViewerses AS viewer "
-								+ "WHERE ( (str.isPublic = :isPublic) " 
-								+ 			" OR (viewer.gcmUsers.id IN "
-								+ 			"		( SELECT gcmUsers.id FROM GcmUserMails userMails WHERE userMails.mail IN (:mails)))"
-								+ 		")"
-								+  " ORDER BY str.registerTime DESC ");
+				query = JPAUtils
+						.getEntityManager()
+						.createQuery(
+								"SELECT str FROM Streams AS str "
+										+ "LEFT JOIN str.streamViewerses AS viewer "
+										+ "WHERE ( (str.isPublic = :isPublic) "
+										+ " OR (viewer.gcmUsers.id IN "
+										+ "		( SELECT gcmUsers.id FROM GcmUserMails userMails WHERE userMails.mail IN (:mails)))"
+										+ ")"
+										+ " ORDER BY str.registerTime DESC ");
 				query.setParameter("mails", mailList);
-			}
-			else {
-				query = JPAUtils.getEntityManager().
-						createQuery("SELECT str FROM Streams AS str "
+			} else {
+				query = JPAUtils.getEntityManager().createQuery(
+						"SELECT str FROM Streams AS str "
 								+ " WHERE (str.isPublic = :isPublic) ");
 			}
 			query.setParameter("isPublic", true);
 
 			results = query.getResultList();
+			if(initialize)
+			{
+				for (Streams streams : results) {
+					Hibernate.initialize(streams.getGcmUsers());
+					Hibernate.initialize(streams.getGcmUsers().getGcmUserMailses());
+				}
+			}
 
 			JPAUtils.closeEntityManager();
 

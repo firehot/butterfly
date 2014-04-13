@@ -101,7 +101,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		userManager = new UserManager(this);
 		streamManager = new StreamManager(this);
 
-		scheduleStreamDeleterTimer(6 * MILLIS_IN_HOUR, 24 * MILLIS_IN_HOUR);
+		scheduleStreamDeleterTimer(1 * MILLIS_IN_HOUR, 24 * MILLIS_IN_HOUR);
 
 		log.info("app started");
 	}
@@ -504,7 +504,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			Streams stream = streamManager.getStream(name);
 
 			notifyUserAboutViewerCount(getViewerCount(stream.getStreamUrl()),
-					this.getRegistrationIdList(stream.getBroadcasterMail()));
+					stream.getGcmUsers().getRegIdses());
 		}
 
 	}
@@ -549,7 +549,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 
 				notifyUserAboutViewerCount(
 						getViewerCount(stream.getStreamUrl()),
-						this.getRegistrationIdList(stream.getBroadcasterMail()));
+						stream.getGcmUsers().getRegIdses());
 				break;
 			}
 
