@@ -101,7 +101,7 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 		}
 		
 		int progress = 24-(int)getTimeDifference(s.registerTime);
-		if(progress < 0)
+		if(progress < 0 || progress == 24)
 			progress = 1;
 		
 		holder.progressBar.setProgress(progress);
