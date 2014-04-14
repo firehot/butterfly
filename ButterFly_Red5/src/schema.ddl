@@ -108,7 +108,7 @@ DROP TABLE IF EXISTS `streams`;
 CREATE TABLE `streams` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `altitude` double DEFAULT NULL,
-  `broadcasterMail` varchar(255) NOT NULL,
+  `user_id` int(11) NOT NULL,
   `isLive` tinyint(1) DEFAULT NULL,
   `isPublic` tinyint(1) DEFAULT NULL,
   `latitude` double DEFAULT NULL,
@@ -117,8 +117,10 @@ CREATE TABLE `streams` (
   `streamName` varchar(255) NOT NULL,
   `streamUrl` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `id` (`id`)
-) ENGINE=InnoDB;
+  UNIQUE KEY `id` (`id`),
+  KEY `FK_USER_STREAM` (`user_id`),
+  CONSTRAINT `FK_USER_STREAM` FOREIGN KEY (`user_id`) REFERENCES `gcm_users` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=119 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
