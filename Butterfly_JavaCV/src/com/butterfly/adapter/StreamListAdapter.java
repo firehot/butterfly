@@ -101,8 +101,6 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 		}
 		
 		int progress = 24-(int)getTimeDifference(s.registerTime);
-		if(progress < 0 || progress == 24)
-			progress = 1;
 		
 		holder.progressBar.setProgress(progress);
 		holder.publishedTime.setText(DateUtils.getRelativeTimeSpanString(s.registerTime));
@@ -116,9 +114,13 @@ public class StreamListAdapter extends ArrayAdapter<Stream> {
 	    Date currentTime = Calendar.getInstance().getTime();
 	    currentTime.getTime();
 	    long diff = currentTime.getTime()-registerTime;
+	   
 	    long diff_sec = TimeUnit.MILLISECONDS.toSeconds(diff);
+	    if(diff_sec >= 86400)
+	    	return 23;
 	    diff_sec/= 60;
 	    diff_sec /= 60;
+
 	    long hours = diff_sec % 24;
 	    
 	    return hours;
