@@ -201,6 +201,15 @@ public class Application extends MultiThreadedApplicationAdapter implements
 				latitude, altitude);
 	}
 
+	/**
+	 * register user to database
+	 * 
+	 * @param register_id
+	 * gcm registration id
+	 * @param mail
+	 * mail adress of the user
+	 * @return
+	 */
 	public boolean registerUser(String register_id, String mail) {
 		return userManager.registerUser(register_id, mail);
 

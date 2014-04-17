@@ -887,6 +887,34 @@ public class ApplicationTester {
 		}
 	}
 
+	@Test
+	public void testSeeYourOwnStream() {
+		boolean isregistered = butterflyApp.registerUser("22", "mail@mail.com");
+		assertTrue(isregistered);
+		
+		isregistered = butterflyApp.registerLiveStream("publisname", "publishurl", null, "mail@mail.com", false, "tur");
+		assertTrue(isregistered);
+	
+		String liveStreams = butterflyApp.getLiveStreams(null);
+		
+		JSONArray jsonArray;
+		try {
+			jsonArray = new JSONArray(liveStreams);
+			int length = jsonArray.length();
+			assertEquals(0, length);
+			
+			liveStreams = butterflyApp.getLiveStreams("mail@mail.com");
+			jsonArray = new JSONArray(liveStreams);
+			length = jsonArray.length();
+			assertEquals(1, length);
+			
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		
+		
+	}
+	
 	public static void delete(File file) {
 
 		if(file.isDirectory()){
