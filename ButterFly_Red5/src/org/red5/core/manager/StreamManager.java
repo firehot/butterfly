@@ -280,14 +280,17 @@ public class StreamManager {
 		try {
 			Query query = null;
 			if (mailList != null) {
+				//TODO: how to improve query below. same subquery executed twice
 				query = JPAUtils
 						.getEntityManager()
 						.createQuery(
 								"SELECT str FROM Streams AS str "
 										+ "LEFT JOIN str.streamViewerses AS viewer "
 										+ "WHERE ( (str.isPublic = :isPublic) "
-										+ " OR (viewer.gcmUsers.id IN "
-										+ "		( SELECT gcmUsers.id FROM GcmUserMails userMails WHERE userMails.mail IN (:mails)))"
+										+ " OR (viewer.gcmUsers.id = "
+										+ "		 (SELECT gcmUsers.id as gcmId FROM GcmUserMails userMails WHERE userMails.mail IN (:mails)))"
+										+ " OR (str.gcmUsers.id = "
+										+ "		 (SELECT gcmUsers.id as gcmId FROM GcmUserMails userMails WHERE userMails.mail IN (:mails)))"
 										+ ")"
 										+ " ORDER BY str.registerTime DESC ");
 				query.setParameter("mails", mailList);
