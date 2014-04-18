@@ -46,8 +46,7 @@ public class ContactAdapter extends ArrayAdapter<ContactAdapter.Contact> {
 	}
 
 	private OnClickListener removeListener = null;
-	public static final String DISPLAY_NAME = Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ? Data.DISPLAY_NAME_PRIMARY
-	: Data.DISPLAY_NAME;
+
 
 	public ContactAdapter(Context context, int resource) {
 		super(context, resource);

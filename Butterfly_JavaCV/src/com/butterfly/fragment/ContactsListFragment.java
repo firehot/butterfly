@@ -54,11 +54,13 @@ public class ContactsListFragment extends Fragment {
 
 		mAdapter = new FilteredContactListAdapter(getActivity(),
 				R.layout.contact_list_item, null, new String[] {
-			ContactAdapter.DISPLAY_NAME, ContactAdapter.DISPLAY_NAME, Data.PHOTO_THUMBNAIL_URI }, new int[] {
+			Data.DISPLAY_NAME_PRIMARY, Data.DISPLAY_NAME_PRIMARY, Data.PHOTO_THUMBNAIL_URI }, new int[] {
 			R.id.display_name, R.id.email_address, R.id.photo_uri}, 0, true);
 
 		frequentContacts = mAdapter.getFrequentContacts();
-		selectedContactAdapter.addAll(frequentContacts);
+		if (frequentContacts != null) {
+			selectedContactAdapter.addAll(frequentContacts);
+		}
 
 
 		searchEditText.addTextChangedListener(new TextWatcher() {
