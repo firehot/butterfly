@@ -45,7 +45,7 @@ public class StreamManager {
 		List<Streams> streamList;
 		removeGhostStreams(entrySet, date.getTime());
 
-		streamList = getAllStreamList(mailList,true);
+		streamList = getAllStreamList(mailList);
 		for (Streams stream : streamList) {
 			jsonObject = new JSONObject();
 			jsonObject.put("url", stream.getStreamUrl());
@@ -72,7 +72,7 @@ public class StreamManager {
 
 	public void removeGhostStreams(Map<String, StreamProxy> entrySet,
 			long currentTime) {
-		List<Streams> streamList = getAllStreamList(null,false);
+		List<Streams> streamList = getAllStreamList(null);
 		if (streamList != null) {
 			for (Streams stream : streamList) {
 
@@ -143,7 +143,7 @@ public class StreamManager {
 			}
 
 			JPAUtils.commit();
-			JPAUtils.closeEntityManager();
+		//	JPAUtils.closeEntityManager();
 
 			StreamProxy proxy = new StreamProxy(url, stream.getId());
 
@@ -201,7 +201,7 @@ public class StreamManager {
 			JPAUtils.beginTransaction();
 			JPAUtils.getEntityManager().persist(stream);
 			JPAUtils.commit();
-			JPAUtils.closeEntityManager();
+		//	JPAUtils.closeEntityManager();
 
 			result = true;
 		} catch (Exception e) {
@@ -219,7 +219,7 @@ public class StreamManager {
 			JPAUtils.beginTransaction();
 			JPAUtils.getEntityManager().merge(stream);
 			JPAUtils.commit();
-			JPAUtils.closeEntityManager();
+		//	JPAUtils.closeEntityManager();
 
 			result = true;
 		} catch (Exception e) {
@@ -237,7 +237,7 @@ public class StreamManager {
 			JPAUtils.beginTransaction();
 			em.remove(em.contains(stream) ? stream : em.merge(stream));
 			JPAUtils.commit();
-			JPAUtils.closeEntityManager();
+			//JPAUtils.closeEntityManager()();
 			result = true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -255,7 +255,7 @@ public class StreamManager {
 					"FROM Streams where streamUrl= :streamUrl");
 			query.setParameter("streamUrl", streamUrl);
 			resultStream = (Streams) query.getSingleResult();
-			JPAUtils.closeEntityManager();
+			//JPAUtils.closeEntityManager();
 
 		} catch (NoResultException e) {
 			return null;
@@ -275,7 +275,7 @@ public class StreamManager {
 	 * @return public streams and private streams shared with the mailList if
 	 *         mailList is null then it returns only public streams
 	 */
-	public List<Streams> getAllStreamList(List<String> mailList,boolean initialize) {
+	public List<Streams> getAllStreamList(List<String> mailList) {
 		List<Streams> results = null;
 		try {
 			Query query = null;
@@ -302,15 +302,6 @@ public class StreamManager {
 			query.setParameter("isPublic", true);
 
 			results = query.getResultList();
-			if(initialize)
-			{
-				for (Streams streams : results) {
-					Hibernate.initialize(streams.getGcmUsers());
-					Hibernate.initialize(streams.getGcmUsers().getGcmUserMailses());
-				}
-			}
-
-			JPAUtils.closeEntityManager();
 
 		} catch (NoResultException e) {
 			return null;

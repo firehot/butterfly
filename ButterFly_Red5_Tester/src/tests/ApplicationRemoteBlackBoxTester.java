@@ -22,7 +22,7 @@ public class ApplicationRemoteBlackBoxTester {
 	
 	private static final String REG_ID2 = "21118723424242423109823jshfsjafhsksdsagagf8374sfdasfasfasf2";
 	private static final String REG_ID = "21118723109823jshfsjafhskf83742";
-	private String serverURL = "http://ec2-54-200-137-96.us-west-2.compute.amazonaws.com:5080/ButterFly_Red5/gateway";
+	private String serverURL = "http://192.168.1.22:5080/ButterFly_Red5/gateway";
 	private AMFConnection amfConnection;
 
 	@Before
@@ -46,8 +46,7 @@ public class ApplicationRemoteBlackBoxTester {
 			assertTrue(result);
 			result = (Boolean) amfConnection.call("registerUser", REG_ID2, "ahmetmermerkaya@hotmail.com");
 			assertTrue(result);
-			double count = (Double)amfConnection.call("getUserCount", "ahmetmermerkaya@hotmail.com");
-			assertEquals((int)count, 1);
+			
 		} catch (ClientStatusException e) {
 			e.printStackTrace();
 		} catch (ServerStatusException e) {

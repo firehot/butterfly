@@ -11,32 +11,40 @@ import org.red5.core.dbModel.GcmUsers;
 
 public class JPAUtils {
 	
-	private static EntityManager entityManager;
 	private static EntityManagerFactory entityManagerFactory;
-
+	private static EntityManager entityManager;
+	private static ThreadLocal<EntityManager> threadLocalEntityManager = new ThreadLocal<EntityManager>() {
+		protected EntityManager initialValue() {
+			return getFactory().createEntityManager();
+		};
+	};
 
 	public static void beginTransaction() {
-		getEntityManager().getTransaction().begin();
+		threadLocalEntityManager.get().getTransaction().begin();
+	}
+	
+	private static EntityManagerFactory getFactory() {
+		if (entityManagerFactory == null || entityManagerFactory.isOpen() == false) {
+			entityManagerFactory = Persistence
+				.createEntityManagerFactory("ButterFly_Red5");			
+		}
+		return entityManagerFactory;
 	}
 	
 	public static EntityManager getEntityManager() {
 		
-		if (entityManager == null || entityManager.isOpen() == false) {
-			if (entityManagerFactory == null || entityManagerFactory.isOpen() == false) {
-				entityManagerFactory = Persistence
-					.createEntityManagerFactory("ButterFly_Red5");			
-			}
-			entityManager = entityManagerFactory.createEntityManager();
-		}
-		return entityManager;
+		return threadLocalEntityManager.get();
 	}
 	
 	public static void commit() {
-		getEntityManager().getTransaction().commit();
+		threadLocalEntityManager.get().getTransaction().commit();
 	}
 
 	public static void closeEntityManager() {
-		getEntityManager().close();
+		if (threadLocalEntityManager.get().isOpen() == true) {
+			threadLocalEntityManager.get().close();
+		}
+		threadLocalEntityManager.remove();
 		entityManager = null;
 	}
 

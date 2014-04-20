@@ -109,6 +109,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public void cancelStreamDeleteTimer() {
 		if (streamDeleterTimer != null) {
 			streamDeleterTimer.cancel();
+			streamDeleterTimer = null;
 		}
 	}
 
@@ -143,7 +144,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 				}
 			}
 		};
-
+		cancelStreamDeleteTimer();
 		streamDeleterTimer = new java.util.Timer();
 		streamDeleterTimer.schedule(streamDeleteTask, 0, runPeriod);
 	}
@@ -269,7 +270,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 					regIdSet.addAll(result);
 				}
 			}
-			JPAUtils.closeEntityManager();
+			//JPAUtils.closeEntityManager();
 
 			if (!mailListNotifiedByMail.isEmpty())
 				sendMail(mailListNotifiedByMail, broadcasterMail, streamName,
