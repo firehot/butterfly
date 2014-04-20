@@ -7,18 +7,27 @@
         android:title="@string/broadcast_live"/>
 
     <item
-        android:id="@+id/group_broadcast"
+        android:id="@+id/refresh"
         android:orderInCategory="15"
+        android:showAsAction="ifRoom"
+        android:icon="@drawable/ic_action_refresh"
+        android:title="@string/refresh"/>
+    
+    <item
+        android:id="@+id/group_broadcast"
+        android:orderInCategory="20"
         android:showAsAction="ifRoom"
         android:icon="@drawable/ic_group"
         android:title="@string/group_broadcast"/>
     
+
+    
     <item
-        android:id="@+id/refresh"
-        android:orderInCategory="20"
-        android:showAsAction="ifRoom"
-        android:icon="@drawable/ic_action_refresh"
-        android:title="@string/refresh"/>
+        android:id="@+id/settings"
+        android:orderInCategory="30"
+        android:showAsAction="never"
+        android:title="@string/settings"/>
+    
     
     
 </menu>

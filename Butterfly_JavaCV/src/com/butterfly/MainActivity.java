@@ -128,6 +128,8 @@ public class MainActivity extends FragmentActivity implements
 			return true;
 		case R.id.group_broadcast:
 			startActivity(new Intent(this, ContactsGroupActivity.class));
+		case R.id.settings:
+			startActivity(new Intent(this, SettingsActivity.class));
 		default:
 			break;
 		}

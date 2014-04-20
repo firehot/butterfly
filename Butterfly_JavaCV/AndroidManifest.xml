@@ -113,6 +113,19 @@
             android:name="android.support.PARENT_ACTIVITY"
             android:value="com.butterfly.MainActivity" />
         </activity>
+        
+          <activity
+            android:name="com.butterfly.SettingsActivity"
+            android:label="@string/app_name"
+            android:parentActivityName="com.butterfly.MainActivity"
+            >
+             <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="oauth" android:host="butterfly_twitter_login"/>
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

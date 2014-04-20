@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">ButterFly</string>
-    <string name="action_settings">Ayarlar</string>
+    <string name="settings">Ayarlar</string>
     <string name="hello_world">Merhaba Dünya!</string>
     <string name="map">Harita</string>
     <string name="live_streams">Canlı Yayınlar</string>
