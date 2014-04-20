@@ -12,7 +12,6 @@ import org.red5.core.dbModel.GcmUsers;
 public class JPAUtils {
 	
 	private static EntityManagerFactory entityManagerFactory;
-	private static EntityManager entityManager;
 	private static ThreadLocal<EntityManager> threadLocalEntityManager = new ThreadLocal<EntityManager>() {
 		protected EntityManager initialValue() {
 			return getFactory().createEntityManager();
@@ -45,7 +44,6 @@ public class JPAUtils {
 			threadLocalEntityManager.get().close();
 		}
 		threadLocalEntityManager.remove();
-		entityManager = null;
 	}
 
 
