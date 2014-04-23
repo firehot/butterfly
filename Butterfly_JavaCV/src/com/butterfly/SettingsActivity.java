@@ -1,26 +1,26 @@
 package com.butterfly;
 
-import com.butterfly.social_media.Twitter;
+import com.butterfly.fragment.SettingsFragment;
+import com.butterfly.social_media.TwitterProxy;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.preference.Preference;
+import android.preference.PreferenceActivity;
 
 public class SettingsActivity extends Activity {
 
-	private Twitter twitter;
+	private TwitterProxy twitter;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		
 		super.onCreate(savedInstanceState);
-		twitter = new Twitter(this);
 		
-		Thread local = new Thread() {
-			public void run() {
-				twitter.login();
-			};
-		};
-		local.start();
-		
-		
+		 getFragmentManager().beginTransaction().replace(android.R.id.content,
+	                new SettingsFragment()).commit();
+		 
 	}
+
 }

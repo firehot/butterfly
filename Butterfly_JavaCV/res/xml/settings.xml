@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory
+        android:key="social_media_category"
+        android:title="Social Media" >
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="twitter_is_enabled"
+            android:summary="@string/tweet_pref_summary"
+            android:title="@string/twitter_pref_title" >
+        </CheckBoxPreference>
+    </PreferenceCategory>
+
+</PreferenceScreen>

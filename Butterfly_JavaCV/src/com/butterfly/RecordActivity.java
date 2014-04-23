@@ -46,6 +46,8 @@ import com.butterfly.debug.BugSense;
 import com.butterfly.fragment.ContactsListFragment;
 import com.butterfly.message.GcmIntentService;
 import com.butterfly.recorder.FFmpegFrameRecorder;
+import com.butterfly.social_media.ISocialMediaProxy;
+import com.butterfly.social_media.TwitterProxy;
 import com.butterfly.tasks.SendPreviewTask;
 import com.butterfly.utils.LocationProvider;
 import com.butterfly.utils.Utils;
@@ -61,7 +63,7 @@ import flex.messaging.io.amf.client.exceptions.ClientStatusException;
 import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
 public class RecordActivity extends Activity implements OnClickListener,
-		PreviewCallback {
+PreviewCallback {
 
 	private final static String CLASS_LABEL = "RecordActivity";
 	private final static String LOG_TAG = CLASS_LABEL;
@@ -124,6 +126,9 @@ public class RecordActivity extends Activity implements OnClickListener,
 	private boolean is_video_public;
 	private NetworkInfo activeNetwork;
 	private LocationProvider locationProvider;
+	private CheckBox tweetCheckBox;
+	private EditText tweetEditText;
+	private TwitterProxy twitterProxy;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -148,11 +153,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-
-
 		ffmpeg_link = getString(R.string.rtmp_url);
-
-
 
 		setContentView(R.layout.activity_record);
 
@@ -166,12 +167,12 @@ public class RecordActivity extends Activity implements OnClickListener,
 		activeNetwork = cm.getActiveNetworkInfo();
 		initLayout();
 	}
-	
+
 	@Override
 	protected void onResume() {
 		super.onResume();
 		Bundle extras = getIntent().getExtras();
-		
+
 		publicVideoCheckBox.setChecked(true);
 		if (extras != null
 				&& extras.containsKey(ContactsListFragment.MAILS_TO_BE_NOTIFIED)) {
@@ -179,7 +180,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 					ContactsListFragment.MAILS_TO_BE_NOTIFIED);
 			publicVideoCheckBox.setChecked(false);
 		}
-		
+
 	}
 
 	@Override
@@ -224,8 +225,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 				new RegisterLocationForStreamTask(httpGatewayURL,
 						RecordActivity.this.streamURL).execute(
-						location.getLongitude(), location.getLatitude(),
-						location.getAltitude());
+								location.getLongitude(), location.getLatitude(),
+								location.getAltitude());
 
 			}
 		});
@@ -235,7 +236,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		streamNameEditText = (EditText) findViewById(R.id.stream_name);
 		publicVideoCheckBox = (CheckBox) findViewById(R.id.check_public);
-		
+
 		/* add control button: start and stop */
 		btnRecorderControl = (Button) findViewById(R.id.recorder_control);
 		btnRecorderControl.setBackgroundResource(R.drawable.bt_start_record);
@@ -251,11 +252,19 @@ public class RecordActivity extends Activity implements OnClickListener,
 		List<Size> sizes = parameters.getSupportedPreviewSizes();
 		parameters.setPreviewSize(sizes.get(0).width, sizes.get(0).height);
 
-	//	parameters.setWhiteBalance(Parameters.WHITE_BALANCE_AUTO);
-	//	parameters.setSceneMode(Parameters.SCENE_MODE_AUTO);
+		//	parameters.setWhiteBalance(Parameters.WHITE_BALANCE_AUTO);
+		//	parameters.setSceneMode(Parameters.SCENE_MODE_AUTO);
 
 		cameraDevice.setParameters(parameters);
 		cameraView.setCamera(cameraDevice);
+
+		twitterProxy = new TwitterProxy(this);
+
+		if (twitterProxy.isAuthorized()) {
+			findViewById(R.id.twitter_layout).setVisibility(View.VISIBLE);
+			tweetCheckBox = (CheckBox)findViewById(R.id.tweet_checkbox);
+			tweetEditText = (EditText) findViewById(R.id.tweet_text);
+		}
 
 		Log.i(LOG_TAG, "cameara preview start: OK");
 	}
@@ -273,14 +282,14 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		likelyWidth = 176;
 		likelyHeight = 144;
-		
+
 		if (likelyWidth != 0 && likelyHeight != 0) {
 			Size size = findPreviewSize(supportedPreviewSizes, likelyWidth,
 					likelyHeight);
 			parameters.setPreviewSize(size.width, size.height);
-//			parameters.setWhiteBalance(Parameters.WHITE_BALANCE_AUTO);
-//			parameters.setSceneMode(Parameters.SCENE_MODE_AUTO);
-			
+			//			parameters.setWhiteBalance(Parameters.WHITE_BALANCE_AUTO);
+			//			parameters.setSceneMode(Parameters.SCENE_MODE_AUTO);
+
 			if (cameraView.isPreviewOn()) {
 				cameraDevice.stopPreview();
 				cameraDevice.setParameters(parameters);
@@ -322,9 +331,9 @@ public class RecordActivity extends Activity implements OnClickListener,
 		// if link is set, dont set it again
 		ffmpeg_link= getString(R.string.rtmp_url);
 		streamURL = String.valueOf((int) (Math.random() * 100000)
-					+ System.currentTimeMillis());
+				+ System.currentTimeMillis());
 		ffmpeg_link += streamURL;
-		
+
 		Log.i(LOG_TAG, "ffmpeg_url: " + ffmpeg_link);
 
 		createRecorder();
@@ -419,7 +428,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 		@Override
 		public void run() {
 			android.os.Process
-					.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+			.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 
 			// Audio
 			int bufferSize;
@@ -487,9 +496,9 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 	@Override
 	public void onClick(View v) {
-		
+
 		if (!recording) {
-			
+
 			btnRecorderControl.setClickable(false);
 
 			streamName = streamNameEditText.getText().toString();
@@ -501,7 +510,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 				InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 				imm.hideSoftInputFromWindow(
 						streamNameEditText.getWindowToken(), 0);
-				
+
 				if (setCameraPreviewSize() == true) {
 
 					initRecorder();
@@ -511,7 +520,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 				} 
 
 			} else {
-				
+
 				Crouton.showText(this,R.string.write_name_of_stream, Style.INFO);
 				btnRecorderControl.setClickable(true);
 			}
@@ -520,7 +529,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 			// This will trigger the audio recording loop to stop and then set
 			// isRecorderStart = false;
 			btnRecorderControl
-					.setBackgroundResource(R.drawable.bt_start_record);
+			.setBackgroundResource(R.drawable.bt_start_record);
 			streamNameEditText.setVisibility(View.VISIBLE);
 			publicVideoCheckBox.setVisibility(View.VISIBLE);
 			stopRecording();
@@ -565,7 +574,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 					result = (Boolean) amfConnection.call("registerLiveStream",
 							params[1], params[2], mailsToBeNotified,
 							possibleMail, is_video_public, Locale.getDefault()
-									.getISO3Language());
+							.getISO3Language());
 
 				} catch (ClientStatusException e) {
 					e.printStackTrace();
@@ -590,7 +599,8 @@ public class RecordActivity extends Activity implements OnClickListener,
 				streamNameEditText.setVisibility(View.GONE);
 				publicVideoCheckBox.setVisibility(View.GONE);
 				btnRecorderControl
-						.setBackgroundResource(R.drawable.bt_stop_record);
+				.setBackgroundResource(R.drawable.bt_stop_record);
+				shareOnSocialMedia(streamURL);
 			} else {
 				Toast.makeText(getApplicationContext(),
 						getString(R.string.stream_registration_failed),
@@ -608,7 +618,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 	}
 
 	public class RegisterLocationForStreamTask extends
-			AsyncTask<Double, Void, Boolean> {
+	AsyncTask<Double, Void, Boolean> {
 		String httpGateway;
 		private String streamURL;
 
@@ -646,7 +656,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 	}
 
 	public class StopRecordingTask extends
-			AsyncTask<FFmpegFrameRecorder, Void, Void> {
+	AsyncTask<FFmpegFrameRecorder, Void, Void> {
 
 		@Override
 		protected Void doInBackground(FFmpegFrameRecorder... params) {
@@ -693,7 +703,24 @@ public class RecordActivity extends Activity implements OnClickListener,
 		}
 
 	}
-	
+
+	public void shareOnSocialMedia(final String videoId) {
+		if (twitterProxy != null && tweetCheckBox.isChecked() == true) {
+
+			new Thread() {
+				@Override
+				public void run() {
+					if (twitterProxy != null && tweetCheckBox.isChecked() == true) {
+
+						twitterProxy.updateStatus(tweetEditText.getText().toString(), videoId);
+					}
+				}
+			}.start();
+
+
+		}
+	}
+
 	public String getStreamURL() {
 		return streamURL;
 	}

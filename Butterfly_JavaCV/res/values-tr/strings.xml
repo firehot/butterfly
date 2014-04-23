@@ -45,6 +45,10 @@
     <string name="nocamera">Bu cihazda kamera bulunamadı</string>
     <string name="hint">İpucu: Arkadaşlarınızı seçin ve kamera basarak canlı yayın yapın</string>
     <string name="list">List</string>
-    <string name="map">Map</string>
     <string name="group_broadcast">Grup Yayını</string>
+    <string name="tweet_i_am_live">Canlı yayın yapıyorum, #watchit</string>
+	<string name="tweet_this">Tweetle</string>
+	<string name="tweet_pref_summary">Sadece yayın yapmadan tweet kutusunu seçerseniz tweet atar, bunun dışında başka bir şey yapmaz</string>
+    <string name="twitter_pref_title">Twitter etkin</string>
+    
 </resources>
