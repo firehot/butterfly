@@ -170,13 +170,13 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		super.disconnect(conn, scope);
 	}
 
-	public String getLiveStreams(String mails) {
+	public String getLiveStreams(String mails,String start,String batchSize) {
 		List<String> mailList = null;
 		if (mails != null) {
 			String[] mailArray = mails.split(",");
 			mailList = new ArrayList<String>(Arrays.asList(mailArray));
 		}
-		return streamManager.getLiveStreams(getLiveStreamProxies(), mailList);
+		return streamManager.getLiveStreams(getLiveStreamProxies(), mailList,start,batchSize);
 	}
 
 	public boolean isLiveStreamExist(String url) {

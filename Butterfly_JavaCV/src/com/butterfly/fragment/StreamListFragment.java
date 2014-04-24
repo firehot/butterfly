@@ -12,13 +12,13 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.Button;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import com.butterfly.MainActivity;
 import com.butterfly.MediaPlayerActivity;
 import com.butterfly.R;
+import com.butterfly.adapter.ButterfFlyEndlessAdapter;
 import com.butterfly.adapter.StreamListAdapter;
 import com.butterfly.listeners.IStreamListUpdateListener;
 import com.butterfly.message.CloudMessaging;
@@ -29,7 +29,7 @@ OnClickListener{
 
 	public static final String STREAM_PUBLISHED_NAME = "stream-name";
 	public static final String STREAM_IS_LIVE = "is-live";
-	private StreamListAdapter adapter;
+	private ButterfFlyEndlessAdapter adapter;
 	public static CloudMessaging msg;
 
 	public static class Stream {
@@ -71,15 +71,17 @@ OnClickListener{
 		@Override
 		public void onItemClick(AdapterView<?> arg0, View view, int position,
 				long id) {
+			Stream s = (Stream)adapter.getItem(position);
+			
 			Toast.makeText(getActivity(),
-					adapter.getItem(position).name, Toast.LENGTH_SHORT).show();
+					s.name, Toast.LENGTH_SHORT).show();
 
-			Stream s = adapter.getItem(position);
+			
 
 			Intent intent = new Intent(getActivity().getApplicationContext(),
 					MediaPlayerActivity.class);
 			intent.putExtra(STREAM_PUBLISHED_NAME,
-					adapter.getItem(position).url);
+					s.url);
 			intent.putExtra(STREAM_IS_LIVE, s.isLive);
 			startActivity(intent);
 
@@ -100,7 +102,7 @@ OnClickListener{
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 		streamList = ((MainActivity)getActivity()).getStreamList();
-		adapter = new StreamListAdapter(this);
+		adapter = new ButterfFlyEndlessAdapter(new StreamListAdapter(this));
 
 		setListAdapter(adapter);
 		getListView().setOnItemClickListener(itemClickListener);
@@ -123,7 +125,9 @@ OnClickListener{
 	public void streamListUpdated(ArrayList<Stream> streamList)
 	{
 		if (adapter != null) {
-			adapter.clear();
+
+				adapter.init();
+
 			if (streamList != null) {
 				adapter.addAll(streamList);
 			}
@@ -171,7 +175,7 @@ OnClickListener{
 		  Stream stream = null;
 		  for(int i = 0; i < count;i++)
 		  {
-			  stream = adapter.getItem(i);
+			  stream = (Stream)adapter.getItem(i);
 			  if(stream.url.equals(streamUrl))
 			  {
 				  break;
