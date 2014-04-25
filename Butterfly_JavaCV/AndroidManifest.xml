@@ -69,11 +69,10 @@
             android:name="com.butterfly.MediaPlayerActivity"
             android:configChanges="orientation|screenSize|smallestScreenSize|keyboard|keyboardHidden|navigation"
             android:parentActivityName="com.butterfly.MainActivity"
-            android:screenOrientation="landscape"
             android:theme="@android:style/Theme.NoTitleBar" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.butterfly.StreamList" />
+                android:value="com.butterfly.MainActivity" />
         </activity>
 
         <receiver
