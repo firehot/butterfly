@@ -21,10 +21,10 @@ import com.commonsware.cwac.endless.EndlessAdapter;
 public class ButterfFlyEndlessAdapter extends EndlessAdapter {
 	private RotateAnimation rotate = null;
 	private View pendingView = null;
-	public StreamListAdapter streamListAdapter=null;
-	public int last_offset=10;
+	public StreamListAdapter streamListAdapter = null;
+	public int last_offset = 10;
 	public static int batch_size = 10;
-	public boolean reached_end=false;
+	public boolean reached_end = false;
 	List<Stream> streamList = null;
 
 	public ButterfFlyEndlessAdapter(StreamListAdapter streamListAdapter) {
@@ -41,41 +41,42 @@ public class ButterfFlyEndlessAdapter extends EndlessAdapter {
 	@Override
 	protected void appendCachedData() {
 		Log.d("butterfly", "appendCachedData");
-		if(streamList != null)
+		if (streamList != null)
 			streamListAdapter.addAll(streamList);
 	}
-	
-	public void init()
-	{
+
+	public void init() {
 		this.streamListAdapter.clear();
 		this.last_offset = 10;
 		this.reached_end = false;
 		restartAppending();
-		
+
 	}
-	
-	public void addAll(ArrayList<Stream> streamList)
-	{
+
+	public void addAll(ArrayList<Stream> streamList) {
 		streamListAdapter.addAll(streamList);
 	}
-	
 
 	@Override
 	protected boolean cacheInBackground() throws Exception {
+
+		if (!MainActivity.mainActivityCompleted) {
+			streamList = null;
+			return true;
+		}
 		
-		if(reached_end)
-		{
+		if (reached_end) {
 			streamList = null;
 			return false;
 		}
-		
-		MainActivity activity = (MainActivity)streamListAdapter.getContext();
+
+		MainActivity activity = (MainActivity) streamListAdapter.getContext();
 		String urlAddress = activity.getString(R.string.http_gateway_url);
-		
-		String streams = Utils.getLiveStreams(activity, urlAddress,String.valueOf(last_offset),String.valueOf(batch_size));
-		
-		
-		if(streamList != null)
+
+		String streams = Utils.getLiveStreams(activity, urlAddress,
+				String.valueOf(last_offset), String.valueOf(batch_size));
+
+		if (streamList != null)
 			streamList.clear();
 		else
 			streamList = new ArrayList<Stream>();
@@ -83,21 +84,20 @@ public class ButterfFlyEndlessAdapter extends EndlessAdapter {
 		if (streams != null) {
 
 			try {
-				
+
 				streamList.addAll(Utils.parseStreams(streams, activity));
-				
-				if(streamList.size() < batch_size)
-				{
+
+				if (streamList.size() < batch_size) {
 					reached_end = true;
 				}
 
 			} catch (JSONException e) {
-				
+
 			}
 
-		} 
-		
-		last_offset+=batch_size;
+		}
+
+		last_offset += batch_size;
 		return true;
 	}
 
@@ -120,11 +120,9 @@ public class ButterfFlyEndlessAdapter extends EndlessAdapter {
 			pendingView.startAnimation(rotate);
 		}
 	}
-	
-	public void remove(Stream stream)
-	{
+
+	public void remove(Stream stream) {
 		this.streamListAdapter.remove(stream);
 	}
-	
 
 }
