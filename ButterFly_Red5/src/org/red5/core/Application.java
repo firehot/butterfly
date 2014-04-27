@@ -79,7 +79,7 @@ import com.google.android.gcm.server.Sender;
  * @author The Red5 Project (red5@osflash.org)
  */
 public class Application extends MultiThreadedApplicationAdapter implements
-		IStreamListener {
+		IStreamListener, IWebService {
 
 	private static Logger log = Red5LoggerFactory.getLogger(Application.class);
 
