@@ -57,7 +57,7 @@
     <string name="title_activity_contact_chooser">Choose Contacts</string>
     <string name="tweet_i_am_live">I am live right now,  #watchit</string>
     <string name="tweet_this">Tweet</string>
-    <string name="tweet_pref_summary">Just tweets if you check the box before starting broadcast, do nothing else</string>
+    <string name="tweet_pref_summary">Just tweets if you let it before starting the broadcast, all control is yours. Do nothing else</string>
     <string name="twitter_pref_title">Enable Twitter</string>
 
 </resources>
