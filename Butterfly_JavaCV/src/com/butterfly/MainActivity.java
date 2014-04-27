@@ -2,9 +2,7 @@ package com.butterfly;
 
 import java.util.ArrayList;
 
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.app.ActionBar;
 import android.app.Activity;
@@ -42,14 +40,10 @@ import com.butterfly.utils.Utils;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
-import flex.messaging.io.MessageIOConstants;
-import flex.messaging.io.amf.client.AMFConnection;
-import flex.messaging.io.amf.client.exceptions.ClientStatusException;
-import flex.messaging.io.amf.client.exceptions.ServerStatusException;
-
 public class MainActivity extends FragmentActivity implements
 		OnPageChangeListener {
 
+	public static boolean mainActivityCompleted=false;
 	AppSectionsPagerAdapter mAppSectionsPagerAdapter;
 	ViewPager mViewPager;
 	ArrayList<Stream> streamList = new ArrayList<Stream>();
@@ -94,7 +88,7 @@ public class MainActivity extends FragmentActivity implements
 		mViewPager.setAdapter(mAppSectionsPagerAdapter);
 		mViewPager.setOnPageChangeListener(this);
 		httpGatewayURL = getString(R.string.http_gateway_url);
-		new GetStreamListTask().execute(httpGatewayURL,"0","10");
+		
 		// Check device for Play Services APK.
 		if (checkPlayServices(this)) {
 			CloudMessaging msg = new CloudMessaging(
@@ -137,6 +131,7 @@ public class MainActivity extends FragmentActivity implements
 	@Override
 	protected void onResume() {
 		checkPlayServices(this);
+		new GetStreamListTask().execute(httpGatewayURL,"0","10");
 		super.onResume();
 	}
 	
@@ -144,6 +139,7 @@ public class MainActivity extends FragmentActivity implements
 	protected void onPause() {
 		super.onPause();
 		
+		mainActivityCompleted = false;
 		showHideKeyboard(false, mViewPager);
 	}
 
@@ -317,7 +313,11 @@ public class MainActivity extends FragmentActivity implements
 			}
 			setProgressBarIndeterminateVisibility(false);
 			super.onPostExecute(streams);
+			
+			MainActivity.mainActivityCompleted = true;
 		}
+		
+		
 	}
 
 	@Override
