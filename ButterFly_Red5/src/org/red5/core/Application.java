@@ -169,6 +169,10 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public void disconnect(IConnection conn, IScope scope) {
 		super.disconnect(conn, scope);
 	}
+	
+	public String getLiveStreams(String mails) {
+		return getLiveStreams(mails, "0", "10");
+	}
 
 	public String getLiveStreams(String mails,String start,String batchSize) {
 		List<String> mailList = null;
