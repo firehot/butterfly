@@ -79,7 +79,7 @@ import com.google.android.gcm.server.Sender;
  * @author The Red5 Project (red5@osflash.org)
  */
 public class Application extends MultiThreadedApplicationAdapter implements
-		IStreamListener {
+		IStreamListener, IWebService {
 
 	private static Logger log = Red5LoggerFactory.getLogger(Application.class);
 
@@ -168,6 +168,10 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	@Override
 	public void disconnect(IConnection conn, IScope scope) {
 		super.disconnect(conn, scope);
+	}
+	
+	public String getLiveStreams(String mails) {
+		return getLiveStreams(mails, "0", "10");
 	}
 
 	public String getLiveStreams(String mails,String start,String batchSize) {
