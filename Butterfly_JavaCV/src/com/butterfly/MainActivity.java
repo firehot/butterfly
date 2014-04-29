@@ -48,7 +48,7 @@ public class MainActivity extends FragmentActivity implements
 	ViewPager mViewPager;
 	ArrayList<Stream> streamList = new ArrayList<Stream>();
 	ArrayList<IStreamListUpdateListener> streamUpdateListenerList = new ArrayList<IStreamListUpdateListener>();
-	private String httpGatewayURL;
+	public String httpGatewayURL;
 
 	private static final String SHARED_PREFERENCE_FIRST_INSTALLATION = "firstInstallation";
 	private static final String APP_SHARED_PREFERENCES = "applicationDetails";
@@ -108,14 +108,6 @@ public class MainActivity extends FragmentActivity implements
 
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.refresh:
-			if (getStreamListTask == null 
-					|| getStreamListTask.getStatus() ==  AsyncTask.Status.FINISHED) 
-			{
-				getStreamListTask = new GetStreamListTask();
-				getStreamListTask.execute(httpGatewayURL,"0","10");
-			}
-			return true;
 		case R.id.record:
 			Intent intent = new Intent(this, RecordActivity.class);
 			startActivity(intent);
