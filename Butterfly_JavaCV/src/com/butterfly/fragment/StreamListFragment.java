@@ -3,8 +3,11 @@ package com.butterfly.fragment;
 import java.util.ArrayList;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,6 +21,7 @@ import android.widget.Toast;
 import com.butterfly.MainActivity;
 import com.butterfly.MediaPlayerActivity;
 import com.butterfly.R;
+import com.butterfly.MainActivity.GetStreamListTask;
 import com.butterfly.adapter.ButterfFlyEndlessAdapter;
 import com.butterfly.adapter.StreamListAdapter;
 import com.butterfly.listeners.IStreamListUpdateListener;
@@ -25,12 +29,13 @@ import com.butterfly.message.CloudMessaging;
 import com.butterfly.tasks.DeleteStreamTask;
 
 public class StreamListFragment extends ListFragment implements IStreamListUpdateListener,
-OnClickListener{
+OnClickListener,OnRefreshListener{
 
 	public static final String STREAM_PUBLISHED_NAME = "stream-name";
 	public static final String STREAM_IS_LIVE = "is-live";
 	private ButterfFlyEndlessAdapter adapter;
 	public static CloudMessaging msg;
+	private SwipeRefreshLayout swipeLayout;
 
 	public static class Stream {
 		public String name;
@@ -95,9 +100,27 @@ OnClickListener{
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState){
 		View v = inflater.inflate(R.layout.main, container, false);
+		
+		swipeLayout = (SwipeRefreshLayout) v.findViewById(R.id.swipe_container);
+	    swipeLayout.setOnRefreshListener(this);
+	    swipeLayout.setColorScheme(android.R.color.holo_blue_bright, 
+	            android.R.color.holo_green_light, 
+	            android.R.color.holo_orange_light, 
+	            android.R.color.holo_red_light);
 		return v;
 	}
 
+	@Override
+	public void onRefresh() {
+		MainActivity activity = (MainActivity)getActivity();
+		if (activity.getStreamListTask == null 
+				|| activity.getStreamListTask.getStatus() ==  AsyncTask.Status.FINISHED) 
+		{
+			activity.getStreamListTask = activity.new GetStreamListTask();
+			activity.getStreamListTask.execute(activity.httpGatewayURL,"0","10");
+		}
+		
+	}
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
@@ -133,6 +156,8 @@ OnClickListener{
 			}
 			adapter.notifyDataSetChanged();
 		}
+		
+		swipeLayout.setRefreshing(false);
 	}
 
 	@Override
