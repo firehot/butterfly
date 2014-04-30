@@ -239,7 +239,6 @@ public class StreamManager {
 			JPAUtils.beginTransaction();
 			em.remove(em.contains(stream) ? stream : em.merge(stream));
 			JPAUtils.commit();
-			//JPAUtils.closeEntityManager()();
 			result = true;
 		} catch (Exception e) {
 			e.printStackTrace();
