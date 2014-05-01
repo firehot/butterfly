@@ -11,12 +11,14 @@ import io.vov.vitamio.widget.MediaController;
 import io.vov.vitamio.widget.VideoView;
 import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.debug.BugSense;
@@ -56,9 +58,19 @@ public class MediaPlayerActivity extends Activity implements
 		httpURL = getString(R.string.http_url) + "streams/";
 
 		Intent intent = getIntent();
-		String streamName = intent
+		Uri data = intent.getData();
+		String streamName = null;
+		if (data != null) {
+			 streamName = data.getQueryParameter("videoId");
+		}
+		else {
+			streamName = intent
 				.getStringExtra(StreamListFragment.STREAM_PUBLISHED_NAME);
-
+		}
+		if (streamName == null) {
+			Toast.makeText(this, "Missing Parameter", Toast.LENGTH_LONG).show();
+			finish();
+		}
 		rtmpUrl += streamName + " live=1";
 		httpURL += streamName + ".flv";
 		setContentView(R.layout.activity_client);

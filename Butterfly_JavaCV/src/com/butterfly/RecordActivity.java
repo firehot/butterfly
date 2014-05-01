@@ -705,7 +705,7 @@ PreviewCallback {
 	}
 
 	public void shareOnSocialMedia(final String videoId) {
-		if (twitterProxy != null && tweetCheckBox.isChecked() == true) {
+		if (twitterProxy != null && tweetCheckBox != null && tweetCheckBox.isChecked() == true) {
 
 			new Thread() {
 				@Override

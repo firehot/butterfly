@@ -42,6 +42,8 @@ public class MainActivityTester extends ActivityInstrumentationTestCase2 {
 		super.tearDown();
 		mainActivity = null;
 	}
+	
+	
 
 	
 	public void testContactSearch() {
