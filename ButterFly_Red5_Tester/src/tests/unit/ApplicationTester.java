@@ -95,7 +95,7 @@ public class ApplicationTester {
 			}
 		}
 		
-		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList(null);
+		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList(null,"0", "10");
 		assertTrue(streamList.get(0).getIsLive());
 
 		registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", null, "mail@mail.com", true, null);
@@ -399,7 +399,7 @@ public class ApplicationTester {
 
 	@Test
 	public void testRegisterLocationForStream() {
-		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList(null);
+		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList(null,"0", "10");
 		assertEquals(0, streamList.size());
 		
 		butterflyApp.registerUser("22", "mail@mail.com");
@@ -409,12 +409,12 @@ public class ApplicationTester {
 		strm.setIsPublic(true);
 		butterflyApp.streamManager.saveStream(strm);
 
-		streamList = butterflyApp.streamManager.getAllStreamList(null);
+		streamList = butterflyApp.streamManager.getAllStreamList(null,"0", "10");
 		assertEquals(1, streamList.size());
 
 		butterflyApp.registerLocationForStream("video_url", 23.4566, 34.667, 100);
 
-		streamList = butterflyApp.streamManager.getAllStreamList(null);
+		streamList = butterflyApp.streamManager.getAllStreamList(null,"0", "10");
 		assertEquals(1, streamList.size());
 
 		Streams stream = butterflyApp.streamManager.getStream("video_url");
@@ -618,7 +618,7 @@ public class ApplicationTester {
 	@Test
 	public void testGetAllStreamList()
 	{
-		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList(null);
+		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList(null,"0", "10");
 		int streamCount = streamList.size();
 
 		butterflyApp.registerUser("22", "mail@mail.com");
@@ -637,7 +637,7 @@ public class ApplicationTester {
 		createdStream = butterflyApp.streamManager.getStream("stream2url");
 		assertNotNull(createdStream);
 
-		streamList = butterflyApp.streamManager.getAllStreamList(null);
+		streamList = butterflyApp.streamManager.getAllStreamList(null,"0", "10");
 		assertEquals(streamCount+2, streamList.size());
 
 
@@ -661,7 +661,7 @@ public class ApplicationTester {
 			}
 		}
 
-		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList(null);
+		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList(null,"0", "10");
 		assertEquals(streamList.size(), 1);
 		Integer id = streamList.get(0).getId();
 
@@ -681,7 +681,7 @@ public class ApplicationTester {
 			}
 		}
 
-		streamList = butterflyApp.streamManager.getAllStreamList(null);
+		streamList = butterflyApp.streamManager.getAllStreamList(null,"0", "10");
 		assertEquals(streamList.size(), 2);
 		id = streamList.get(1).getId();
 
@@ -709,7 +709,7 @@ public class ApplicationTester {
 		boolean registerLiveStream = butterflyApp.registerLiveStream(tmpName, "publishUrl", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com", "mail@mail.com", true, null);
 		assertEquals(registerLiveStream, true);
 
-		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList(null);
+		List<Streams> streamList = butterflyApp.streamManager.getAllStreamList(null,"0", "10");
 		assertEquals(streamList.size(), 1);
 		Integer id = streamList.get(0).getId();
 
@@ -726,12 +726,12 @@ public class ApplicationTester {
 		assertEquals(registerLiveStream, true);
 
 		//get public videos
-		List<Streams> allStreamList = butterflyApp.streamManager.getAllStreamList(null);
+		List<Streams> allStreamList = butterflyApp.streamManager.getAllStreamList(null,"0", "10");
 		//it should be zero because there is no public video
 		assertEquals(0, allStreamList.size());
 
 		ArrayList<String> mailList = new ArrayList<String>(Arrays.asList(new String[] {"ahmetmermerkaya@gmail.com"}));
-		allStreamList = butterflyApp.streamManager.getAllStreamList(mailList);
+		allStreamList = butterflyApp.streamManager.getAllStreamList(mailList,"0", "10");
 		//it should be one because video is shared with that email
 		assertEquals(1, allStreamList.size());
 
@@ -740,7 +740,7 @@ public class ApplicationTester {
 		assertTrue(registerUser);
 
 		mailList = new ArrayList<String>(Arrays.asList(new String[] {"ahmetmermerkaya@hotmail.com"}));
-		allStreamList = butterflyApp.streamManager.getAllStreamList(mailList);
+		allStreamList = butterflyApp.streamManager.getAllStreamList(mailList,"0", "10");
 		//check tthat registered second mail get the shared video
 		assertEquals(1, allStreamList.size());
 
@@ -749,7 +749,7 @@ public class ApplicationTester {
 		assertEquals(registerLiveStream, true);
 
 		mailList = new ArrayList<String>(Arrays.asList(new String[] {"ahmetmermerkaya@hotmail.com", "ahmetmermerkaya@gmail.com"}));
-		allStreamList = butterflyApp.streamManager.getAllStreamList(mailList);
+		allStreamList = butterflyApp.streamManager.getAllStreamList(mailList,"0", "10");
 		//check that multiple email address gets the public and private videos
 		assertEquals(2, allStreamList.size());
 
@@ -758,7 +758,7 @@ public class ApplicationTester {
 		assertEquals(registerLiveStream, true);
 
 		mailList = new ArrayList<String>(Arrays.asList(new String[] {"ahmetmermerkaya@hotmail.com", "ahmetmermerkaya@gmail.com"}));
-		allStreamList = butterflyApp.streamManager.getAllStreamList(mailList);
+		allStreamList = butterflyApp.streamManager.getAllStreamList(mailList,"0", "10");
 		assertEquals(3, allStreamList.size());
 
 	}
@@ -771,7 +771,7 @@ public class ApplicationTester {
 			boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com", "mail@mail.com", true, null);
 			assertEquals(registerLiveStream, true);
 
-			String liveStreams = butterflyApp.getLiveStreams(null);
+			String liveStreams = butterflyApp.getLiveStreams(null, "0", "10");
 
 			JSONArray jsonArray = new JSONArray(liveStreams);
 
@@ -795,7 +795,7 @@ public class ApplicationTester {
 			registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl9898", "ahmetmermerkaya@gmail.com,ahmetmermerkaya@hotmail.com", "mail@mail.com", false, null);
 			assertEquals(registerLiveStream, true);
 
-			liveStreams = butterflyApp.getLiveStreams("ahmetmermerkaya@gmail.com");
+			liveStreams = butterflyApp.getLiveStreams("ahmetmermerkaya@gmail.com","0", "10");
 			
 			jsonArray = new JSONArray(liveStreams);
 
@@ -827,7 +827,7 @@ public class ApplicationTester {
 		boolean registerLiveStream = butterflyApp.registerLiveStream("publishedName", "publishUrl", null, "mail@mail.com", true, null);
 		assertEquals(registerLiveStream, true);
 		
-		String liveStreams = butterflyApp.getLiveStreams("ahmetmermerkaya@gmail.com");
+		String liveStreams = butterflyApp.getLiveStreams("ahmetmermerkaya@gmail.com","0", "10");
 		
 		JSONArray jsonArray;
 		try {
@@ -839,9 +839,9 @@ public class ApplicationTester {
 			assertTrue(jsonObject.has("isLive"));
 			assertTrue(jsonObject.getBoolean("isLive"));
 			
-			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis());
+			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10");
 			
-			liveStreams = butterflyApp.getLiveStreams(null);
+			liveStreams = butterflyApp.getLiveStreams(null,"0", "10");
 			
 			jsonArray = new JSONArray(liveStreams);
 			length = jsonArray.length();
@@ -853,9 +853,9 @@ public class ApplicationTester {
 			
 			Thread.sleep(5000);
 			
-			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis());
+			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10");
 			
-			liveStreams = butterflyApp.getLiveStreams(null);
+			liveStreams = butterflyApp.getLiveStreams(null,"0", "10");
 			
 			jsonArray = new JSONArray(liveStreams);
 			length = jsonArray.length();
@@ -867,9 +867,9 @@ public class ApplicationTester {
 			
 			Thread.sleep(StreamManager.MAX_TIME_INTERVAL_BETWEEN_PACKETS);
 			
-			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis());
+			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10");
 			
-			liveStreams = butterflyApp.getLiveStreams(null);
+			liveStreams = butterflyApp.getLiveStreams(null,"0", "10");
 			
 			jsonArray = new JSONArray(liveStreams);
 			length = jsonArray.length();
@@ -895,7 +895,7 @@ public class ApplicationTester {
 		isregistered = butterflyApp.registerLiveStream("publisname", "publishurl", null, "mail@mail.com", false, "tur");
 		assertTrue(isregistered);
 	
-		String liveStreams = butterflyApp.getLiveStreams(null);
+		String liveStreams = butterflyApp.getLiveStreams(null,"0", "10");
 		
 		JSONArray jsonArray;
 		try {
@@ -903,14 +903,40 @@ public class ApplicationTester {
 			int length = jsonArray.length();
 			assertEquals(0, length);
 			
-			liveStreams = butterflyApp.getLiveStreams("mail@mail.com");
+			liveStreams = butterflyApp.getLiveStreams("mail@mail.com","0", "10");
 			jsonArray = new JSONArray(liveStreams);
 			length = jsonArray.length();
 			assertEquals(1, length);
 			
+			//share video user ownself
+			isregistered = butterflyApp.registerLiveStream("publisname2", "publishurl2", "mail@mail.com", "mail@mail.com", false, "tur");
+			assertTrue(isregistered);
+			
+			//we have totally registered two streams one is shared with noone
+			//and the above one is shared with users ownself
+			
+			//check that we should have 2 live streams registered
+			liveStreams = butterflyApp.getLiveStreams("mail@mail.com","0", "10");
+			jsonArray = new JSONArray(liveStreams);
+			length = jsonArray.length();
+			assertEquals(2, length);
+			
+			liveStreams = butterflyApp.getLiveStreams(null,"0", "10");
+			jsonArray = new JSONArray(liveStreams);
+			length = jsonArray.length();
+			assertEquals(0, length);
+			
+			//test with unregistered mail adress
+			liveStreams = butterflyApp.getLiveStreams("unregistered string","0", "10");
+			jsonArray = new JSONArray(liveStreams);
+			length = jsonArray.length();
+			assertEquals(0, length);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
+		
+		
+	
 	}
 	
 	@Test
@@ -921,7 +947,7 @@ public class ApplicationTester {
 		isregistered = butterflyApp.registerLiveStream("publisname", "publishurl", null, "mail@mail.com", true, "tur");
 		assertTrue(isregistered);
 	
-		String liveStreams = butterflyApp.getLiveStreams("mail@mail.com");
+		String liveStreams = butterflyApp.getLiveStreams("mail@mail.com","0", "10");
 		
 		try {
 			JSONArray jsonArray = new JSONArray(liveStreams);

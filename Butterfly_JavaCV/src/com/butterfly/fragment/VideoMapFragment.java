@@ -122,8 +122,10 @@ public class VideoMapFragment extends Fragment implements IStreamListUpdateListe
 
 	public void streamListUpdated(ArrayList<Stream> streamList) {
 		if (mMap != null) {
-			mMap.clear();
-			hashMap.clear();
+
+				mMap.clear();
+				hashMap.clear();
+
 			for (final Stream stream : streamList) {
 				Marker marker = addMarker(stream.latitude, stream.longitude, stream.name);
 				BTVMarker btvMarker = new BTVMarker(marker, stream);

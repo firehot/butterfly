@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 
+
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
@@ -16,6 +17,7 @@ import org.hibernate.Hibernate;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.AnnotationConfiguration;
+import org.hibernate.engine.jdbc.batch.spi.Batch;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.red5.core.Application;
@@ -35,7 +37,7 @@ public class StreamManager {
 	}
 
 	public String getLiveStreams(Map<String, StreamProxy> entrySet,
-			List<String> mailList) {
+			List<String> mailList,String start,String batchSize) {
 
 		JSONArray jsonArray = new JSONArray();
 		JSONObject jsonObject;
@@ -43,9 +45,9 @@ public class StreamManager {
 		java.util.Date date = new java.util.Date();
 
 		List<Streams> streamList;
-		removeGhostStreams(entrySet, date.getTime());
+		removeGhostStreams(entrySet, date.getTime(),start,batchSize);
 
-		streamList = getAllStreamList(mailList);
+		streamList = getAllStreamList(mailList,start,batchSize);
 		for (Streams stream : streamList) {
 			jsonObject = new JSONObject();
 			jsonObject.put("url", stream.getStreamUrl());
@@ -71,8 +73,8 @@ public class StreamManager {
 	}
 
 	public void removeGhostStreams(Map<String, StreamProxy> entrySet,
-			long currentTime) {
-		List<Streams> streamList = getAllStreamList(null);
+			long currentTime,String start,String batchSize) {
+		List<Streams> streamList = getAllStreamList(null,start,batchSize);
 		if (streamList != null) {
 			for (Streams stream : streamList) {
 
@@ -237,7 +239,6 @@ public class StreamManager {
 			JPAUtils.beginTransaction();
 			em.remove(em.contains(stream) ? stream : em.merge(stream));
 			JPAUtils.commit();
-			//JPAUtils.closeEntityManager()();
 			result = true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -275,7 +276,7 @@ public class StreamManager {
 	 * @return public streams and private streams shared with the mailList if
 	 *         mailList is null then it returns only public streams
 	 */
-	public List<Streams> getAllStreamList(List<String> mailList) {
+	public List<Streams> getAllStreamList(List<String> mailList,String start,String batchSize) {
 		List<Streams> results = null;
 		try {
 			Query query = null;
@@ -300,6 +301,8 @@ public class StreamManager {
 								+ " WHERE (str.isPublic = :isPublic) ");
 			}
 			query.setParameter("isPublic", true);
+			query.setFirstResult(Integer.parseInt(start));
+			query.setMaxResults(Integer.parseInt(batchSize));
 
 			results = query.getResultList();
 

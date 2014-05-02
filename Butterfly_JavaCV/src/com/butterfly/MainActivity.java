@@ -2,9 +2,7 @@ package com.butterfly;
 
 import java.util.ArrayList;
 
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.app.ActionBar;
 import android.app.Activity;
@@ -42,24 +40,20 @@ import com.butterfly.utils.Utils;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
-import flex.messaging.io.MessageIOConstants;
-import flex.messaging.io.amf.client.AMFConnection;
-import flex.messaging.io.amf.client.exceptions.ClientStatusException;
-import flex.messaging.io.amf.client.exceptions.ServerStatusException;
-
 public class MainActivity extends FragmentActivity implements
 		OnPageChangeListener {
 
+	public static boolean mainActivityCompleted=false;
 	AppSectionsPagerAdapter mAppSectionsPagerAdapter;
 	ViewPager mViewPager;
 	ArrayList<Stream> streamList = new ArrayList<Stream>();
 	ArrayList<IStreamListUpdateListener> streamUpdateListenerList = new ArrayList<IStreamListUpdateListener>();
-	private String httpGatewayURL;
+	public String httpGatewayURL;
 
 	private static final String SHARED_PREFERENCE_FIRST_INSTALLATION = "firstInstallation";
 	private static final String APP_SHARED_PREFERENCES = "applicationDetails";
 	private int batteryLevel = 0;
-	private GetStreamListTask getStreamListTask;
+	public GetStreamListTask getStreamListTask;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -94,7 +88,7 @@ public class MainActivity extends FragmentActivity implements
 		mViewPager.setAdapter(mAppSectionsPagerAdapter);
 		mViewPager.setOnPageChangeListener(this);
 		httpGatewayURL = getString(R.string.http_gateway_url);
-		new GetStreamListTask().execute(httpGatewayURL);
+		
 		// Check device for Play Services APK.
 		if (checkPlayServices(this)) {
 			CloudMessaging msg = new CloudMessaging(
@@ -114,14 +108,6 @@ public class MainActivity extends FragmentActivity implements
 
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.refresh:
-			if (getStreamListTask == null 
-					|| getStreamListTask.getStatus() ==  AsyncTask.Status.FINISHED) 
-			{
-				getStreamListTask = new GetStreamListTask();
-				getStreamListTask.execute(httpGatewayURL);
-			}
-			return true;
 		case R.id.record:
 			Intent intent = new Intent(this, RecordActivity.class);
 			startActivity(intent);
@@ -139,6 +125,7 @@ public class MainActivity extends FragmentActivity implements
 	@Override
 	protected void onResume() {
 		checkPlayServices(this);
+		new GetStreamListTask().execute(httpGatewayURL,"0","10");
 		super.onResume();
 	}
 	
@@ -146,6 +133,7 @@ public class MainActivity extends FragmentActivity implements
 	protected void onPause() {
 		super.onPause();
 		
+		mainActivityCompleted = false;
 		showHideKeyboard(false, mViewPager);
 	}
 
@@ -285,20 +273,8 @@ public class MainActivity extends FragmentActivity implements
 
 		@Override
 		protected String doInBackground(String... params) {
-			String streams = null;
-			AMFConnection amfConnection = new AMFConnection();
-			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
-			try {
-				System.out.println(params[0]);
-				amfConnection.connect(params[0]);
-				String mails = Utils.getMailList(MainActivity.this);
-				streams = (String) amfConnection.call("getLiveStreams",mails);
-			} catch (ClientStatusException e) {
-				e.printStackTrace();
-			} catch (ServerStatusException e) {
-				e.printStackTrace();
-			}
-			amfConnection.close();
+			
+			String streams = Utils.getLiveStreams(MainActivity.this, params);
 
 			return streams;
 		}
@@ -306,61 +282,13 @@ public class MainActivity extends FragmentActivity implements
 		@Override
 		protected void onPostExecute(String streams) {
 			
+
 			streamList.clear();
 
 			if (streams != null) {
-				// JSONObject jsonObject = new JSONObject(streams);
-				JSONArray jsonArray;
+
 				try {
-					jsonArray = new JSONArray(streams);
-					int length = jsonArray.length();
-					if (length > 0) {
-
-						JSONObject jsonObject;
-
-						for (int i = 0; i < length; i++) {
-							jsonObject = (JSONObject) jsonArray.get(i);
-							
-							String tmp = jsonObject.getString("latitude");
-							if (tmp.equals("null")) { tmp = "0"; }
-							Double latitude = Double.parseDouble(tmp);
-							
-							tmp = jsonObject.getString("longitude");
-							if (tmp.equals("null")) { tmp = "0"; }
-							Double longitude = Double.parseDouble(tmp);
-							
-							tmp = jsonObject.getString("altitude");
-							if (tmp.equals("null")) { tmp = "0"; }
-							Double altitude = Double.parseDouble(tmp);
-
-							boolean isPublic = true;
-							if (jsonObject.has("isPublic")) {
-								isPublic = jsonObject.getBoolean("isPublic");
-							}
-							
-							long registerTime = 0;
-							if (jsonObject.has("registerTime")) {
-								registerTime = jsonObject.getLong("registerTime");
-							}
-							
-							streamList.add(new Stream(jsonObject.getString("name"), 
-											jsonObject.getString("url"), 
-											Integer.parseInt(jsonObject.getString("viewerCount")), 
-											latitude, 
-											longitude, 
-											altitude, 
-											Boolean.parseBoolean(jsonObject.getString("isLive")),
-											Boolean.parseBoolean(jsonObject.getString("isDeletable")),
-											isPublic,
-											registerTime));
-							
-
-						}
-					} else {
-						Toast.makeText(getApplicationContext(),
-								getString(R.string.noLiveStream),
-								Toast.LENGTH_LONG).show();
-					}
+					streamList.addAll(Utils.parseStreams(streams, getApplicationContext()));
 
 					updateStreamListeners();
 
@@ -379,7 +307,11 @@ public class MainActivity extends FragmentActivity implements
 			}
 			setProgressBarIndeterminateVisibility(false);
 			super.onPostExecute(streams);
+			
+			MainActivity.mainActivityCompleted = true;
 		}
+		
+		
 	}
 
 	@Override

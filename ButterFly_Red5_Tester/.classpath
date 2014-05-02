@@ -51,6 +51,8 @@
 	<classpathentry kind="lib" path="libs/logback-classic-1.0.3.jar"/>
 	<classpathentry kind="lib" path="libs/quartz-1.8.5.jar"/>
 	<classpathentry kind="lib" path="libs/java-json.jar"/>
+	<classpathentry kind="lib" path="libs/commons-lang-2.6.jar"/>
+	<classpathentry kind="lib" path="libs/commons-io-2.4.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jst.server.core.container/org.eclipsewtp.jst.server.generic.red5.runtimeClasspathProvider/Red5 Server Runtime"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
