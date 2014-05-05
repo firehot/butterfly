@@ -100,7 +100,7 @@ public class UserManager {
 				result = true;
 			}
 			JPAUtils.commit();
-			//JPAUtils.closeEntityManager();
+
 
 			
 		} catch (Exception e) {
@@ -174,7 +174,7 @@ public class UserManager {
 			}
 
 			JPAUtils.commit();
-			//JPAUtils.closeEntityManager();
+
 			result = true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -196,7 +196,7 @@ public class UserManager {
 			query.executeUpdate();
 
 			JPAUtils.commit();
-			//JPAUtils.closeEntityManager();
+
 			result = true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -257,7 +257,6 @@ public class UserManager {
 				
 			}
 
-			//JPAUtils.closeEntityManager();
 		} catch (NoResultException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
@@ -281,7 +280,7 @@ public class UserManager {
 				result = ((RegIds) results.get(0)).getGcmUsers();
 			}
 
-			//JPAUtils.closeEntityManager();
+
 		} catch (NoResultException e) {
 			e.printStackTrace();
 		} catch (Exception e) {

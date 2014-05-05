@@ -111,7 +111,7 @@ public class StreamManager {
 			}
 
 			JPAUtils.commit();
-		//	JPAUtils.closeEntityManager();
+
 
 			StreamProxy proxy = new StreamProxy(url, stream.getId());
 
@@ -167,7 +167,6 @@ public class StreamManager {
 			JPAUtils.beginTransaction();
 			JPAUtils.getEntityManager().persist(stream);
 			JPAUtils.commit();
-		//	JPAUtils.closeEntityManager();
 
 			result = true;
 		} catch (Exception e) {
@@ -185,7 +184,6 @@ public class StreamManager {
 			JPAUtils.beginTransaction();
 			JPAUtils.getEntityManager().merge(stream);
 			JPAUtils.commit();
-		//	JPAUtils.closeEntityManager();
 
 			result = true;
 		} catch (Exception e) {
@@ -220,7 +218,6 @@ public class StreamManager {
 					"FROM Streams where streamUrl= :streamUrl");
 			query.setParameter("streamUrl", streamUrl);
 			resultStream = (Streams) query.getSingleResult();
-			//JPAUtils.closeEntityManager();
 
 		} catch (NoResultException e) {
 			return null;
