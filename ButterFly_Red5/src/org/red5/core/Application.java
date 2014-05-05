@@ -56,6 +56,7 @@ import org.red5.core.dbModel.StreamProxy;
 import org.red5.core.dbModel.Streams;
 import org.red5.core.manager.StreamManager;
 import org.red5.core.manager.UserManager;
+import org.red5.core.utils.Red5Timer;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IConnection;
@@ -115,41 +116,19 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 
 	public void scheduleStreamDeleterTimer(long runPeriod, final long deleteTime) {
-		TimerTask streamDeleteTask = new TimerTask() {
-
-			@Override
-			public void run() {
-				File dir = new File("webapps/ButterFly_Red5/streams");
-				String[] files = dir.list();
-				if (files != null) {
-					long timeMillis = System.currentTimeMillis();
-					for (String fileName : files) {
-						File f = new File(dir, fileName);
-						if (f.isFile() == true && f.exists() == true) {
-
-							String key = f.getName().substring(0,
-									f.getName().indexOf(".flv"));
-							if ((timeMillis - f.lastModified()) > deleteTime) {
-
-								deleteStreamFiles(key);
-
-								Streams stream = streamManager.getStream(key);
-								if (stream != null)
-									streamManager.deleteStream(stream);
-								if (proxyStreams.containsKey(key))
-									proxyStreams.remove(key);
-							}
-
-						}
-					}
-				}
-			}
-		};
+		TimerTask streamDeleteTask = new Red5Timer(this, deleteTime);
 		cancelStreamDeleteTimer();
 		streamDeleterTimer = new java.util.Timer();
 		streamDeleterTimer.schedule(streamDeleteTask, 0, runPeriod);
 	}
-
+	
+	public void removeTimeUpStreams(String key) {
+		Streams stream = streamManager.getStream(key);
+		if (stream != null)
+			streamManager.deleteStream(stream);
+		if (proxyStreams.containsKey(key))
+			proxyStreams.remove(key);
+	}
 	@Override
 	public void appStop(IScope arg0) {
 		log.info("app stop");
