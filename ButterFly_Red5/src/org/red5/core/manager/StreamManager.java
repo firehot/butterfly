@@ -2,7 +2,6 @@ package org.red5.core.manager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,18 +20,16 @@ public class StreamManager {
 
 	public static final int MAX_TIME_INTERVAL_BETWEEN_PACKETS = 20000;
 
-
-	public List<Streams> getLiveStreams(Map<String, StreamProxy> entrySet,
-			List<String> mailList,String start,String batchSize,Map<String, StreamProxy> registeredLiveStreams) {
-
+	public List<Streams> getLiveStreams(Map<String, StreamProxy> registeredLiveStreams,
+			List<String> mailList, String start, String batchSize) {
 
 		java.util.Date date = new java.util.Date();
 
 		List<Streams> streamList;
-		removeGhostStreams(entrySet, date.getTime(),start,batchSize,registeredLiveStreams);
+		removeGhostStreams(registeredLiveStreams, date.getTime(), start, batchSize);
 
-		streamList = getAllStreamList(mailList,start,batchSize);
-		
+		streamList = getAllStreamList(mailList, start, batchSize);
+
 		return streamList;
 	}
 
@@ -41,22 +38,23 @@ public class StreamManager {
 
 	}
 
-	public void removeGhostStreams(Map<String, StreamProxy> entrySet,
-			long currentTime,String start,String batchSize,Map<String, StreamProxy> registeredLiveStreams) {
-		List<Streams> streamList = getAllStreamList(null,start,batchSize);
+	public void removeGhostStreams(Map<String, StreamProxy> registeredLiveStreams,
+			long currentTime, String start, String batchSize) {
+		List<Streams> streamList = getAllStreamList(null, start, batchSize);
 		if (streamList != null) {
 			for (Streams stream : streamList) {
 
 				StreamProxy streamProxy = null;
-				if (entrySet.containsKey(stream.getStreamUrl())) {
-					streamProxy = entrySet.get(stream.getStreamUrl());
+				if (registeredLiveStreams.containsKey(stream.getStreamUrl())) {
+					streamProxy = registeredLiveStreams.get(stream.getStreamUrl());
 
-					if (entrySet.containsKey(stream.getStreamUrl())) {
-						streamProxy = entrySet.get(stream.getStreamUrl());
+					if (registeredLiveStreams.containsKey(stream.getStreamUrl())) {
+						streamProxy = registeredLiveStreams.get(stream.getStreamUrl());
 
 						if ((currentTime - streamProxy.lastPacketReceivedTime) > MAX_TIME_INTERVAL_BETWEEN_PACKETS) {
 
-							removeStream(stream.getStreamUrl(),registeredLiveStreams);
+							removeStream(stream.getStreamUrl(),
+									registeredLiveStreams);
 						}
 					}
 				}
@@ -74,53 +72,38 @@ public class StreamManager {
 		return result;
 	}
 
-	public boolean registerLiveStream(String streamName, String url,
-			String mailsToBeNotified, String broadcasterMail, boolean isPublic,
-			String deviceLanguage,Map<String, StreamProxy> registeredStreams,GcmUsers user ) {
+	public StreamProxy registerLiveStream(String url,
+			String mailsToBeNotified,Streams stream) {
 
+		JPAUtils.beginTransaction();
 
-		boolean result = false;
-		if (registeredStreams.containsKey(url) == false) {
-			
+		JPAUtils.getEntityManager().persist(stream);
 
-			JPAUtils.beginTransaction();
-			Streams stream = new Streams(user,
-					Calendar.getInstance().getTime(), streamName, url);
-			stream.setIsPublic(isPublic);
-			stream.setIsLive(true);
-			JPAUtils.getEntityManager().persist(stream);
+		// saveStream(stream);
 
-			// saveStream(stream);
+		if (mailsToBeNotified != null) {
+			String[] mails = mailsToBeNotified.split(",");
+			List<String> mailList = new ArrayList<String>(Arrays.asList(mails));
 
-			if (mailsToBeNotified != null) {
-				String[] mails = mailsToBeNotified.split(",");
-				List<String> mailList = new ArrayList<String>(
-						Arrays.asList(mails));
+			Query query = JPAUtils.getEntityManager().createQuery(
+					"SELECT DISTINCT user FROM GcmUsers AS user "
+							+ "JOIN user.gcmUserMailses AS userMails "
+							+ "WHERE userMails.mail IN :email");
+			query.setParameter("email", mailList);
+			List<GcmUsers> results = query.getResultList();
 
-				Query query = JPAUtils.getEntityManager().createQuery(
-						"SELECT DISTINCT user FROM GcmUsers AS user "
-								+ "JOIN user.gcmUserMailses AS userMails "
-								+ "WHERE userMails.mail IN :email");
-				query.setParameter("email", mailList);
-				List<GcmUsers> results = query.getResultList();
-
-				for (GcmUsers gcmUserMails : results) {
-					JPAUtils.getEntityManager().persist(
-							new StreamViewers(stream, gcmUserMails));
-				}
+			for (GcmUsers gcmUserMails : results) {
+				JPAUtils.getEntityManager().persist(
+						new StreamViewers(stream, gcmUserMails));
 			}
-
-			JPAUtils.commit();
-
-
-			StreamProxy proxy = new StreamProxy(url, stream.getId());
-
-			registeredStreams.put(url, proxy);
-			
-			// return true even if stream is not public
-			result = true;
 		}
-		return result;
+
+		JPAUtils.commit();
+
+		StreamProxy proxy = new StreamProxy(url, stream.getId());
+
+
+		return proxy;
 	}
 
 	public boolean registerLocationForStream(String url, double longitude,
@@ -141,8 +124,9 @@ public class StreamManager {
 		return result;
 	}
 
-	public boolean removeStream(String streamUrl,Map<String, StreamProxy> registeredLiveStreams) {
-		
+	public boolean removeStream(String streamUrl,
+			Map<String, StreamProxy> registeredLiveStreams) {
+
 		boolean result = false;
 		if (registeredLiveStreams.containsKey(streamUrl)) {
 			StreamProxy stream = registeredLiveStreams.remove(streamUrl);
@@ -237,12 +221,14 @@ public class StreamManager {
 	 * @return public streams and private streams shared with the mailList if
 	 *         mailList is null then it returns only public streams
 	 */
-	public List<Streams> getAllStreamList(List<String> mailList,String start,String batchSize) {
+	public List<Streams> getAllStreamList(List<String> mailList, String start,
+			String batchSize) {
 		List<Streams> results = null;
 		try {
 			Query query = null;
 			if (mailList != null) {
-				//TODO: how to improve query below. same subquery executed twice
+				// TODO: how to improve query below. same subquery executed
+				// twice
 				query = JPAUtils
 						.getEntityManager()
 						.createQuery(

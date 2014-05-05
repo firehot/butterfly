@@ -8,7 +8,6 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -839,7 +838,7 @@ public class ApplicationTester {
 			assertTrue(jsonObject.has("isLive"));
 			assertTrue(jsonObject.getBoolean("isLive"));
 			
-			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10",butterflyApp.getLiveStreamProxies());
+			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10");
 			
 			liveStreams = butterflyApp.getLiveStreams(null,"0", "10");
 			
@@ -853,7 +852,7 @@ public class ApplicationTester {
 			
 			Thread.sleep(5000);
 			
-			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10",butterflyApp.getLiveStreamProxies());
+			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10");
 			
 			liveStreams = butterflyApp.getLiveStreams(null,"0", "10");
 			
@@ -867,7 +866,7 @@ public class ApplicationTester {
 			
 			Thread.sleep(StreamManager.MAX_TIME_INTERVAL_BETWEEN_PACKETS);
 			
-			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10",butterflyApp.getLiveStreamProxies());
+			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10");
 			
 			liveStreams = butterflyApp.getLiveStreams(null,"0", "10");
 			

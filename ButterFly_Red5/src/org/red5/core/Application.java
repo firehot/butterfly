@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -180,8 +181,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			String[] mailArray = mails.split(",");
 			mailList = new ArrayList<String>(Arrays.asList(mailArray));
 		}
-		List<Streams> streamList = streamManager.getLiveStreams(getLiveStreamProxies(), mailList,
-				start, batchSize,this.getLiveStreamProxies());
+		List<Streams> streamList = streamManager.getLiveStreams(
+				getLiveStreamProxies(), mailList, start, batchSize);
 		JSONArray jsonArray = new JSONArray();
 		JSONObject jsonObject;
 
@@ -196,7 +197,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			jsonObject.put("altitude", stream.getAltitude());
 			jsonObject.put("isLive", stream.getIsLive());
 			jsonObject.put("isPublic", stream.getIsPublic());
-			jsonObject.put("isDeletable", streamManager.isDeletable(stream, mailList));
+			jsonObject.put("isDeletable",
+					streamManager.isDeletable(stream, mailList));
 			jsonObject.put("registerTime", stream.getRegisterTime().getTime());
 			jsonArray.add(jsonObject);
 		}
@@ -219,12 +221,26 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		Map<String, StreamProxy> registeredStreams = this
 				.getLiveStreamProxies();
 		GcmUsers user = this.userManager.getGcmUserByEmails(broadcasterMail);
-		boolean result = streamManager.registerLiveStream(streamName, url,
-				mailsToBeNotified, broadcasterMail, isPublic, deviceLanguage,
-				registeredStreams, user);
-		if(result)
-			this.sendNotificationsOrMail(mailsToBeNotified,
-					broadcasterMail, url, streamName, deviceLanguage);
+		boolean result = false;
+		if (this.getLiveStreamProxies().containsKey(url) == false) {
+			
+			Streams stream = new Streams(user, Calendar.getInstance().getTime(),
+					streamName, url);
+			stream.setIsPublic(isPublic);
+			stream.setIsLive(true);
+			
+			StreamProxy proxy = streamManager.registerLiveStream(
+					url, mailsToBeNotified, stream);
+			if(proxy != null)
+			{
+				registeredStreams.put(url, proxy);
+				result = true;
+			}
+		}
+
+		if (result)
+			this.sendNotificationsOrMail(mailsToBeNotified, broadcasterMail,
+					url, streamName, deviceLanguage);
 		return result;
 	}
 
@@ -340,8 +356,9 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 
 	public boolean removeStream(String streamUrl) {
-		Map<String, StreamProxy> registeredLiveStreams = this.getLiveStreamProxies();
-		return streamManager.removeStream(streamUrl,registeredLiveStreams);
+		Map<String, StreamProxy> registeredLiveStreams = this
+				.getLiveStreamProxies();
+		return streamManager.removeStream(streamUrl, registeredLiveStreams);
 	}
 
 	public void sendMail(final ArrayList<String> email, String broadcasterMail,
