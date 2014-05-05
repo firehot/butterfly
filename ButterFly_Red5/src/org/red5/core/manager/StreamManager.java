@@ -7,20 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
-
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
-import org.hibernate.Hibernate;
-import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
-import org.hibernate.cfg.AnnotationConfiguration;
-import org.hibernate.engine.jdbc.batch.spi.Batch;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.red5.core.Application;
 import org.red5.core.dbModel.GcmUsers;
 import org.red5.core.dbModel.StreamProxy;
 import org.red5.core.dbModel.StreamViewers;
@@ -30,41 +20,20 @@ import org.red5.core.utils.JPAUtils;
 public class StreamManager {
 
 	public static final int MAX_TIME_INTERVAL_BETWEEN_PACKETS = 20000;
-	Application red5App;
 
-	public StreamManager(Application red5App) {
-		this.red5App = red5App;
-	}
 
-	public String getLiveStreams(Map<String, StreamProxy> entrySet,
-			List<String> mailList,String start,String batchSize) {
+	public List<Streams> getLiveStreams(Map<String, StreamProxy> entrySet,
+			List<String> mailList,String start,String batchSize,Map<String, StreamProxy> registeredLiveStreams) {
 
-		JSONArray jsonArray = new JSONArray();
-		JSONObject jsonObject;
 
 		java.util.Date date = new java.util.Date();
 
 		List<Streams> streamList;
-		removeGhostStreams(entrySet, date.getTime(),start,batchSize);
+		removeGhostStreams(entrySet, date.getTime(),start,batchSize,registeredLiveStreams);
 
 		streamList = getAllStreamList(mailList,start,batchSize);
-		for (Streams stream : streamList) {
-			jsonObject = new JSONObject();
-			jsonObject.put("url", stream.getStreamUrl());
-			jsonObject.put("name", stream.getStreamName());
-			jsonObject.put("viewerCount",
-					this.red5App.getViewerCount(stream.getStreamUrl()));
-			jsonObject.put("latitude", stream.getLatitude());
-			jsonObject.put("longitude", stream.getLongitude());
-			jsonObject.put("altitude", stream.getAltitude());
-			jsonObject.put("isLive", stream.getIsLive());
-			jsonObject.put("isPublic", stream.getIsPublic());
-			jsonObject.put("isDeletable", isDeletable(stream, mailList));
-			jsonObject.put("registerTime", stream.getRegisterTime().getTime());
-			jsonArray.add(jsonObject);
-		}
-
-		return jsonArray.toString();
+		
+		return streamList;
 	}
 
 	public boolean isDeletable(Streams stream, List<String> mailList) {
@@ -73,7 +42,7 @@ public class StreamManager {
 	}
 
 	public void removeGhostStreams(Map<String, StreamProxy> entrySet,
-			long currentTime,String start,String batchSize) {
+			long currentTime,String start,String batchSize,Map<String, StreamProxy> registeredLiveStreams) {
 		List<Streams> streamList = getAllStreamList(null,start,batchSize);
 		if (streamList != null) {
 			for (Streams stream : streamList) {
@@ -87,7 +56,7 @@ public class StreamManager {
 
 						if ((currentTime - streamProxy.lastPacketReceivedTime) > MAX_TIME_INTERVAL_BETWEEN_PACKETS) {
 
-							removeStream(stream.getStreamUrl());
+							removeStream(stream.getStreamUrl(),registeredLiveStreams);
 						}
 					}
 				}
@@ -107,15 +76,12 @@ public class StreamManager {
 
 	public boolean registerLiveStream(String streamName, String url,
 			String mailsToBeNotified, String broadcasterMail, boolean isPublic,
-			String deviceLanguage) {
+			String deviceLanguage,Map<String, StreamProxy> registeredStreams,GcmUsers user ) {
 
-		Map<String, StreamProxy> registeredStreams = this.red5App
-				.getLiveStreamProxies();
 
 		boolean result = false;
 		if (registeredStreams.containsKey(url) == false) {
-			GcmUsers user = this.red5App.userManager
-					.getGcmUserByEmails(broadcasterMail);
+			
 
 			JPAUtils.beginTransaction();
 			Streams stream = new Streams(user,
@@ -150,8 +116,7 @@ public class StreamManager {
 			StreamProxy proxy = new StreamProxy(url, stream.getId());
 
 			registeredStreams.put(url, proxy);
-			this.red5App.sendNotificationsOrMail(mailsToBeNotified,
-					broadcasterMail, url, streamName, deviceLanguage);
+			
 			// return true even if stream is not public
 			result = true;
 		}
@@ -176,9 +141,8 @@ public class StreamManager {
 		return result;
 	}
 
-	public boolean removeStream(String streamUrl) {
-		Map<String, StreamProxy> registeredLiveStreams = this.red5App
-				.getLiveStreamProxies();
+	public boolean removeStream(String streamUrl,Map<String, StreamProxy> registeredLiveStreams) {
+		
 		boolean result = false;
 		if (registeredLiveStreams.containsKey(streamUrl)) {
 			StreamProxy stream = registeredLiveStreams.remove(streamUrl);

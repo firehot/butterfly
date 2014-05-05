@@ -2,7 +2,6 @@ package org.red5.core.manager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -10,7 +9,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
-import org.red5.core.Application;
 import org.red5.core.dbModel.GcmUserMails;
 import org.red5.core.dbModel.GcmUsers;
 import org.red5.core.dbModel.RegIds;
@@ -18,11 +16,6 @@ import org.red5.core.utils.JPAUtils;
 
 public class UserManager {
 
-	Application red5App;
-
-	public UserManager(Application red5App) {
-		this.red5App = red5App;
-	}
 
 	/**
 	 * @param mail

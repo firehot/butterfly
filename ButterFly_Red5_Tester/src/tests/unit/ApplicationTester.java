@@ -839,7 +839,7 @@ public class ApplicationTester {
 			assertTrue(jsonObject.has("isLive"));
 			assertTrue(jsonObject.getBoolean("isLive"));
 			
-			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10");
+			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10",butterflyApp.getLiveStreamProxies());
 			
 			liveStreams = butterflyApp.getLiveStreams(null,"0", "10");
 			
@@ -853,7 +853,7 @@ public class ApplicationTester {
 			
 			Thread.sleep(5000);
 			
-			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10");
+			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10",butterflyApp.getLiveStreamProxies());
 			
 			liveStreams = butterflyApp.getLiveStreams(null,"0", "10");
 			
@@ -867,7 +867,7 @@ public class ApplicationTester {
 			
 			Thread.sleep(StreamManager.MAX_TIME_INTERVAL_BETWEEN_PACKETS);
 			
-			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10");
+			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10",butterflyApp.getLiveStreamProxies());
 			
 			liveStreams = butterflyApp.getLiveStreams(null,"0", "10");
 			
