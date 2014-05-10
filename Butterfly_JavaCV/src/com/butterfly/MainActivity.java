@@ -54,6 +54,7 @@ public class MainActivity extends FragmentActivity implements
 	private static final String APP_SHARED_PREFERENCES = "applicationDetails";
 	private int batteryLevel = 0;
 	public GetStreamListTask getStreamListTask;
+	private CloudMessaging gcmMessaging;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -91,9 +92,17 @@ public class MainActivity extends FragmentActivity implements
 		
 		// Check device for Play Services APK.
 		if (checkPlayServices(this)) {
-			CloudMessaging msg = new CloudMessaging(
+			//we need to initialize CloudMessaging
+			getGCMCloudMessaging();
+		}
+	}
+	
+	public CloudMessaging getGCMCloudMessaging() {
+		if (gcmMessaging == null) {
+			gcmMessaging = new CloudMessaging(
 					this.getApplicationContext(), this, httpGatewayURL);
 		}
+		return gcmMessaging;
 	}
 
 	@Override

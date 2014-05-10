@@ -22,6 +22,7 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 public class CloudMessaging {
 
+	private static final String IS_REGISTERED_TO_BACKEND = "IS_REGISTERED_TO_BACKEND";
 	public static final String EXTRA_MESSAGE = "message";
 	public static final String PROPERTY_REG_ID = "registration_id";
 	private static final String PROPERTY_APP_VERSION = "appVersion";
@@ -37,7 +38,7 @@ public class CloudMessaging {
 	private Activity activity;
 	private String backendServer;
 
-	public CloudMessaging(Context context, Activity activity, String backendServer) {
+	public CloudMessaging(final Context context, Activity activity, String backendServer) {
 		this.context = context;
 		this.activity = activity;
 		gcm = GoogleCloudMessaging.getInstance(this.context);
@@ -46,6 +47,15 @@ public class CloudMessaging {
 
 		if (regid.isEmpty()) {
 			registerInBackground();
+		}
+		else if (isRegisteredToBackEnd(context) == false) {
+			new Thread() {
+				@Override
+				public void run() {
+					boolean isRegistered = sendRegistrationIdToBackend();		            
+		            setRegisteredToBackendStatus(context, isRegistered);
+				}
+			}.start();
 		}
 		else if(isAppUpdated(this.context))
 		{
@@ -63,6 +73,11 @@ public class CloudMessaging {
 		}
 		
 		return registrationId;
+	}
+	
+	private boolean isRegisteredToBackEnd(Context context) {
+		final SharedPreferences prefs = getGCMPreferences(context, activity.getClass());
+		return prefs.getBoolean(IS_REGISTERED_TO_BACKEND, false);
 	}
 	
 	private boolean isAppUpdated(Context context) {
@@ -120,14 +135,16 @@ public class CloudMessaging {
 		new UpdateRegIDTask().execute(oldRegID);
 	}
 	
-	private void sendRegistrationIdToBackend() 
+	private boolean sendRegistrationIdToBackend() 
 	{
 		String mails = Utils.getMailList(this.activity);
+		boolean isregistered = false;
 		if(mails != null)
 		{
 			Log.e("butterfly", mails);	
-			registerUser(backendServer, regid, mails);
+			isregistered = registerUser(backendServer, regid, mails);
 		}
+		return isregistered;
 	}
 
 	private void updateRegistrationId(String oldRegID) 
@@ -152,10 +169,8 @@ public class CloudMessaging {
 					.call("registerUser",registerId, mail);
 
 		} catch (ClientStatusException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ServerStatusException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		amfConnection.close();
@@ -174,10 +189,8 @@ public class CloudMessaging {
 					.call("updateUser",registerId, mail,oldRegID);
 
 		} catch (ClientStatusException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ServerStatusException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		amfConnection.close();
@@ -233,11 +246,9 @@ public class CloudMessaging {
 	                // so it can use GCM/HTTP or CCS to send messages to your app.
 	                // The request to your server should be authenticated if your app
 	                // is using accounts.
-	                sendRegistrationIdToBackend();
-
-	                // For this demo: we don't need to send it because the device
-	                // will send upstream messages to a server that echo back the
-	                // message using the 'from' address in the message.
+	                boolean isRegistered = sendRegistrationIdToBackend();
+	                
+	                setRegisteredToBackendStatus(context, isRegistered);
 
 	                // Persist the regID - no need to register again.
 	                storeRegistrationId(context, regid);
@@ -292,6 +303,15 @@ public class CloudMessaging {
 		SharedPreferences.Editor editor = prefs.edit();
 		editor.putString(PROPERTY_REG_ID, regId);
 		editor.putInt(PROPERTY_APP_VERSION, appVersion);
+		editor.commit();
+	}
+	
+	
+	private void setRegisteredToBackendStatus(Context context, boolean isregistered) {
+		final SharedPreferences prefs = getGCMPreferences(context,
+				activity.getClass());
+		SharedPreferences.Editor editor = prefs.edit();
+		editor.putBoolean(IS_REGISTERED_TO_BACKEND, isregistered);
 		editor.commit();
 	}
 
