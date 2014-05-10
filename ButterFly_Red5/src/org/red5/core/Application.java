@@ -661,10 +661,23 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		}
 		boolean result = streamManager.deleteStream(stream);
 		if (result) {
-			streamManager.deleteStreamFiles(url);
+			deleteStreamFiles(url);
 		}
 		return result;
 	}
 
-	
+	public void deleteStreamFiles(String url) {
+		File dirStream = new File("webapps/ButterFly_Red5/streams");
+		File dirPreview = new File("webapps/ButterFly_Red5");
+
+		File fStream = new File(dirStream, url + ".flv");
+		File fPreview = new File(dirPreview, url + ".png");
+		if (fStream.isFile() == true && fStream.exists() == true) {
+			fStream.delete();
+		}
+
+		if (fPreview.isFile() == true && fPreview.exists() == true) {
+			fPreview.delete();
+		}
+	}
 }
