@@ -23,10 +23,10 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -47,6 +47,8 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.red5.core.dbModel.GcmUserMails;
 import org.red5.core.dbModel.GcmUsers;
 import org.red5.core.dbModel.RegIds;
@@ -54,7 +56,7 @@ import org.red5.core.dbModel.StreamProxy;
 import org.red5.core.dbModel.Streams;
 import org.red5.core.manager.StreamManager;
 import org.red5.core.manager.UserManager;
-import org.red5.core.utils.JPAUtils;
+import org.red5.core.utils.Red5Timer;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IConnection;
@@ -98,8 +100,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		messagesTR = ResourceBundle.getBundle("resources/LanguageBundle",
 				new Locale("tr"));
 		messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
-		userManager = new UserManager(this);
-		streamManager = new StreamManager(this);
+		userManager = new UserManager();
+		streamManager = new StreamManager();
 
 		scheduleStreamDeleterTimer(1 * MILLIS_IN_HOUR, 24 * MILLIS_IN_HOUR);
 
@@ -114,41 +116,19 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 
 	public void scheduleStreamDeleterTimer(long runPeriod, final long deleteTime) {
-		TimerTask streamDeleteTask = new TimerTask() {
-
-			@Override
-			public void run() {
-				File dir = new File("webapps/ButterFly_Red5/streams");
-				String[] files = dir.list();
-				if (files != null) {
-					long timeMillis = System.currentTimeMillis();
-					for (String fileName : files) {
-						File f = new File(dir, fileName);
-						if (f.isFile() == true && f.exists() == true) {
-
-							String key = f.getName().substring(0,
-									f.getName().indexOf(".flv"));
-							if ((timeMillis - f.lastModified()) > deleteTime) {
-	
-								deleteStreamFiles(key);
-								
-								Streams stream = streamManager.getStream(key);
-								if (stream != null)
-									streamManager.deleteStream(stream);
-								if (proxyStreams.containsKey(key))
-									proxyStreams.remove(key);
-							}
-
-						}
-					}
-				}
-			}
-		};
+		TimerTask streamDeleteTask = new Red5Timer(this, deleteTime);
 		cancelStreamDeleteTimer();
 		streamDeleterTimer = new java.util.Timer();
 		streamDeleterTimer.schedule(streamDeleteTask, 0, runPeriod);
 	}
-
+	
+	public void removeTimeUpStreams(String key) {
+		Streams stream = streamManager.getStream(key);
+		if (stream != null)
+			streamManager.deleteStream(stream);
+		if (proxyStreams.containsKey(key))
+			proxyStreams.remove(key);
+	}
 	@Override
 	public void appStop(IScope arg0) {
 		log.info("app stop");
@@ -169,18 +149,40 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public void disconnect(IConnection conn, IScope scope) {
 		super.disconnect(conn, scope);
 	}
-	
+
 	public String getLiveStreams(String mails) {
 		return getLiveStreams(mails, "0", "10");
 	}
 
-	public String getLiveStreams(String mails,String start,String batchSize) {
+	public String getLiveStreams(String mails, String start, String batchSize) {
 		List<String> mailList = null;
 		if (mails != null) {
 			String[] mailArray = mails.split(",");
 			mailList = new ArrayList<String>(Arrays.asList(mailArray));
 		}
-		return streamManager.getLiveStreams(getLiveStreamProxies(), mailList,start,batchSize);
+		List<Streams> streamList = streamManager.getLiveStreams(
+				getLiveStreamProxies(), mailList, start, batchSize);
+		JSONArray jsonArray = new JSONArray();
+		JSONObject jsonObject;
+
+		for (Streams stream : streamList) {
+			jsonObject = new JSONObject();
+			jsonObject.put("url", stream.getStreamUrl());
+			jsonObject.put("name", stream.getStreamName());
+			jsonObject.put("viewerCount",
+					this.getViewerCount(stream.getStreamUrl()));
+			jsonObject.put("latitude", stream.getLatitude());
+			jsonObject.put("longitude", stream.getLongitude());
+			jsonObject.put("altitude", stream.getAltitude());
+			jsonObject.put("isLive", stream.getIsLive());
+			jsonObject.put("isPublic", stream.getIsPublic());
+			jsonObject.put("isDeletable",
+					streamManager.isDeletable(stream, mailList));
+			jsonObject.put("registerTime", stream.getRegisterTime().getTime());
+			jsonArray.add(jsonObject);
+		}
+
+		return jsonArray.toString();
 	}
 
 	public boolean isLiveStreamExist(String url) {
@@ -195,9 +197,30 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public boolean registerLiveStream(String streamName, String url,
 			String mailsToBeNotified, String broadcasterMail, boolean isPublic,
 			String deviceLanguage) {
+		Map<String, StreamProxy> registeredStreams = this
+				.getLiveStreamProxies();
+		GcmUsers user = this.userManager.getGcmUserByEmails(broadcasterMail);
+		boolean result = false;
+		if (this.getLiveStreamProxies().containsKey(url) == false) {
+			
+			Streams stream = new Streams(user, Calendar.getInstance().getTime(),
+					streamName, url);
+			stream.setIsPublic(isPublic);
+			stream.setIsLive(true);
+			
+			StreamProxy proxy = streamManager.registerLiveStream(
+					url, mailsToBeNotified, stream);
+			if(proxy != null)
+			{
+				registeredStreams.put(url, proxy);
+				result = true;
+			}
+		}
 
-		return streamManager.registerLiveStream(streamName, url,
-				mailsToBeNotified, broadcasterMail, isPublic, deviceLanguage);
+		if (result)
+			this.sendNotificationsOrMail(mailsToBeNotified, broadcasterMail,
+					url, streamName, deviceLanguage);
+		return result;
 	}
 
 	public boolean registerLocationForStream(String url, double longitude,
@@ -210,9 +233,9 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	 * register user to database
 	 * 
 	 * @param register_id
-	 * gcm registration id
+	 *            gcm registration id
 	 * @param mail
-	 * mail adress of the user
+	 *            mail adress of the user
 	 * @return
 	 */
 	public boolean registerUser(String register_id, String mail) {
@@ -274,7 +297,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 					regIdSet.addAll(result);
 				}
 			}
-			//JPAUtils.closeEntityManager();
+			// JPAUtils.closeEntityManager();
 
 			if (!mailListNotifiedByMail.isEmpty())
 				sendMail(mailListNotifiedByMail, broadcasterMail, streamName,
@@ -312,7 +335,9 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 
 	public boolean removeStream(String streamUrl) {
-		return streamManager.removeStream(streamUrl);
+		Map<String, StreamProxy> registeredLiveStreams = this
+				.getLiveStreamProxies();
+		return streamManager.removeStream(streamUrl, registeredLiveStreams);
 	}
 
 	public void sendMail(final ArrayList<String> email, String broadcasterMail,
@@ -562,8 +587,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 				Streams stream = streamManager.getStream(value.streamUrl);
 
 				notifyUserAboutViewerCount(
-						getViewerCount(stream.getStreamUrl()),
-						stream.getGcmUsers().getRegIdses());
+						getViewerCount(stream.getStreamUrl()), stream
+								.getGcmUsers().getRegIdses());
 				break;
 			}
 
@@ -644,18 +669,15 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		return count;
 	}
 
-	public boolean deleteStream(String url)
-	{
-		log.info("Stream to be deleted url is "+url);
+	public boolean deleteStream(String url) {
+		log.info("Stream to be deleted url is " + url);
 		Streams stream = streamManager.getStream(url);
-		if(stream == null)
-		{
+		if (stream == null) {
 			log.info("Stream to be deleted is null");
 			return false;
 		}
 		boolean result = streamManager.deleteStream(stream);
-		if(result)
-		{
+		if (result) {
 			deleteStreamFiles(url);
 		}
 		return result;
@@ -670,7 +692,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		if (fStream.isFile() == true && fStream.exists() == true) {
 			fStream.delete();
 		}
-		
+
 		if (fPreview.isFile() == true && fPreview.exists() == true) {
 			fPreview.delete();
 		}
