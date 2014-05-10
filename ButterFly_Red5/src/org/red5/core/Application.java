@@ -27,7 +27,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -55,6 +54,7 @@ import org.red5.core.dbModel.RegIds;
 import org.red5.core.dbModel.StreamProxy;
 import org.red5.core.dbModel.Streams;
 import org.red5.core.manager.StreamManager;
+import org.red5.core.manager.StreamProxyManager;
 import org.red5.core.manager.UserManager;
 import org.red5.core.utils.Red5Timer;
 import org.red5.logging.Red5LoggerFactory;
@@ -64,8 +64,6 @@ import org.red5.server.api.Red5;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.api.stream.IPlayItem;
-import org.red5.server.api.stream.IStreamListener;
-import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.api.stream.ISubscriberStream;
 import org.slf4j.Logger;
 
@@ -80,20 +78,19 @@ import com.google.android.gcm.server.Sender;
  * 
  * @author The Red5 Project (red5@osflash.org)
  */
-public class Application extends MultiThreadedApplicationAdapter implements
-		IStreamListener, IWebService {
+public class Application extends MultiThreadedApplicationAdapter implements IWebService {
 
 	private static Logger log = Red5LoggerFactory.getLogger(Application.class);
 
 	private static final String SENDER_ID = "AIzaSyCFmHIbJO0qCtPo6klp7Ade3qjeGLgtZWw";
 	private static final String WEB_PLAY_URL = "http://www.butterflytv.net/player.html?videoId=";
-	private Map<String, StreamProxy> proxyStreams = new HashMap<String, StreamProxy>();
 	private ResourceBundle messagesTR;
 	private ResourceBundle messagesEN;
 	private java.util.Timer streamDeleterTimer;
 	private static long MILLIS_IN_HOUR = 60 * 60 * 1000;
 	public UserManager userManager;
 	public StreamManager streamManager;
+	public StreamProxyManager streamProxyManager;
 	private boolean isNotificationSent;
 
 	public Application() {
@@ -102,7 +99,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		messagesEN = ResourceBundle.getBundle("resources/LanguageBundle");
 		userManager = new UserManager();
 		streamManager = new StreamManager();
-
+		streamProxyManager = new StreamProxyManager();
+		
 		scheduleStreamDeleterTimer(1 * MILLIS_IN_HOUR, 24 * MILLIS_IN_HOUR);
 
 		log.info("app started");
@@ -126,8 +124,8 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		Streams stream = streamManager.getStream(key);
 		if (stream != null)
 			streamManager.deleteStream(stream);
-		if (proxyStreams.containsKey(key))
-			proxyStreams.remove(key);
+		
+		streamProxyManager.removeProxyStream(key);
 	}
 	@Override
 	public void appStop(IScope arg0) {
@@ -161,7 +159,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 			mailList = new ArrayList<String>(Arrays.asList(mailArray));
 		}
 		List<Streams> streamList = streamManager.getLiveStreams(
-				getLiveStreamProxies(), mailList, start, batchSize);
+				streamProxyManager.getLiveStreamProxies(), mailList, start, batchSize);
 		JSONArray jsonArray = new JSONArray();
 		JSONObject jsonObject;
 
@@ -197,11 +195,10 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public boolean registerLiveStream(String streamName, String url,
 			String mailsToBeNotified, String broadcasterMail, boolean isPublic,
 			String deviceLanguage) {
-		Map<String, StreamProxy> registeredStreams = this
-				.getLiveStreamProxies();
+		Map<String, StreamProxy> registeredStreams = streamProxyManager.getLiveStreamProxies();
 		GcmUsers user = this.userManager.getGcmUserByEmails(broadcasterMail);
 		boolean result = false;
-		if (this.getLiveStreamProxies().containsKey(url) == false) {
+		if (registeredStreams.containsKey(url) == false) {
 			
 			Streams stream = new Streams(user, Calendar.getInstance().getTime(),
 					streamName, url);
@@ -330,13 +327,12 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	@Override
 	public void streamPublishStart(IBroadcastStream stream) {
 
-		stream.addStreamListener(this);
+		stream.addStreamListener(streamProxyManager);
 		super.streamPublishStart(stream);
 	}
 
 	public boolean removeStream(String streamUrl) {
-		Map<String, StreamProxy> registeredLiveStreams = this
-				.getLiveStreamProxies();
+		Map<String, StreamProxy> registeredLiveStreams = streamProxyManager.getLiveStreamProxies();
 		return streamManager.removeStream(streamUrl, registeredLiveStreams);
 	}
 
@@ -536,8 +532,10 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		super.streamPlayItemPlay(subscriberStream, item, isLive);
 
 		String name = item.getName();
-		if (getLiveStreamProxies().containsKey(name)) {
-			StreamProxy streamProxy = getLiveStreamProxies().get(name);
+		Map<String, StreamProxy> registeredStreams = streamProxyManager.getLiveStreamProxies();
+		
+		if (registeredStreams.containsKey(name)) {
+			StreamProxy streamProxy = registeredStreams.get(name);
 			streamProxy.addViewer(subscriberStream.getName());
 
 			Streams stream = streamManager.getStream(name);
@@ -575,7 +573,7 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	public void streamSubscriberClose(ISubscriberStream subcriberStream) {
 		super.streamSubscriberClose(subcriberStream);
 
-		Set<Entry<String, StreamProxy>> entrySet = getLiveStreamProxies()
+		Set<Entry<String, StreamProxy>> entrySet = streamProxyManager.getLiveStreamProxies()
 				.entrySet();
 		for (Iterator iterator = entrySet.iterator(); iterator.hasNext();) {
 			Entry<String, StreamProxy> entry = (Entry<String, StreamProxy>) iterator
@@ -596,20 +594,6 @@ public class Application extends MultiThreadedApplicationAdapter implements
 	}
 
 
-	@Override
-	public void packetReceived(IBroadcastStream stream, IStreamPacket packet) {
-		String streamUrl = stream.getPublishedName();
-
-		if (proxyStreams.containsKey(streamUrl)) {
-			StreamProxy streamTemp = proxyStreams.get(streamUrl);
-			java.util.Date date = new java.util.Date();
-			streamTemp.lastPacketReceivedTime = date.getTime();
-
-			streamTemp.write(packet);
-		}
-
-	}
-
 	/**
 	 * This methods gets image in byte array and saves as a file in the server
 	 * 
@@ -625,10 +609,6 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	public Map<String, StreamProxy> getLiveStreamProxies() {
-		return proxyStreams;
 	}
 
 	public boolean isNotificationSent() {
