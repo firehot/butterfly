@@ -595,23 +595,6 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		}
 	}
 
-	public int checkClientBandwidth(long startTime, int length, byte[] data) {
-		System.out.println(" start time --> " + startTime);
-		long currentTimeMillis = System.currentTimeMillis();
-		System.out.println(" end time -->" + currentTimeMillis);
-
-		long diff = currentTimeMillis - startTime;
-
-		System.out.println("diff -> " + diff + " data length ->" + data.length);
-
-		if (length == data.length) {
-			int bandwidth = data.length / (int) diff;
-			return bandwidth;
-
-		}
-		return 0;
-
-	}
 
 	@Override
 	public void packetReceived(IBroadcastStream stream, IStreamPacket packet) {
@@ -678,23 +661,10 @@ public class Application extends MultiThreadedApplicationAdapter implements
 		}
 		boolean result = streamManager.deleteStream(stream);
 		if (result) {
-			deleteStreamFiles(url);
+			streamManager.deleteStreamFiles(url);
 		}
 		return result;
 	}
 
-	public void deleteStreamFiles(String url) {
-		File dirStream = new File("webapps/ButterFly_Red5/streams");
-		File dirPreview = new File("webapps/ButterFly_Red5");
-
-		File fStream = new File(dirStream, url + ".flv");
-		File fPreview = new File(dirPreview, url + ".png");
-		if (fStream.isFile() == true && fStream.exists() == true) {
-			fStream.delete();
-		}
-
-		if (fPreview.isFile() == true && fPreview.exists() == true) {
-			fPreview.delete();
-		}
-	}
+	
 }
