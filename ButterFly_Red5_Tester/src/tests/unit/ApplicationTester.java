@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
@@ -28,8 +29,10 @@ import org.red5.core.Application;
 import org.red5.core.dbModel.GcmUserMails;
 import org.red5.core.dbModel.GcmUsers;
 import org.red5.core.dbModel.RegIds;
+import org.red5.core.dbModel.StreamProxy;
 import org.red5.core.dbModel.Streams;
 import org.red5.core.manager.StreamManager;
+import org.red5.core.manager.StreamProxyManager;
 import org.red5.core.utils.JPAUtils;
 
 public class ApplicationTester {
@@ -485,7 +488,7 @@ public class ApplicationTester {
 			f3p.createNewFile();
 			boolean result = butterflyApp.registerUser("ksdjfÅŸlask9934803248omjj", "ahmetmermerkaya@gmail.com");
 			assertEquals(true, result);
-
+			
 			result = butterflyApp.registerUser("ksdjfÅŸlask9934803248omjasdfÅŸasdfjj", "ahmetmermerkaya@hotmail.com");
 			assertEquals(true, result);
 			butterflyApp.registerUser("22", "mail@mail.com");
@@ -495,7 +498,7 @@ public class ApplicationTester {
 			assertTrue(registered);
 			registered = butterflyApp.registerLiveStream("streamName", "f3", "ahmetmermerkaya@hotmail.com,ahmetmermerkaya@gmail.com", "mail@mail.com", true, "tur");
 			assertTrue(registered);
-			assertEquals(3, butterflyApp.getLiveStreamProxies().size());
+			assertEquals(3, butterflyApp.streamProxyManager.getLiveStreamProxies().size());
 
 			Query query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers");
 			assertEquals(6, query.getResultList().size());
@@ -535,7 +538,7 @@ public class ApplicationTester {
 		Query query = JPAUtils.getEntityManager().createQuery("FROM StreamViewers");
 		assertEquals(0, query.getResultList().size());
 
-		assertEquals(0, butterflyApp.getLiveStreamProxies().size());
+		assertEquals(0, butterflyApp.streamProxyManager.getLiveStreamProxies().size());
 
 		try {
 			f1.createNewFile();
@@ -558,7 +561,7 @@ public class ApplicationTester {
 			registered = butterflyApp.registerLiveStream("streamName", "f3", null, "mail3@mail.com", true, "tur");
 			assertTrue(registered);
 			
-			assertEquals(3, butterflyApp.getLiveStreamProxies().size());
+			assertEquals(3, butterflyApp.streamProxyManager.getLiveStreamProxies().size());
 			
 
 		} catch (IOException e1) {
@@ -838,7 +841,7 @@ public class ApplicationTester {
 			assertTrue(jsonObject.has("isLive"));
 			assertTrue(jsonObject.getBoolean("isLive"));
 			
-			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10");
+			butterflyApp.streamManager.removeGhostStreams(butterflyApp.streamProxyManager.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10");
 			
 			liveStreams = butterflyApp.getLiveStreams(null,"0", "10");
 			
@@ -852,7 +855,7 @@ public class ApplicationTester {
 			
 			Thread.sleep(5000);
 			
-			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10");
+			butterflyApp.streamManager.removeGhostStreams(butterflyApp.streamProxyManager.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10");
 			
 			liveStreams = butterflyApp.getLiveStreams(null,"0", "10");
 			
@@ -866,7 +869,7 @@ public class ApplicationTester {
 			
 			Thread.sleep(StreamManager.MAX_TIME_INTERVAL_BETWEEN_PACKETS);
 			
-			butterflyApp.streamManager.removeGhostStreams(butterflyApp.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10");
+			butterflyApp.streamManager.removeGhostStreams(butterflyApp.streamProxyManager.getLiveStreamProxies(), System.currentTimeMillis(),"0", "10");
 			
 			liveStreams = butterflyApp.getLiveStreams(null,"0", "10");
 			
