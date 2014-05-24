@@ -1,6 +1,6 @@
 package org.red5.core.dbModel;
-// default package
-// Generated Mar 29, 2014 3:32:38 PM by Hibernate Tools 4.0.0
+
+// Generated May 25, 2014 5:07:06 PM by Hibernate Tools 4.0.0
 
 import java.util.HashSet;
 import java.util.Set;
@@ -22,16 +22,17 @@ public class GcmUsers implements java.io.Serializable {
 
 	private Integer id;
 	private Set<GcmUserMails> gcmUserMailses = new HashSet<GcmUserMails>(0);
+	private Set<Streams> streamses = new HashSet<Streams>(0);
 	private Set<StreamViewers> streamViewerses = new HashSet<StreamViewers>(0);
 	private Set<RegIds> regIdses = new HashSet<RegIds>(0);
-	private Set<Streams> streams = new HashSet<Streams>(0);
-	
+
 	public GcmUsers() {
 	}
 
-	public GcmUsers(Set<GcmUserMails> gcmUserMailses,
+	public GcmUsers(Set<GcmUserMails> gcmUserMailses, Set<Streams> streamses,
 			Set<StreamViewers> streamViewerses, Set<RegIds> regIdses) {
 		this.gcmUserMailses = gcmUserMailses;
+		this.streamses = streamses;
 		this.streamViewerses = streamViewerses;
 		this.regIdses = regIdses;
 	}
@@ -57,6 +58,15 @@ public class GcmUsers implements java.io.Serializable {
 	}
 
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "gcmUsers")
+	public Set<Streams> getStreamses() {
+		return this.streamses;
+	}
+
+	public void setStreamses(Set<Streams> streamses) {
+		this.streamses = streamses;
+	}
+
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "gcmUsers")
 	public Set<StreamViewers> getStreamViewerses() {
 		return this.streamViewerses;
 	}
@@ -73,16 +83,5 @@ public class GcmUsers implements java.io.Serializable {
 	public void setRegIdses(Set<RegIds> regIdses) {
 		this.regIdses = regIdses;
 	}
-
-	@OneToMany(fetch = FetchType.LAZY, mappedBy = "gcmUsers")
-	public Set<Streams> getStreams() {
-		return streams;
-	}
-
-	public void setStreams(Set<Streams> streams) {
-		this.streams = streams;
-	}
-	
-	
 
 }

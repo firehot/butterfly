@@ -57,7 +57,10 @@ public interface IWebService {
 	 */
 	public boolean registerUser(String register_id, String mail) ;
 	
+	
 	/**
+	 * use registerUser(String registerId, String mail, String deviceId)
+	 * 
 	 * update a users gcm id 
 	 * @param register_id
 	 * @param mail

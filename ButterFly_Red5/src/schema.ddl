@@ -1,10 +1,10 @@
-CREATE DATABASE  IF NOT EXISTS `butterflydb` /*!40100 DEFAULT CHARACTER SET utf8 */;
+CREATE DATABASE  IF NOT EXISTS `butterflydb` /*!40100 DEFAULT CHARACTER SET latin1 */;
 USE `butterflydb`;
--- MySQL dump 10.13  Distrib 5.5.35, for debian-linux-gnu (x86_64)
+-- MySQL dump 10.13  Distrib 5.5.37, for debian-linux-gnu (x86_64)
 --
 -- Host: localhost    Database: butterflydb
 -- ------------------------------------------------------
--- Server version	5.5.35-0ubuntu0.12.04.2-log
+-- Server version	5.5.37-0ubuntu0.12.04.1-log
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -34,7 +34,7 @@ CREATE TABLE `gcm_user_mails` (
   UNIQUE KEY `mail_2` (`mail`),
   KEY `FK175F1E16F21DFF8` (`user_id`),
   CONSTRAINT `FK175F1E16F21DFF8` FOREIGN KEY (`user_id`) REFERENCES `gcm_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=188 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -43,6 +43,7 @@ CREATE TABLE `gcm_user_mails` (
 
 LOCK TABLES `gcm_user_mails` WRITE;
 /*!40000 ALTER TABLE `gcm_user_mails` DISABLE KEYS */;
+INSERT INTO `gcm_user_mails` VALUES (185,'mail@mail.com',180),(186,'ahmetmermerkaya@gmail.com',181),(187,'ahmetmermerkaya@hotmail.com',181);
 /*!40000 ALTER TABLE `gcm_user_mails` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -61,9 +62,9 @@ CREATE TABLE `stream_viewers` (
   UNIQUE KEY `id` (`id`),
   KEY `FKDF086E2563426DC` (`streamId`),
   KEY `FKDF086E2E612240F` (`userId`),
-  CONSTRAINT `FKDF086E2E612240F` FOREIGN KEY (`userId`) REFERENCES `gcm_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `FKDF086E2563426DC` FOREIGN KEY (`streamId`) REFERENCES `streams` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+  CONSTRAINT `FKDF086E2563426DC` FOREIGN KEY (`streamId`) REFERENCES `streams` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `FKDF086E2E612240F` FOREIGN KEY (`userId`) REFERENCES `gcm_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=86 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -72,6 +73,7 @@ CREATE TABLE `stream_viewers` (
 
 LOCK TABLES `stream_viewers` WRITE;
 /*!40000 ALTER TABLE `stream_viewers` DISABLE KEYS */;
+INSERT INTO `stream_viewers` VALUES (84,181,246),(85,181,248);
 /*!40000 ALTER TABLE `stream_viewers` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -86,7 +88,7 @@ CREATE TABLE `gcm_users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=182 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -95,6 +97,7 @@ CREATE TABLE `gcm_users` (
 
 LOCK TABLES `gcm_users` WRITE;
 /*!40000 ALTER TABLE `gcm_users` DISABLE KEYS */;
+INSERT INTO `gcm_users` VALUES (180),(181);
 /*!40000 ALTER TABLE `gcm_users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -120,7 +123,7 @@ CREATE TABLE `streams` (
   UNIQUE KEY `id` (`id`),
   KEY `FK_USER_STREAM` (`user_id`),
   CONSTRAINT `FK_USER_STREAM` FOREIGN KEY (`user_id`) REFERENCES `gcm_users` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=119 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=249 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -129,6 +132,7 @@ CREATE TABLE `streams` (
 
 LOCK TABLES `streams` WRITE;
 /*!40000 ALTER TABLE `streams` DISABLE KEYS */;
+INSERT INTO `streams` VALUES (246,NULL,180,1,0,NULL,NULL,'2014-05-24 13:38:09','publishedName','publishUrl1'),(247,NULL,180,1,1,NULL,NULL,'2014-05-24 13:38:09','publishedNamesdfdsf','publishUrl1sdsdfs'),(248,NULL,180,1,1,NULL,NULL,'2014-05-24 13:38:09','publishedsfsfNamesdfdsf','publishUrl1sdsdfs32424');
 /*!40000 ALTER TABLE `streams` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -147,7 +151,7 @@ CREATE TABLE `reg_ids` (
   UNIQUE KEY `id` (`id`),
   KEY `FK40B8148DF21DFF8` (`user_id`),
   CONSTRAINT `FK40B8148DF21DFF8` FOREIGN KEY (`user_id`) REFERENCES `gcm_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=206 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -156,6 +160,7 @@ CREATE TABLE `reg_ids` (
 
 LOCK TABLES `reg_ids` WRITE;
 /*!40000 ALTER TABLE `reg_ids` DISABLE KEYS */;
+INSERT INTO `reg_ids` VALUES (202,'22',180),(203,'deneme',181),(204,'deneme123131',181),(205,'APA91bFb_756VSgDdQqtd0Rw5opG73rIOwUYHdxjTRlMDOSql8HFLENGWm_RSFCcs-kT5opHs6fsanTvjW0G9ocJMcmbW2zUci6eUiC8U64fs0T086RhOmlUvz6691S4CSAn4AmYI_6RyiVYzZ6g2xBFrbXi7T-8Lg',181);
 /*!40000 ALTER TABLE `reg_ids` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -168,4 +173,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-03-29 17:03:45
+-- Dump completed on 2014-05-25 17:16:20

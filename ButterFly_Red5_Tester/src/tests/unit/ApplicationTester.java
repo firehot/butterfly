@@ -77,6 +77,8 @@ public class ApplicationTester {
 	public void after() {
 		butterflyApp = null;
 	}
+	
+	
 
 	@Test
 	public void testRegisterStream() {
@@ -155,8 +157,11 @@ public class ApplicationTester {
 		int t = (int) (Math.random()*1000);
 		boolean result = butterflyApp.registerUser(String.valueOf(t), "dgsdgs");
 		assertEquals(true, result);
+		
+		
 
 	}
+
 
 	public int getMailRowCount(String mail) {
 
@@ -264,6 +269,7 @@ public class ApplicationTester {
 		String newid = "35252828634";
 		boolean result = butterflyApp.updateUser(newid, "hasan@hasan.com,salih@salih.com", id);
 		assertEquals(result,true);
+		JPAUtils.closeEntityManager();
 
 		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails WHERE mail=:mail");
 		query.setParameter("mail", "hasan@hasan.com");
@@ -340,14 +346,32 @@ public class ApplicationTester {
 		assertEquals(userMail.getGcmUsers().getRegIdses().size(), 2);
 
 		isRegistered = butterflyApp.registerUser(id2, "hasan@hasan.com,salih@salih.com,okan@okan.com,ferit@ferit.com");
-		assertEquals(isRegistered, false);
+		assertEquals(isRegistered, true);
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails WHERE mail=:mail");
+		query.setParameter("mail", "okan@okan.com");
+		assertEquals(query.getResultList().size(),1);
+		userMail = (GcmUserMails) query.getSingleResult();
+
+		assertEquals(userMail.getGcmUsers().getGcmUserMailses().size(), 4);
+		
+		
 
 
 		isRegistered = butterflyApp.registerUser(id2, "hasan@hasan.com,ferit@ferit.com");
-		assertEquals(isRegistered, false);
+		assertEquals(isRegistered, true);
 
 		isRegistered = butterflyApp.registerUser(id2, "dunya@dunya.com,ferit@ferit.com");
-		assertEquals(isRegistered, false);
+		assertEquals(isRegistered, true);
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails WHERE mail=:mail");
+		query.setParameter("mail", "okan@okan.com");
+		assertEquals(query.getResultList().size(),1);
+		userMail = (GcmUserMails) query.getSingleResult();
+
+		assertEquals(userMail.getGcmUsers().getGcmUserMailses().size(), 5);
+		
+		
 
 		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails WHERE mail=:mail");
 		query.setParameter("mail", "dunya@dunya.com");
@@ -396,7 +420,43 @@ public class ApplicationTester {
 		assertTrue(registerUser);
 
 		registerUser = butterflyApp.registerUser("1", "deneme@deneme.com");
-		assertTrue(!registerUser);
+		assertTrue(registerUser);
+		
+		Query query = JPAUtils.getEntityManager().createQuery("FROM RegIds");
+		assertEquals(1, query.getResultList().size());
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUsers");
+		assertEquals(1, query.getResultList().size());
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails");
+		assertEquals(1, query.getResultList().size());
+		JPAUtils.closeEntityManager();
+		
+		
+		registerUser = butterflyApp.registerUser("2", "deneme@deneme.com");
+		assertTrue(registerUser);
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM RegIds");
+		assertEquals(2, query.getResultList().size());
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUsers");
+		assertEquals(1, query.getResultList().size());
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails");
+		assertEquals(1, query.getResultList().size());
+		JPAUtils.closeEntityManager();
+		
+		butterflyApp.updateUser("1", "deneme@deneme.com", "2");
+		JPAUtils.closeEntityManager();
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM RegIds");
+		assertEquals(1, query.getResultList().size());
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUsers");
+		assertEquals(1, query.getResultList().size());
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails");
+		assertEquals(1, query.getResultList().size());
 	}
 
 	@Test

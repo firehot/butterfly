@@ -37,7 +37,7 @@ public class UserManager {
 				result = gcmUsers.getRegIdses();
 			}
 
-			
+
 		} catch (NoResultException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
@@ -47,28 +47,70 @@ public class UserManager {
 		return result;
 	}
 
+	
+	private List<GcmUserMails> getGcmUserMails(List<String> mailList) {
+		Query query;
+		query = JPAUtils.getEntityManager().createQuery(
+				"FROM GcmUserMails WHERE mail IN (:email)");
+
+		query.setParameter("email", mailList);
+		List<GcmUserMails> results = query.getResultList();
+		return results;
+	}
+
+	private void addNotRegisteredEmails(List<String> mailList,
+			List<GcmUserMails> results, GcmUserMails userMail) {
+		//remove already existing mails from list
+		for (GcmUserMails gcmUserMail : results) {
+			mailList.remove(gcmUserMail.getMail());
+		}
+		//now, mailList have only emails that is not associated with that user
+		//add non-existing mails to mail table
+		for (int i = 0; i < mailList.size(); i++) {
+			GcmUserMails userMails = new  GcmUserMails(userMail.getGcmUsers(), mailList.get(i));
+			addGcmUserMail(userMail.getGcmUsers(), userMails);
+			userMail.getGcmUsers().getGcmUserMailses().add(userMails);
+			userMails.setGcmUsers(userMail.getGcmUsers());
+			JPAUtils.getEntityManager().persist(userMails);
+		}
+	}
+
+	/**
+	 * use  registerUser(String registerId, String mail, String deviceId)
+	 * @param register_id
+	 * @param mail
+	 * @return
+	 */
 	public boolean registerUser(String register_id, String mail) {
 		boolean result;
 		try {
 			JPAUtils.beginTransaction();
 			Query query = JPAUtils.getEntityManager().createQuery(
 					"FROM GcmUserMails WHERE mail IN (:email)");
-			
+
 			String[] mails = mail.split(",");
 			List<String> mailList = new ArrayList<String>(Arrays.asList(mails));
-			
+
 			query.setParameter("email", mailList);
 			List<GcmUserMails> results = query.getResultList();
-			
+
 			if (results.size() > 0) {
 				GcmUserMails userMail = (GcmUserMails) results.get(0);
-				RegIds regid = new RegIds(register_id);
-				result = addRegID(userMail.getGcmUsers(), regid);
-
-				if (result == true) {
+				query = JPAUtils.getEntityManager().createQuery(
+						"FROM RegIds WHERE gcmRegId=:regId AND gcmUsers.id=:user_id");
+				
+				query.setParameter("regId", register_id);
+				query.setParameter("user_id", userMail.getGcmUsers().getId());
+				
+				//result = addRegID(userMail.getGcmUsers(), regid);
+				if (query.getResultList().size() == 0) {
+					RegIds regid = new RegIds(register_id);
+					regid.setGcmUsers(userMail.getGcmUsers());
+					userMail.getGcmUsers().getRegIdses().add(regid);
 					JPAUtils.getEntityManager().persist(regid);
 				}
-				
+				//result is true because it is already registered or it has been registered right now
+				result = true;
 				//remove already existing mails from list
 				for (GcmUserMails gcmUserMail : results) {
 					mailList.remove(gcmUserMail.getMail());
@@ -80,13 +122,13 @@ public class UserManager {
 					addGcmUserMail(userMail.getGcmUsers(), userMails);
 					JPAUtils.getEntityManager().persist(userMails);
 				}
-				
+
 
 			} else {
 				GcmUsers gcmUsers = new GcmUsers();
 				JPAUtils.getEntityManager().persist(gcmUsers);
-				
-				
+
+
 				for (int i = 0; i < mails.length; i++) {
 					GcmUserMails userMails = new  GcmUserMails();
 					userMails.setMail(mails[i]);
@@ -95,14 +137,14 @@ public class UserManager {
 				}
 				RegIds regid = new RegIds(register_id);
 				addRegID(gcmUsers, regid);
-				
+
 				JPAUtils.getEntityManager().persist(regid);
 				result = true;
 			}
 			JPAUtils.commit();
 
 
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = false;
@@ -124,13 +166,13 @@ public class UserManager {
 		boolean result;
 		try {
 			JPAUtils.beginTransaction();
-			
+
 			Query query = JPAUtils.getEntityManager().createQuery(
-					"FROM GcmUserMails WHERE mail IN :email");
-			
+					"FROM GcmUserMails WHERE mail IN (:email)");
+
 			String[] mails = mail.split(",");
 			List<String> mailList = new ArrayList<String>(Arrays.asList(mails));
-			
+
 			query.setParameter("email", mailList);
 
 			List<GcmUserMails> results = query.getResultList();
@@ -138,29 +180,24 @@ public class UserManager {
 			// if user is found
 			if (results.size() > 0) {
 				GcmUserMails gcmUserMail = (GcmUserMails) results.get(0);
+
+				query = JPAUtils.getEntityManager().
+						createQuery("DELETE FROM RegIds "
+								+ " WHERE gcmRegId=:regId OR gcmRegId=:regIdSame");
+				query.setParameter("regId", oldRegID);
+				query.setParameter("regIdSame", register_id);
+				query.executeUpdate();
 				
-				Set<RegIds> regIdses = gcmUserMail.getGcmUsers().getRegIdses();
-				
-				boolean found = false;
-				// update the reg id of the user using the old reg id
-				for (RegIds regid : regIdses) {
-					if (regid.getGcmRegId().equals(oldRegID)) {
-						regid.setGcmRegId(register_id);
-						found = true;
-						break;
-					}
-				}
-				if (found == false) {
-					RegIds regid = new RegIds(register_id);
-					addRegID(gcmUserMail.getGcmUsers(), regid);
-					JPAUtils.getEntityManager().persist(regid);
-				}
+				RegIds regid = new RegIds(register_id);
+				regid.setGcmUsers(gcmUserMail.getGcmUsers());
+				gcmUserMail.getGcmUsers().getRegIdses().add(regid);
+				JPAUtils.getEntityManager().persist(regid);
 
 			} else {
 				//if user does not exists
 				GcmUsers gcmUsers = new GcmUsers();
 				JPAUtils.getEntityManager().persist(gcmUsers);
-				
+
 				for (int i = 0; i < mails.length; i++) {
 					GcmUserMails userMails = new  GcmUserMails();
 					userMails.setMail(mails[i]);
@@ -169,7 +206,7 @@ public class UserManager {
 				}
 				RegIds regid = new RegIds(register_id);
 				addRegID(gcmUsers, regid);
-				
+
 				JPAUtils.getEntityManager().persist(regid);
 			}
 
@@ -242,7 +279,7 @@ public class UserManager {
 		}
 		return false;
 	}
-	
+
 	public GcmUsers getGcmUserByMail(String broadcasterMail) {
 		EntityManager entityManager = JPAUtils.getEntityManager();
 		GcmUsers result = null;
@@ -254,7 +291,7 @@ public class UserManager {
 			List results = query.getResultList();
 			if (results.size() > 0) {
 				result = ((GcmUserMails) results.get(0)).getGcmUsers();
-				
+
 			}
 
 		} catch (NoResultException e) {
@@ -264,7 +301,7 @@ public class UserManager {
 		}
 
 		return result;
-		
+
 	}
 
 	public GcmUsers getGcmUserByRegId(String regId) {
@@ -294,10 +331,10 @@ public class UserManager {
 	{
 		Query query = JPAUtils.getEntityManager().createQuery(
 				"FROM GcmUserMails WHERE mail IN :email");
-		
+
 		String[] mails = emails.split(",");
 		List<String> mailList = new ArrayList<String>(Arrays.asList(mails));
-		
+
 		query.setParameter("email", mailList);
 
 		List<GcmUserMails> results = query.getResultList();
@@ -307,7 +344,9 @@ public class UserManager {
 			GcmUserMails gcmUserMail = (GcmUserMails) results.get(0);
 			return gcmUserMail.getGcmUsers();
 		}
-		
+
 		return null;
 	}
+
+
 }

@@ -11,6 +11,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
+import org.red5.core.dbModel.GcmUserMails;
 import org.red5.core.dbModel.GcmUsers;
 import org.red5.core.dbModel.StreamProxy;
 import org.red5.core.dbModel.StreamViewers;
@@ -34,9 +35,21 @@ public class StreamManager {
 		return streamList;
 	}
 
-	public boolean isDeletable(Streams stream, List<String> mailList) {
-		return stream.isDeletable(mailList);
-
+	public boolean isDeletable(Streams stream, List<String> mailList) 
+	{
+		if(mailList == null)
+			return false;
+		
+		Set<GcmUserMails> mails = stream.getGcmUsers().getGcmUserMailses();
+		for (GcmUserMails gcmUserMails : mails) {
+			for (String mailItem : mailList) {
+				if(gcmUserMails.getMail().equals(mailItem))
+				{
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	public void removeGhostStreams(Map<String, StreamProxy> registeredLiveStreams,
