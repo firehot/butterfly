@@ -485,11 +485,38 @@ public class RecordActivity extends Activity implements OnClickListener,
 		}
 	}
 
+	public  boolean hasConnection() {
+	    ConnectivityManager cm = (ConnectivityManager) this.getSystemService(
+	        Context.CONNECTIVITY_SERVICE);
+
+	    NetworkInfo wifiNetwork = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+	    if (wifiNetwork != null && wifiNetwork.isConnected()) {
+	      return true;
+	    }
+
+	    NetworkInfo mobileNetwork = cm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+	    if (mobileNetwork != null && mobileNetwork.isConnected()) {
+	      return true;
+	    }
+
+	    NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+	    if (activeNetwork != null && activeNetwork.isConnected()) {
+	      return true;
+	    }
+
+	    return false;
+	  }
+	
 	@Override
 	public void onClick(View v) {
 		
 		if (!recording) {
 			
+			if(!hasConnection())
+			{
+				Crouton.showText(RecordActivity.this,R.string.connectivityProblem, Style.ALERT);
+				return;
+			}
 			btnRecorderControl.setClickable(false);
 
 			streamName = streamNameEditText.getText().toString();
