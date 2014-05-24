@@ -53,7 +53,6 @@
     <string name="nocamera">No camera found in this device</string>
     <string name="hint">Hint: Choose friends and press camera for live broadcasting</string>
     <string name="list">List</string>
-    <string name="map">Map</string>
     <string name="group_broadcast">Group Broadcast</string>
     <string name="title_activity_contact_chooser">Choose Contacts</string>
 
