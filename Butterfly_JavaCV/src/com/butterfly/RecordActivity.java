@@ -122,7 +122,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 	private TextView viewerCountView;
 	private String streamName;
 	private boolean is_video_public;
-	private NetworkInfo activeNetwork;
 	private LocationProvider locationProvider;
 
 	@Override
@@ -163,7 +162,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
-		activeNetwork = cm.getActiveNetworkInfo();
 		initLayout();
 	}
 	
@@ -268,8 +266,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 		List<Size> supportedPreviewSizes = parameters
 				.getSupportedPreviewSizes();
 		int likelyWidth = 0, likelyHeight = 0;
-
-		int type = activeNetwork.getType();
 
 		likelyWidth = 176;
 		likelyHeight = 144;

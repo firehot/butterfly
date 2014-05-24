@@ -77,6 +77,8 @@ public class ApplicationTester {
 	public void after() {
 		butterflyApp = null;
 	}
+	
+	
 
 	@Test
 	public void testRegisterStream() {
@@ -156,6 +158,138 @@ public class ApplicationTester {
 		boolean result = butterflyApp.registerUser(String.valueOf(t), "dgsdgs");
 		assertEquals(true, result);
 
+	}
+	
+	@Test
+	public void testRegisterUserWithId() {
+		int t = (int) (Math.random()*1000);
+		boolean result = butterflyApp.registerUser(String.valueOf(t), "ahmetmermerkaya@hotmail.com");
+		assertEquals(true, result);		
+		
+		String hexId = "ABDDEEABDDEENNKK"; 
+		
+		result = butterflyApp.registerUser(String.valueOf(t), "ahmetmermerkaya@hotmail.com", hexId);
+		assertEquals(true, result);		
+		Query query = JPAUtils.getEntityManager().createQuery("FROM RegIds");
+		List<RegIds> list = query.getResultList();
+		assertEquals(1, list.size());
+		assertEquals(list.get(0).getGcmRegId(), String.valueOf(t));
+		JPAUtils.closeEntityManager();
+		
+		
+		//register user with same hexId but different regid. This is the case app removed and installed
+	    int regid2 = (int) (Math.random()*1000);
+		result = butterflyApp.registerUser(String.valueOf(regid2), "ahmetmermerkaya@hotmail.com", hexId);
+		assertEquals(true, result);		
+		query = JPAUtils.getEntityManager().createQuery("FROM RegIds");
+		
+		list = query.getResultList();
+		assertEquals(1, list.size());
+		assertEquals(list.get(0).getGcmRegId(), String.valueOf(regid2));
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails");
+		list = query.getResultList();
+		assertEquals(1, list.size());
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUsers");
+		list = query.getResultList();
+		assertEquals(1, list.size());
+		JPAUtils.closeEntityManager();
+		
+		//register user with everything same, this is the case app data removed.
+		result = butterflyApp.registerUser(String.valueOf(regid2), "ahmetmermerkaya@hotmail.com", hexId);
+		assertEquals(true, result);		
+		query = JPAUtils.getEntityManager().createQuery("FROM RegIds");
+		list = query.getResultList();
+		assertEquals(1, list.size());
+		assertEquals(list.get(0).getGcmRegId(), String.valueOf(regid2));
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails");
+		list = query.getResultList();
+		assertEquals(1, list.size());
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUsers");
+		list = query.getResultList();
+		assertEquals(1, list.size());
+		JPAUtils.closeEntityManager();
+		
+		//new user
+		String hexId2 = "dfasfkjdfkdf";
+		int regid3 = (int) (Math.random()*1000);
+		result = butterflyApp.registerUser(String.valueOf(regid3), "okan@okan.com", hexId2);
+		assertEquals(true, result);		
+		query = JPAUtils.getEntityManager().createQuery("FROM RegIds ORDER BY id DESC");
+		list = query.getResultList();
+		//it should 2 regids with the previous one
+		assertEquals(2, list.size());
+		assertEquals(list.get(0).getGcmRegId(), String.valueOf(regid3));
+		
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails");
+		list = query.getResultList();
+		//2 mail address
+		assertEquals(2, list.size());
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUsers");
+		list = query.getResultList();
+		//2 users
+		assertEquals(2, list.size());
+		JPAUtils.closeEntityManager();
+		
+		
+		//register user same address but different hexId
+		String hexId3 = "kdmhddf8989";
+		int regid4 = (int) (Math.random()*1000);
+		result = butterflyApp.registerUser(String.valueOf(regid4), "okan@okan.com", hexId3);
+		assertEquals(true, result);		
+		query = JPAUtils.getEntityManager().createQuery("FROM RegIds ORDER BY id DESC");
+		list = query.getResultList();
+		// total 3 regids
+		assertEquals(3, list.size());
+		assertEquals(list.get(0).getGcmRegId(), String.valueOf(regid4));
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails");
+		list = query.getResultList();
+		//total 2 mail addresses
+		assertEquals(2, list.size());
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUsers");
+		list = query.getResultList();
+		//total 2 users
+		assertEquals(2, list.size());
+		JPAUtils.closeEntityManager();
+		
+		
+		//register user by adding extra mail
+		result = butterflyApp.registerUser(String.valueOf(regid4), "okan@okan.com,okan@gmail.com", hexId3);
+		assertEquals(true, result);		
+		query = JPAUtils.getEntityManager().createQuery("FROM RegIds ORDER BY id DESC");
+		list = query.getResultList();
+		//total 3 regids
+		assertEquals(3, list.size());
+		assertEquals(list.get(0).getGcmRegId(), String.valueOf(regid4));
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails");
+		list = query.getResultList();
+		//3 mail address 1 increased
+		assertEquals(3, list.size());
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUsers");
+		list = query.getResultList();
+		//gcm user size is same : 2
+		assertEquals(2, list.size());
+		JPAUtils.closeEntityManager();
+		
+		
+		//existing user in different device and extra mail
+		String hexId4 = "mdndmfndfkdmhddf8989";
+		int regid5 = (int) (Math.random()*1000);
+		result = butterflyApp.registerUser(String.valueOf(regid5), "okan@okan.com,okan@kurumsal.com", hexId4);
+		assertEquals(true, result);		
+		query = JPAUtils.getEntityManager().createQuery("FROM RegIds ORDER BY id DESC");
+		list = query.getResultList();
+		// +1 regids should 4 in total
+		assertEquals(4, list.size());
+		assertEquals(list.get(0).getGcmRegId(), String.valueOf(regid5));
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUserMails");
+		list = query.getResultList();
+		//+1 mail address count should be 4
+		assertEquals(4, list.size());
+		query = JPAUtils.getEntityManager().createQuery("FROM GcmUsers");
+		list = query.getResultList();
+		assertEquals(2, list.size());
+		JPAUtils.closeEntityManager();
+		
 	}
 
 	public int getMailRowCount(String mail) {

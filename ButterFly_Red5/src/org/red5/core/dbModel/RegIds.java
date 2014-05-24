@@ -1,6 +1,6 @@
 package org.red5.core.dbModel;
-// default package
-// Generated Mar 29, 2014 3:32:38 PM by Hibernate Tools 4.0.0
+
+// Generated May 24, 2014 11:23:18 AM by Hibernate Tools 4.0.0
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -22,6 +22,7 @@ public class RegIds implements java.io.Serializable {
 	private Integer id;
 	private GcmUsers gcmUsers;
 	private String gcmRegId;
+	private String deviceId;
 
 	public RegIds() {
 	}
@@ -30,9 +31,10 @@ public class RegIds implements java.io.Serializable {
 		this.gcmRegId = gcmRegId;
 	}
 
-	public RegIds(GcmUsers gcmUsers, String gcmRegId) {
+	public RegIds(GcmUsers gcmUsers, String gcmRegId, String deviceId) {
 		this.gcmUsers = gcmUsers;
 		this.gcmRegId = gcmRegId;
+		this.deviceId = deviceId;
 	}
 
 	@Id
@@ -63,6 +65,15 @@ public class RegIds implements java.io.Serializable {
 
 	public void setGcmRegId(String gcmRegId) {
 		this.gcmRegId = gcmRegId;
+	}
+
+	@Column(name = "device_id", length = 45)
+	public String getDeviceId() {
+		return this.deviceId;
+	}
+
+	public void setDeviceId(String deviceId) {
+		this.deviceId = deviceId;
 	}
 
 }
