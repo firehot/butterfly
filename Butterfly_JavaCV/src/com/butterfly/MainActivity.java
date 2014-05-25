@@ -28,7 +28,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.adapter.AppSectionsPagerAdapter;
@@ -39,6 +38,9 @@ import com.butterfly.message.CloudMessaging;
 import com.butterfly.utils.Utils;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+
+import de.keyboardsurfer.android.widget.crouton.Crouton;
+import de.keyboardsurfer.android.widget.crouton.Style;
 
 public class MainActivity extends FragmentActivity implements
 		OnPageChangeListener {
@@ -142,6 +144,7 @@ public class MainActivity extends FragmentActivity implements
 			getStreamListTask.cancel(true);
 		}
 		BugSenseHandler.closeSession(this);
+		Crouton.cancelAllCroutons();
 	}
 
 	public void registerStreamListListener(IStreamListUpdateListener listener) {
@@ -292,15 +295,11 @@ public class MainActivity extends FragmentActivity implements
 
 				} catch (JSONException e) {
 					e.printStackTrace();
-					Toast.makeText(getApplicationContext(),
-							getString(R.string.connectivityProblem),
-							Toast.LENGTH_LONG).show();
+					Crouton.showText(MainActivity.this,R.string.connectivityProblem, Style.ALERT);
 				}
 
 			} else {
-				Toast.makeText(getApplicationContext(),
-						getString(R.string.connectivityProblem),
-						Toast.LENGTH_LONG).show();
+				Crouton.showText(MainActivity.this,R.string.connectivityProblem, Style.ALERT);
 
 			}
 			setProgressBarIndeterminateVisibility(false);
