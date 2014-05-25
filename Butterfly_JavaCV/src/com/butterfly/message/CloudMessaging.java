@@ -48,7 +48,7 @@ public class CloudMessaging {
 		regid = getRegistrationId(this.context);
 		this.backendServer = backendServer;
 
-		if (regid.isEmpty() || isAppUpdated(this.context)) {
+		if (regid.isEmpty()) {
 			registerInBackground();
 		}
 		else if (isAppUpdated(this.context)) {
