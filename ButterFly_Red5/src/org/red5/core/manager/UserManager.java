@@ -187,7 +187,7 @@ public class UserManager {
 				query.setParameter("regId", oldRegID);
 				query.setParameter("regIdSame", register_id);
 				query.executeUpdate();
-				
+
 				RegIds regid = new RegIds(register_id);
 				regid.setGcmUsers(gcmUserMail.getGcmUsers());
 				gcmUserMail.getGcmUsers().getRegIdses().add(regid);

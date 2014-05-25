@@ -161,7 +161,7 @@ public class ApplicationTester {
 		
 
 	}
-
+	
 
 	public int getMailRowCount(String mail) {
 

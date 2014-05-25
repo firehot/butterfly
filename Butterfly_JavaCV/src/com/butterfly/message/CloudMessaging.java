@@ -48,7 +48,7 @@ public class CloudMessaging {
 		regid = getRegistrationId(this.context);
 		this.backendServer = backendServer;
 
-		if (regid.isEmpty()) {
+		if (regid.isEmpty() || isAppUpdated(this.context)) {
 			registerInBackground();
 		}
 		else if (isAppUpdated(this.context)) {
@@ -144,7 +144,6 @@ public class CloudMessaging {
 		}
 		return result;
 	}
-	
 	protected Boolean registerUser(String backendServer, String registerId, String mail) {
 		Boolean isRegistered = false;
 		AMFConnection amfConnection = new AMFConnection();
