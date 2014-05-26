@@ -660,9 +660,4 @@ public class Application extends MultiThreadedApplicationAdapter implements IWeb
 			fPreview.delete();
 		}
 	}
-
-	public boolean registerUser(String registerId, String mail, String deviceId) {
-	
-		return userManager.registerUser(registerId,mail,deviceId);
-	}
 }

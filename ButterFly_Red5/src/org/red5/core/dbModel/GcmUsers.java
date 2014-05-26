@@ -1,6 +1,6 @@
 package org.red5.core.dbModel;
 
-// Generated May 24, 2014 11:23:18 AM by Hibernate Tools 4.0.0
+// Generated May 25, 2014 7:06:23 PM by Hibernate Tools 4.0.0
 
 import java.util.HashSet;
 import java.util.Set;

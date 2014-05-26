@@ -55,21 +55,8 @@ public interface IWebService {
 	 * @return
 	 * boolean. if successful returns true else returns false
 	 */
-	@Deprecated
 	public boolean registerUser(String register_id, String mail) ;
 	
-	
-	/**
-	 * register user with gcm id, mail adress and device id and updates if required
-	 * @param register_id
-	 * @param mail 
-	 * mail address can be comma separated
-	 * @param deviceId
-	 * device id, android_id is used in android
-	 * @return
-	 * boolean. if successful returns true else returns false
-	 */
-	public boolean registerUser(String registerId, String mail, String deviceId);
 	
 	/**
 	 * use registerUser(String registerId, String mail, String deviceId)
@@ -81,7 +68,6 @@ public interface IWebService {
 	 * @return
 	 * boolean. if successful returns true else returns false
 	 */
-	@Deprecated
 	public boolean updateUser(String register_id, String mail, String oldRegID);
 	
 	
