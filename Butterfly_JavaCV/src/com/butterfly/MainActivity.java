@@ -24,9 +24,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 
 import com.bugsense.trace.BugSenseHandler;
@@ -43,9 +46,9 @@ import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
 
 public class MainActivity extends FragmentActivity implements
-		OnPageChangeListener {
+		OnPageChangeListener, OnClickListener {
 
-	public static boolean mainActivityCompleted=false;
+	public static boolean mainActivityCompleted = false;
 	AppSectionsPagerAdapter mAppSectionsPagerAdapter;
 	ViewPager mViewPager;
 	ArrayList<Stream> streamList = new ArrayList<Stream>();
@@ -56,6 +59,10 @@ public class MainActivity extends FragmentActivity implements
 	private static final String APP_SHARED_PREFERENCES = "applicationDetails";
 	private int batteryLevel = 0;
 	public GetStreamListTask getStreamListTask;
+	Button nextButton;
+	Button okButton;
+	ImageView image;
+	ImageView image2;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -68,11 +75,19 @@ public class MainActivity extends FragmentActivity implements
 				APP_SHARED_PREFERENCES, MODE_PRIVATE);
 		Boolean firstInstallation = applicationPrefs.getBoolean(
 				SHARED_PREFERENCE_FIRST_INSTALLATION, false);
+		
 		if (!firstInstallation) {
 			showTermsOfUse(applicationPrefs);
 		}
 
 		setContentView(R.layout.activity_main);
+
+		nextButton = (Button) findViewById(R.id.buttonNext);
+		nextButton.setOnClickListener(this);
+		okButton = (Button) findViewById(R.id.buttonOk);
+		okButton.setOnClickListener(this);
+		image = (ImageView) findViewById(R.id.help1ImageView);
+		image2 = (ImageView) findViewById(R.id.help2ImageView);
 
 		// Create the adapter that will return a fragment for each of the three
 		// primary sections
@@ -90,7 +105,27 @@ public class MainActivity extends FragmentActivity implements
 		mViewPager.setAdapter(mAppSectionsPagerAdapter);
 		mViewPager.setOnPageChangeListener(this);
 		httpGatewayURL = getString(R.string.http_gateway_url);
-		
+
+
+		if (firstInstallation) {
+			
+			mViewPager.setVisibility(View.VISIBLE);
+			nextButton.setVisibility(View.GONE);
+			okButton.setVisibility(View.GONE);
+			image.setVisibility(View.GONE);
+			image2.setVisibility(View.GONE);
+
+			setFullScreen(false);
+		} else {
+			
+			mViewPager.setVisibility(View.GONE);
+			nextButton.setVisibility(View.VISIBLE);
+			okButton.setVisibility(View.GONE);
+			image.setVisibility(View.VISIBLE);
+			image2.setVisibility(View.GONE);
+			setFullScreen(true);
+		}
+
 		// Check device for Play Services APK.
 		if (checkPlayServices(this)) {
 			CloudMessaging msg = new CloudMessaging(
@@ -125,14 +160,14 @@ public class MainActivity extends FragmentActivity implements
 	@Override
 	protected void onResume() {
 		checkPlayServices(this);
-		new GetStreamListTask().execute(httpGatewayURL,"0","10");
+		new GetStreamListTask().execute(httpGatewayURL, "0", "10");
 		super.onResume();
 	}
-	
+
 	@Override
 	protected void onPause() {
 		super.onPause();
-		
+
 		mainActivityCompleted = false;
 		showHideKeyboard(false, mViewPager);
 	}
@@ -140,7 +175,8 @@ public class MainActivity extends FragmentActivity implements
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		if (getStreamListTask != null && getStreamListTask.getStatus() == AsyncTask.Status.RUNNING) {
+		if (getStreamListTask != null
+				&& getStreamListTask.getStatus() == AsyncTask.Status.RUNNING) {
 			getStreamListTask.cancel(true);
 		}
 		BugSenseHandler.closeSession(this);
@@ -274,7 +310,7 @@ public class MainActivity extends FragmentActivity implements
 
 		@Override
 		protected String doInBackground(String... params) {
-			
+
 			String streams = Utils.getLiveStreams(MainActivity.this, params);
 
 			return streams;
@@ -282,73 +318,69 @@ public class MainActivity extends FragmentActivity implements
 
 		@Override
 		protected void onPostExecute(String streams) {
-			
 
 			streamList.clear();
 
 			if (streams != null) {
 
 				try {
-					streamList.addAll(Utils.parseStreams(streams, getApplicationContext()));
+					streamList.addAll(Utils.parseStreams(streams,
+							getApplicationContext()));
 
 					updateStreamListeners();
 
 				} catch (JSONException e) {
 					e.printStackTrace();
-					Crouton.showText(MainActivity.this,R.string.connectivityProblem, Style.ALERT);
+					Crouton.showText(MainActivity.this,
+							R.string.connectivityProblem, Style.ALERT);
 				}
 
 			} else {
-				Crouton.showText(MainActivity.this,R.string.connectivityProblem, Style.ALERT);
+				Crouton.showText(MainActivity.this,
+						R.string.connectivityProblem, Style.ALERT);
 
 			}
 			setProgressBarIndeterminateVisibility(false);
 			super.onPostExecute(streams);
-			
+
 			MainActivity.mainActivityCompleted = true;
 		}
-		
-		
+
 	}
 
 	@Override
 	public void onPageScrollStateChanged(int state) {
 
 		if (state == ViewPager.SCROLL_STATE_IDLE) {
-			
-			//Camera var ise item count 2 oluyor(contactlist,streamlist ve mapfragment)
-			if(mAppSectionsPagerAdapter.getCount() == 2)
-			{
-				if(mViewPager.getCurrentItem() == 1)
-				{
-					//hide keyboard when showing the video list
-					showHideKeyboard(false, mViewPager);					
+
+			// Camera var ise item count 2 oluyor(contactlist,streamlist ve
+			// mapfragment)
+			if (mAppSectionsPagerAdapter.getCount() == 2) {
+				if (mViewPager.getCurrentItem() == 1) {
+					// hide keyboard when showing the video list
+					showHideKeyboard(false, mViewPager);
 				}
 			}
 
 		}
 	}
-	
+
 	/**
 	 * Klavyenin gosterilip gosterilmemesini saglayan metod
+	 * 
 	 * @param toShow
 	 * @param view
 	 */
-	public void showHideKeyboard(boolean toShow,View view)
-	{
+	public void showHideKeyboard(boolean toShow, View view) {
 		final InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-		
-		if(toShow)
-		{
+
+		if (toShow) {
 			inputMethodManager.toggleSoftInputFromWindow(
-					view
-							.getApplicationWindowToken(),
+					view.getApplicationWindowToken(),
 					InputMethodManager.SHOW_FORCED, 0);
-		}
-		else
-		{
-			inputMethodManager.hideSoftInputFromWindow(
-					view.getWindowToken(), 0);
+		} else {
+			inputMethodManager
+					.hideSoftInputFromWindow(view.getWindowToken(), 0);
 		}
 	}
 
@@ -360,6 +392,43 @@ public class MainActivity extends FragmentActivity implements
 
 	@Override
 	public void onPageSelected(int position) {
+
+	}
+
+	@Override
+	public void onClick(View v) {
+		if (v == nextButton) {
+			nextButton.setVisibility(View.GONE);
+			okButton.setVisibility(View.VISIBLE);
+			image.setVisibility(View.GONE);
+			image2.setVisibility(View.VISIBLE);
+		} else {
+			image.setVisibility(View.GONE);
+			image2.setVisibility(View.GONE);
+			setFullScreen(false);
+			nextButton.setVisibility(View.GONE);
+			okButton.setVisibility(View.GONE);
+
+			mViewPager.setVisibility(View.VISIBLE);
+
+		}
+
+	}
+
+	private void setFullScreen(boolean bFullScreen) {
+		if (bFullScreen) {
+			getActionBar().hide();
+			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			getWindow().clearFlags(
+					WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+		} else {
+			getWindow().addFlags(
+					WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+			getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			getActionBar().show();
+		}
+
+		getWindow().getDecorView().requestLayout();
 
 	}
 }
