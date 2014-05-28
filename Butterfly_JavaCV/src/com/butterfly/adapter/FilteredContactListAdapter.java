@@ -7,34 +7,32 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
+import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
-import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
-import android.widget.SimpleCursorAdapter.CursorToStringConverter;
 
 import com.butterfly.R;
+import com.butterfly.adapter.ContactAdapter.Contact;
 import com.butterfly.adapter.ContactAdapter.ViewHolder;
-import com.butterfly.fragment.ContactsListFragment;
 
 public class FilteredContactListAdapter extends SimpleCursorAdapter {
 
 	// These are the Contacts rows that we will retrieve.
 	public static final String[] CONTACTS_SUMMARY_PROJECTION = new String[] {
-		Data._ID,
-		// The primary display name
-		Data.DISPLAY_NAME_PRIMARY,
-		// The contact's _ID, to construct a content URI
-		Data.CONTACT_ID,
-		// The contact's LOOKUP_KEY, to construct a content URI
-		Data.LOOKUP_KEY, 
-		Email.ADDRESS ,
-		Data.PHOTO_THUMBNAIL_URI,
+			Data._ID,
+			// The primary display name
+			Data.DISPLAY_NAME_PRIMARY,
+			// The contact's _ID, to construct a content URI
+			Data.CONTACT_ID,
+			// The contact's LOOKUP_KEY, to construct a content URI
+			Data.LOOKUP_KEY, Email.ADDRESS, Data.PHOTO_THUMBNAIL_URI,
 
 	};
 
@@ -58,28 +56,30 @@ public class FilteredContactListAdapter extends SimpleCursorAdapter {
 		});
 	}
 
-
-
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 
 		Cursor cursor = getCursor();
 		cursor.moveToPosition(position);
 
-
-
 		ViewHolder holder;
 		if (convertView == null) {
-			convertView = LayoutInflater.from(this.context).inflate(R.layout.contact_list_item  , null);
+			convertView = LayoutInflater.from(this.context).inflate(
+					R.layout.contact_list_item, null);
 			holder = new ViewHolder();
-			holder.displayNameView = (TextView) convertView.findViewById(R.id.display_name);
-			holder.emailView = (TextView) convertView.findViewById(R.id.email_address);
-			holder.photoView = (ImageView) convertView.findViewById(R.id.photo_uri);
+			holder.displayNameView = (TextView) convertView
+					.findViewById(R.id.display_name);
+			holder.emailView = (TextView) convertView
+					.findViewById(R.id.email_address);
+			holder.photoView = (ImageView) convertView
+					.findViewById(R.id.photo_uri);
 			convertView.setTag(holder);
 
 			emailColumnIndex = cursor.getColumnIndex(Email.ADDRESS);
-			displayNameColumnIndex = cursor.getColumnIndex(Data.DISPLAY_NAME_PRIMARY);
-			photoUriColumnIndex = cursor.getColumnIndex(Data.PHOTO_THUMBNAIL_URI);
+			displayNameColumnIndex = cursor
+					.getColumnIndex(Data.DISPLAY_NAME_PRIMARY);
+			photoUriColumnIndex = cursor
+					.getColumnIndex(Data.PHOTO_THUMBNAIL_URI);
 		} else {
 			holder = (ViewHolder) convertView.getTag();
 		}
@@ -93,16 +93,14 @@ public class FilteredContactListAdapter extends SimpleCursorAdapter {
 		String displayName = cursor.getString(displayNameColumnIndex);
 		if (displayName != null && displayName.length() > 0) {
 			holder.displayNameView.setText(displayName);
-		}
-		else {
+		} else {
 			holder.displayNameView.setText("");
 		}
 
 		String photoUri = cursor.getString(photoUriColumnIndex);
 		if (photoUri != null) {
 			holder.photoView.setImageURI(Uri.parse(photoUri));
-		}
-		else {
+		} else {
 			holder.photoView.setImageResource(R.drawable.ic_contact_picture_2);
 		}
 
@@ -112,11 +110,9 @@ public class FilteredContactListAdapter extends SimpleCursorAdapter {
 	public Cursor getCursor(CharSequence constraint) {
 		String[] selectArgs = null;
 
-		String select = 
-				"(" + Email.ADDRESS + " NOTNULL " + " AND " +
-						Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "'" + " AND "
-						+ Data.DISPLAY_NAME_PRIMARY + " NOTNULL " +
-						" ) ";
+		String select = "(" + Email.ADDRESS + " NOTNULL " + " AND "
+				+ Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "'"
+				+ " AND " + Data.DISPLAY_NAME_PRIMARY + " NOTNULL " + " ) ";
 
 		if (constraint != null) {
 			select += " AND (" + Email.ADDRESS + " LIKE ? " + " OR "
@@ -129,74 +125,142 @@ public class FilteredContactListAdapter extends SimpleCursorAdapter {
 
 		return context.getContentResolver().query(Data.CONTENT_URI,
 				CONTACTS_SUMMARY_PROJECTION, select, selectArgs,
-				Contacts.TIMES_CONTACTED + " DESC "
-				);
+				Contacts.TIMES_CONTACTED + " DESC ");
 	}
 
 	/**
-	 * Returns the frequent contacts in an array list. 
-	 * If any exception occurs it returns null
+	 * Returns the frequent contacts in an array list. If any exception occurs
+	 * it returns null
+	 * 
 	 * @return
 	 */
 	public ArrayList<ContactAdapter.Contact> getFrequentContacts() {
 
 		ArrayList<ContactAdapter.Contact> frequentContacts = null;
 		try {
-			String[] CONTACTS_SUMMARY_PROJECTION = new String[] {
-					Contacts._ID,
+			String[] CONTACTS_SUMMARY_PROJECTION = new String[] { Contacts._ID,
 					// The primary display name
-					Data.DISPLAY_NAME_PRIMARY,
-					Contacts.PHOTO_THUMBNAIL_URI,
-			};
+					Data.DISPLAY_NAME_PRIMARY, Contacts.PHOTO_THUMBNAIL_URI, };
 
 			ContentResolver resolver = this.context.getContentResolver();
 			Cursor cursor = resolver.query(Contacts.CONTENT_STREQUENT_URI,
-					CONTACTS_SUMMARY_PROJECTION, null, null, null 	
-					);
+					CONTACTS_SUMMARY_PROJECTION, null, null, null);
 
 			cursor.moveToFirst();
-			int displayNameIndex = cursor.getColumnIndex(Data.DISPLAY_NAME_PRIMARY);
-			int photoIndex = cursor.getColumnIndex(Contacts.PHOTO_THUMBNAIL_URI);
+			int displayNameIndex = cursor
+					.getColumnIndex(Data.DISPLAY_NAME_PRIMARY);
+			int photoIndex = cursor
+					.getColumnIndex(Contacts.PHOTO_THUMBNAIL_URI);
 			int idIndex = cursor.getColumnIndex(Contacts._ID);
 
-			String[] EMAIL_PROJECTION = new String[] {
-					Email.ADDRESS
-			};
+			String[] EMAIL_PROJECTION = new String[] { Email.ADDRESS };
 			String email, displayName, photoUri;
 			frequentContacts = new ArrayList<ContactAdapter.Contact>();
 			String allMails = new String();
-			while (cursor.isAfterLast() == false) 
-			{
-				String select = Data.MIMETYPE + " = '"+ Email.CONTENT_ITEM_TYPE +"' AND " + 
-						Email.ADDRESS + " NOTNULL AND " 
-						+ Data.CONTACT_ID + "= " + cursor.getInt(idIndex) + " ";
+			while (cursor.isAfterLast() == false) {
+				String select = Data.MIMETYPE + " = '"
+						+ Email.CONTENT_ITEM_TYPE + "' AND " + Email.ADDRESS
+						+ " NOTNULL AND " + Data.CONTACT_ID + "= "
+						+ cursor.getInt(idIndex) + " ";
 
-				Cursor emailCursor = resolver.query(Data.CONTENT_URI, EMAIL_PROJECTION, 
-						select, 
-						null, Email.TYPE + " ASC ");
+				Cursor emailCursor = resolver.query(Data.CONTENT_URI,
+						EMAIL_PROJECTION, select, null, Email.TYPE + " ASC ");
 				if (emailCursor.getCount() > 0) {
 					emailCursor.moveToFirst();
-					email = emailCursor.getString(emailCursor.getColumnIndex(Email.ADDRESS));
+					email = emailCursor.getString(emailCursor
+							.getColumnIndex(Email.ADDRESS));
 					if (allMails.contains(email) == false) {
 						allMails += email;
 
 						displayName = cursor.getString(displayNameIndex);
 						photoUri = cursor.getString(photoIndex);
-						frequentContacts.add(new ContactAdapter.Contact(displayName, email, photoUri));
+						frequentContacts.add(new ContactAdapter.Contact(
+								displayName, email, photoUri));
 					}
 				}
 				emailCursor.close();
 				cursor.moveToNext();
 			}
 			cursor.close();
-		}
-		catch (SQLiteException e) {
+		} catch (SQLiteException e) {
 			e.printStackTrace();
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return frequentContacts;
+	}
+
+	/**
+	 * Returns the frequent contacts in an array list. If any exception occurs
+	 * it returns null
+	 * 
+	 * @return
+	 */
+	public ArrayList<ContactAdapter.Contact> getContactsWithPhoneAndEmail() {
+
+		ArrayList<ContactAdapter.Contact> frequentContacts = null;
+		try {
+
+			String[] PROJECTION = new String[] { Data._ID, Email.ADDRESS,
+					Contacts.PHOTO_THUMBNAIL_URI, Data.DISPLAY_NAME_PRIMARY,
+					Contacts.HAS_PHONE_NUMBER };
+			String selectCriteria = Contacts.HAS_PHONE_NUMBER + "> 0 and ("
+					+ Data.MIMETYPE + "='" + Photo.CONTENT_ITEM_TYPE + "' OR "
+					+ Data.MIMETYPE + "='" + Email.CONTENT_ITEM_TYPE + "')";
+
+			ContentResolver resolver = this.context.getContentResolver();
+
+			Cursor cursor = resolver.query(Data.CONTENT_URI, PROJECTION,
+					selectCriteria, null, Data.DISPLAY_NAME_PRIMARY);
+
+			cursor.moveToFirst();
+			int displayNameIndex = cursor
+					.getColumnIndex(Data.DISPLAY_NAME_PRIMARY);
+			int photoIndex = cursor
+					.getColumnIndex(Contacts.PHOTO_THUMBNAIL_URI);
+			int emailIndex = cursor.getColumnIndex(Email.ADDRESS);
+
+
+			String email, displayName, photoUri;
+			frequentContacts = new ArrayList<ContactAdapter.Contact>();
+
+			while (cursor.isAfterLast() == false) {
+				email = cursor.getString(emailIndex);
+				if(email == null || email.length() == 0 )
+				{
+					cursor.moveToNext();
+					continue;
+				}
+
+				displayName = cursor.getString(displayNameIndex);
+				photoUri = "";
+				if (photoIndex != -1)
+					photoUri = cursor.getString(photoIndex);
+				
+				ContactAdapter.Contact contact = new ContactAdapter.Contact(displayName,
+						email, photoUri);
+				if(!contains(frequentContacts,email))
+					frequentContacts.add(contact);
+
+				cursor.moveToNext();
+			}
+			cursor.close();
+		} catch (SQLiteException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return frequentContacts;
+	}
+	
+	public boolean contains(ArrayList<ContactAdapter.Contact> frequentContacts,String email)
+	{
+		for (Contact contact : frequentContacts) {
+			if(contact.email.equals(email))
+				return true;
+		}
+		
+		return false;
 	}
 
 }

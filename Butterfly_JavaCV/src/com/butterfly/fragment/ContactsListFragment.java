@@ -58,8 +58,15 @@ public class ContactsListFragment extends Fragment {
 			R.id.display_name, R.id.email_address, R.id.photo_uri}, 0, true);
 
 		frequentContacts = mAdapter.getFrequentContacts();
+
 		if (frequentContacts != null) {
 			selectedContactAdapter.addAll(frequentContacts);
+		}
+		else
+		{
+			frequentContacts = mAdapter.getContactsWithPhoneAndEmail();
+			if(frequentContacts != null)
+				selectedContactAdapter.addAll(frequentContacts);
 		}
 
 
