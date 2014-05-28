@@ -71,7 +71,7 @@ public class RecordActivityTester extends ActivityInstrumentationTestCase2 {
 			String url = recordActivity.getString(R.string.http_gateway_url);
 			System.out.println(url);
 			amfConnection.connect(url);
-			String mails = Utils.getMailList(recordActivity);
+			String mails = Utils.getRegisteredMailList(recordActivity);
 			streams = (String) amfConnection.call("getLiveStreams",mails);
 		} catch (ClientStatusException e) {
 			e.printStackTrace();

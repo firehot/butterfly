@@ -530,7 +530,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 					initRecorder();
 					new RegisterStreamTask().execute(httpGatewayURL, streamName,
 							streamURL,
-							Utils.getMailList(RecordActivity.this));
+							Utils.getRegisteredMailList(RecordActivity.this));
 				} 
 
 			} else {

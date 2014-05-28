@@ -19,8 +19,7 @@
 	<string name="start">Başlat</string>
 	<string name="stop">Durdur</string>
 	<string name="delete">Sil</string>
-	<string name="accept">Kabul ediyorum</string>
-    <string name="cancel">İptal</string>
+	<string name="cancel">İptal</string>
     <string name="error">Hata</string>
     <string name="ok">Tamam</string>
     <string name="please_wait">Lütfen bekleyiniz</string>
@@ -29,7 +28,8 @@
     <string name="loading">Yükleniyor...</string>
     <string name="public_chkbox">Herkese açık</string>
     <string name="stream_registration_failed">Yayın kayıt edilemedi. Lütfen bağlantınızı kontrol ediniz ve tekrar deneyiniz</string>
-	<string name="terms_of_service_title">Şartlar ve Gizlilik</string>
+	<string name="associate_addresses">Kullanmak istediğiniz adreslerinizi seçiniz</string>
+	<string name="choose_a_mail_address">Lütfen en az bir tane mail adresi seçiniz</string>
 	<string name="shareStream">Yayınını paylaş</string>
 	<string name="chooseContactAndShare">Tanıdıklarını seçin ve İleri\'ye basın</string>
 	<string name="insufficient_bandwidth">İnternet hızınız canlı yayın yapmak için yeteri kadar hızlı değildir</string>
@@ -40,11 +40,10 @@
 	<plurals name="viewers_count">
         <item quantity="other">%d İzleyici</item>
     </plurals>
-    <string name="accept_privacy_and_terms"><u>Kabul ediyorum\'a tıklayarak Şartlar ve Gizliliği kabul etmiş oluyorsunuz.</u></string>
+    <string name="accept_privacy_and_terms"><u>Tamam\'a tıklayarak Şartlar ve Gizliliği kabul etmiş oluyorsunuz.</u></string>
 	<string name="checking_bandwidth">İnternet hızı kontrol ediliyor...</string>
     <string name="nocamera">Bu cihazda kamera bulunamadı</string>
     <string name="hint">İpucu: Arkadaşlarınızı seçin ve kamera basarak canlı yayın yapın</string>
     <string name="list">List</string>
-    <string name="map">Map</string>
     <string name="group_broadcast">Grup Yayını</string>
 </resources>

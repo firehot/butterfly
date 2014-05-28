@@ -2,15 +2,23 @@
     android:layout_width="match_parent"
     android:layout_height="0dip">
 
+    <ListView 
+        android:id="@+id/mail_addresses"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" 
+        ></ListView>
 
     <TextView
+        android:layout_marginTop="6dp"
+        android:layout_below="@id/mail_addresses"
         android:id="@+id/accepting_privacy_and_terms"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/accept_privacy_and_terms"
         android:textColor="#0066FF"
         android:padding="5dp"
-        android:textAppearance="?android:attr/textAppearanceMedium"
+        
+        android:textAppearance="?android:attr/textAppearanceSmall"
         android:layout_centerHorizontal="true"
         />
     <ProgressBar android:id="@+id/web_view_load_progress"

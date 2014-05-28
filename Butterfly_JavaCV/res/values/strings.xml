@@ -11,9 +11,9 @@
     <string name="title_activity_stream_list">StreamList</string>
     <string name="refresh">Refresh</string>
     <string name="broadcast_live">Broadcast Live</string>
-    <string name="http_gateway_url">http://54.194.98.151:5080/ButterFly_Red5/gateway</string>
-    <string name="rtmp_url">rtmp://54.194.98.151/ButterFly_Red5/</string>
-    <string name="http_url">http://54.194.98.151:5080/ButterFly_Red5/</string>
+    <string name="http_gateway_url">http://192.168.1.21:5080/ButterFly_Red5/gateway</string>
+    <string name="rtmp_url">rtmp://192.168.1.21/ButterFly_Red5/</string>
+    <string name="http_url">http://192.168.1.21:5080/ButterFly_Red5/</string>
     <string name="write_name_of_stream">Please write the name of the stream</string>
     <string name="connectivityProblem">Problem in connectivity</string>
     <string name="noLiveStream">No live streams right now</string>
@@ -22,7 +22,6 @@
     <string name="start">Start</string>
     <string name="stop">Stop</string>
     <string name="delete">Delete</string>
-    <string name="accept">I Agree</string>
     <string name="cancel">Cancel</string>
     <string name="error">Error</string>
     <string name="ok">OK</string>
@@ -34,7 +33,8 @@
     <string name="chooseContactAndShare">Choose contacts and press Next</string>
     <string name="public_chkbox">Public</string>
     <string name="stream_registration_failed">Stream registration failed. Check your connectivity and try again</string>
-    <string name="terms_of_service_title">Terms and Privacy</string>
+    <string name="associate_addresses">Choose addresses to associate</string>
+    <string name="choose_a_mail_address">Choose at least an e-mail address</string>
     <string name="shareStream">Share broadcast</string>
     <string name="insufficient_bandwidth">Internet speed is not high enough for broadcasting</string>
     <string name="missed_the_stream">There is no live stream with this url right now. You should have missed it. Please be quick for the next time </string>
@@ -47,7 +47,7 @@
         <item quantity="other">%d Viewers</item>
     </plurals>
 
-    <string name="accept_privacy_and_terms"><u>By clicking I agree you are accepting the Terms and Privacy</u></string>
+    <string name="accept_privacy_and_terms"><u>By clicking OK you are accepting the Terms and Privacy</u></string>
     <string name="terms_of_service_url">http://www.butterflytv.net/privacy-and-terms/</string>
     <string name="checking_bandwidth">Checking internet speed...</string>
     <string name="nocamera">No camera found in this device</string>

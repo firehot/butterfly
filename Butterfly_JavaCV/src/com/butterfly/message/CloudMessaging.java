@@ -40,6 +40,7 @@ public class CloudMessaging {
 	private Context context;
 	private Activity mActivity;
 	private String backendServer;
+	private String commaSeparatedMails;
 
 	public CloudMessaging(Context context, Activity activity, String backendServer) {
 		this.context = context;
@@ -48,6 +49,11 @@ public class CloudMessaging {
 		regid = getRegistrationId(this.context);
 		this.backendServer = backendServer;
 
+		
+	}
+	
+	public void checkRegistrationId(String mails) {
+		this.commaSeparatedMails = mails;
 		if (regid.isEmpty()) {
 			registerInBackground();
 		}
@@ -63,7 +69,6 @@ public class CloudMessaging {
 				};
 			}.start();
 		}
-
 	}
 
 	private String getRegistrationId(Context context) {
@@ -136,11 +141,10 @@ public class CloudMessaging {
 	private boolean sendRegistrationIdToBackend() 
 	{
 		boolean result = false;
-		String mails = Utils.getMailList(this.mActivity);
-		if(mails != null)
+		if(commaSeparatedMails != null && commaSeparatedMails.length()>0)
 		{
-			Log.e("butterfly", mails);	
-			result = registerUser(backendServer, regid, mails);
+			Log.e("butterfly", commaSeparatedMails);	
+			result = registerUser(backendServer, regid, commaSeparatedMails);
 		}
 		return result;
 	}
@@ -221,11 +225,11 @@ public class CloudMessaging {
 	private boolean updateRegistrationId(String oldRegID) 
 	{
 		boolean result = false;
-		String mails =  Utils.getMailList(this.mActivity);
-		if(mails != null)
+	
+		if(commaSeparatedMails != null && commaSeparatedMails.length()>0)
 		{
-			Log.e("butterfly", mails);	
-			result = updateUser(backendServer, regid, mails, oldRegID);
+			Log.e("butterfly", commaSeparatedMails);	
+			result = updateUser(backendServer, regid, commaSeparatedMails, oldRegID);
 		}
 		return result;
 	}

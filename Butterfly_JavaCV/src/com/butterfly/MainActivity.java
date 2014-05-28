@@ -13,12 +13,14 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.AsyncTask;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
+import android.util.SparseBooleanArray;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,7 +29,10 @@ import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.adapter.AppSectionsPagerAdapter;
@@ -43,7 +48,7 @@ import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
 
 public class MainActivity extends FragmentActivity implements
-		OnPageChangeListener {
+OnPageChangeListener {
 
 	public static boolean mainActivityCompleted=false;
 	AppSectionsPagerAdapter mAppSectionsPagerAdapter;
@@ -52,10 +57,13 @@ public class MainActivity extends FragmentActivity implements
 	ArrayList<IStreamListUpdateListener> streamUpdateListenerList = new ArrayList<IStreamListUpdateListener>();
 	public String httpGatewayURL;
 
-	private static final String SHARED_PREFERENCE_FIRST_INSTALLATION = "firstInstallation";
-	private static final String APP_SHARED_PREFERENCES = "applicationDetails";
+	private static final String SHARED_PREFERENCE_FIRST_INSTALLATION = "first_opening";
+	public static final String APP_SHARED_PREFERENCES = "applicationDetails";
+	public static final String REGISTERED_MAIL_ADDRESS = "REGISTERED_MAIL_ADDRESS";
 	private int batteryLevel = 0;
 	public GetStreamListTask getStreamListTask;
+	private CloudMessaging gcmMessenger;
+	private SharedPreferences applicationPrefs;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -64,21 +72,11 @@ public class MainActivity extends FragmentActivity implements
 		BugSenseHandler.initAndStartSession(this, BugSense.API_KEY);
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
-		final SharedPreferences applicationPrefs = getSharedPreferences(
-				APP_SHARED_PREFERENCES, MODE_PRIVATE);
-		Boolean firstInstallation = applicationPrefs.getBoolean(
-				SHARED_PREFERENCE_FIRST_INSTALLATION, false);
-		if (!firstInstallation) {
-			showTermsOfUse(applicationPrefs);
-		}
-
 		setContentView(R.layout.activity_main);
-
 		// Create the adapter that will return a fragment for each of the three
 		// primary sections
 		// of the app.
-		mAppSectionsPagerAdapter = new AppSectionsPagerAdapter(
-				getSupportFragmentManager(), this);
+		mAppSectionsPagerAdapter = new AppSectionsPagerAdapter(getSupportFragmentManager(), this);
 
 		// Set up the action bar.
 		final ActionBar actionBar = getActionBar();
@@ -90,11 +88,33 @@ public class MainActivity extends FragmentActivity implements
 		mViewPager.setAdapter(mAppSectionsPagerAdapter);
 		mViewPager.setOnPageChangeListener(this);
 		httpGatewayURL = getString(R.string.http_gateway_url);
-		
+
 		// Check device for Play Services APK.
 		if (checkPlayServices(this)) {
-			CloudMessaging msg = new CloudMessaging(
+			gcmMessenger = new CloudMessaging(
 					this.getApplicationContext(), this, httpGatewayURL);
+		}
+
+
+		applicationPrefs = getSharedPreferences(
+				APP_SHARED_PREFERENCES, MODE_PRIVATE);
+		Boolean firstInstallation = applicationPrefs.getBoolean(
+				SHARED_PREFERENCE_FIRST_INSTALLATION, false);
+		if (!firstInstallation) {
+			showTermsOfUse(applicationPrefs);
+		}
+		else {
+			
+			// if the app is opened for the first time, check registation id is called
+			// in dialog positive button click.
+			if (gcmMessenger != null) {
+				String registeredMailAddress = applicationPrefs.getString(REGISTERED_MAIL_ADDRESS, null);
+				if (registeredMailAddress != null && registeredMailAddress.length()>0) {
+					gcmMessenger.checkRegistrationId(registeredMailAddress);
+				}
+			}
+			getStreamListTask = new GetStreamListTask();
+			getStreamListTask.execute(httpGatewayURL, "0","10");
 		}
 	}
 
@@ -123,16 +143,8 @@ public class MainActivity extends FragmentActivity implements
 	}
 
 	@Override
-	protected void onResume() {
-		checkPlayServices(this);
-		new GetStreamListTask().execute(httpGatewayURL,"0","10");
-		super.onResume();
-	}
-	
-	@Override
 	protected void onPause() {
 		super.onPause();
-		
 		mainActivityCompleted = false;
 		showHideKeyboard(false, mViewPager);
 	}
@@ -163,12 +175,20 @@ public class MainActivity extends FragmentActivity implements
 
 	private void showTermsOfUse(final SharedPreferences applicationPrefs) {
 		AlertDialog.Builder termsDialog = new AlertDialog.Builder(this);
-		termsDialog.setTitle(R.string.terms_of_service_title);
+		termsDialog.setTitle(R.string.associate_addresses);
 		termsDialog.setCancelable(false);
 		final View dialog_view = getLayoutInflater().inflate(
 				R.layout.dialog_privacy_and_terms, null);
 		View acceptingPrivacyTextView = dialog_view
 				.findViewById(R.id.accepting_privacy_and_terms);
+
+		final ListView mailAddressesLv = (ListView)dialog_view.findViewById(R.id.mail_addresses);
+
+		mailAddressesLv.setAdapter(new ArrayAdapter<String>(MainActivity.this,
+				android.R.layout.simple_list_item_multiple_choice, Utils.getFullMailArrayList(MainActivity.this)));
+
+
+		mailAddressesLv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 		acceptingPrivacyTextView.setOnClickListener(new OnClickListener() {
 			boolean termsLoadedOnce = false;
 
@@ -200,27 +220,58 @@ public class MainActivity extends FragmentActivity implements
 			}
 		});
 		termsDialog.setView(dialog_view);
-		termsDialog.setPositiveButton(R.string.accept,
-				new DialogInterface.OnClickListener() {
 
-					public void onClick(DialogInterface arg0, int arg1) {
-						// do something when the OK button is clicked
-						SharedPreferences.Editor mInstallationEditor = applicationPrefs
-								.edit();
-						mInstallationEditor.putBoolean(
-								SHARED_PREFERENCE_FIRST_INSTALLATION, true);
-						mInstallationEditor.commit();
-					}
-				});
-		termsDialog.setNegativeButton(R.string.cancel,
-				new DialogInterface.OnClickListener() {
+		termsDialog.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface arg0, int arg1) {
+				// we need to add this to compatibility. 
+				// OK button doesnt close the dialog if no email address are selected.
+			}
+		});
+		termsDialog.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface arg0, int arg1) {
+				MainActivity.this.finish();
+			}
+		});
+		final AlertDialog dialog = termsDialog.show();
+		dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				SharedPreferences.Editor mInstallationEditor = applicationPrefs
+						.edit();
+				mInstallationEditor.putBoolean(SHARED_PREFERENCE_FIRST_INSTALLATION, true);
+				mInstallationEditor.commit();
 
-					public void onClick(DialogInterface arg0, int arg1) {
-						// do something when the Cancel button is clicked
-						MainActivity.this.finish();
+				int itemCount = mailAddressesLv.getCheckedItemCount();
+				if (itemCount > 0) {
+					SparseBooleanArray checkedItemIds = mailAddressesLv.getCheckedItemPositions();
+					
+					String mails = new String();
+					for (int i = 0; i < mailAddressesLv.getCount(); i++) {
+						if (checkedItemIds.get(i)) {
+							if (i>0) {
+								mails += ",";
+							}
+							mails += mailAddressesLv.getAdapter().getItem(i);
+						}
 					}
-				});
-		termsDialog.show();
+					Editor editor = applicationPrefs.edit();
+					editor.putString(REGISTERED_MAIL_ADDRESS, mails);
+					editor.commit();
+					if (gcmMessenger != null) {
+						gcmMessenger.checkRegistrationId(mails);
+					}
+					dialog.dismiss();
+					
+					getStreamListTask = new GetStreamListTask();
+					getStreamListTask.execute(httpGatewayURL, "0","10");
+
+				}
+				else {
+					Toast.makeText(MainActivity.this, getString(R.string.choose_a_mail_address), Toast.LENGTH_SHORT).show();
+				}
+			}
+		});
 	}
 
 	private void getBatteryPercentage() {
@@ -274,7 +325,7 @@ public class MainActivity extends FragmentActivity implements
 
 		@Override
 		protected String doInBackground(String... params) {
-			
+
 			String streams = Utils.getLiveStreams(MainActivity.this, params);
 
 			return streams;
@@ -282,7 +333,7 @@ public class MainActivity extends FragmentActivity implements
 
 		@Override
 		protected void onPostExecute(String streams) {
-			
+
 
 			streamList.clear();
 
@@ -304,18 +355,18 @@ public class MainActivity extends FragmentActivity implements
 			}
 			setProgressBarIndeterminateVisibility(false);
 			super.onPostExecute(streams);
-			
+
 			MainActivity.mainActivityCompleted = true;
 		}
-		
-		
+
+
 	}
 
 	@Override
 	public void onPageScrollStateChanged(int state) {
 
 		if (state == ViewPager.SCROLL_STATE_IDLE) {
-			
+
 			//Camera var ise item count 2 oluyor(contactlist,streamlist ve mapfragment)
 			if(mAppSectionsPagerAdapter.getCount() == 2)
 			{
@@ -328,7 +379,7 @@ public class MainActivity extends FragmentActivity implements
 
 		}
 	}
-	
+
 	/**
 	 * Klavyenin gosterilip gosterilmemesini saglayan metod
 	 * @param toShow
@@ -337,12 +388,12 @@ public class MainActivity extends FragmentActivity implements
 	public void showHideKeyboard(boolean toShow,View view)
 	{
 		final InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-		
+
 		if(toShow)
 		{
 			inputMethodManager.toggleSoftInputFromWindow(
 					view
-							.getApplicationWindowToken(),
+					.getApplicationWindowToken(),
 					InputMethodManager.SHOW_FORCED, 0);
 		}
 		else
