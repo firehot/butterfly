@@ -26,10 +26,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -48,9 +51,9 @@ import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
 
 public class MainActivity extends FragmentActivity implements
-OnPageChangeListener {
+		OnPageChangeListener, OnClickListener {
 
-	public static boolean mainActivityCompleted=false;
+	public static boolean mainActivityCompleted = false;
 	AppSectionsPagerAdapter mAppSectionsPagerAdapter;
 	ViewPager mViewPager;
 	ArrayList<Stream> streamList = new ArrayList<Stream>();
@@ -64,6 +67,10 @@ OnPageChangeListener {
 	public GetStreamListTask getStreamListTask;
 	private CloudMessaging gcmMessenger;
 	private SharedPreferences applicationPrefs;
+	Button nextButton;
+	Button okButton;
+	ImageView image;
+	ImageView image2;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -73,6 +80,13 @@ OnPageChangeListener {
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
 		setContentView(R.layout.activity_main);
+		nextButton = (Button) findViewById(R.id.buttonNext);
+		nextButton.setOnClickListener(this);
+		okButton = (Button) findViewById(R.id.buttonOk);
+		okButton.setOnClickListener(this);
+		image = (ImageView) findViewById(R.id.help1ImageView);
+		image2 = (ImageView) findViewById(R.id.help2ImageView);
+
 		// Create the adapter that will return a fragment for each of the three
 		// primary sections
 		// of the app.
@@ -102,8 +116,21 @@ OnPageChangeListener {
 				SHARED_PREFERENCE_FIRST_INSTALLATION, false);
 		if (!firstInstallation) {
 			showTermsOfUse(applicationPrefs);
+			mViewPager.setVisibility(View.GONE);
+			nextButton.setVisibility(View.VISIBLE);
+			okButton.setVisibility(View.GONE);
+			image.setVisibility(View.VISIBLE);
+			image2.setVisibility(View.GONE);
+			setFullScreen(true);
 		}
 		else {
+			mViewPager.setVisibility(View.VISIBLE);
+			nextButton.setVisibility(View.GONE);
+			okButton.setVisibility(View.GONE);
+			image.setVisibility(View.GONE);
+			image2.setVisibility(View.GONE);
+
+			setFullScreen(false);
 			
 			// if the app is opened for the first time, check registation id is called
 			// in dialog positive button click.
@@ -152,7 +179,8 @@ OnPageChangeListener {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		if (getStreamListTask != null && getStreamListTask.getStatus() == AsyncTask.Status.RUNNING) {
+		if (getStreamListTask != null
+				&& getStreamListTask.getStatus() == AsyncTask.Status.RUNNING) {
 			getStreamListTask.cancel(true);
 		}
 		BugSenseHandler.closeSession(this);
@@ -340,17 +368,20 @@ OnPageChangeListener {
 			if (streams != null) {
 
 				try {
-					streamList.addAll(Utils.parseStreams(streams, getApplicationContext()));
+					streamList.addAll(Utils.parseStreams(streams,
+							getApplicationContext()));
 
 					updateStreamListeners();
 
 				} catch (JSONException e) {
 					e.printStackTrace();
-					Crouton.showText(MainActivity.this,R.string.connectivityProblem, Style.ALERT);
+					Crouton.showText(MainActivity.this,
+							R.string.connectivityProblem, Style.ALERT);
 				}
 
 			} else {
-				Crouton.showText(MainActivity.this,R.string.connectivityProblem, Style.ALERT);
+				Crouton.showText(MainActivity.this,
+						R.string.connectivityProblem, Style.ALERT);
 
 			}
 			setProgressBarIndeterminateVisibility(false);
@@ -382,26 +413,23 @@ OnPageChangeListener {
 
 	/**
 	 * Klavyenin gosterilip gosterilmemesini saglayan metod
+	 * 
 	 * @param toShow
 	 * @param view
 	 */
-	public void showHideKeyboard(boolean toShow,View view)
-	{
+	public void showHideKeyboard(boolean toShow, View view) {
 		final InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-
 		if(toShow)
 		{
 			inputMethodManager.toggleSoftInputFromWindow(
 					view
 					.getApplicationWindowToken(),
 					InputMethodManager.SHOW_FORCED, 0);
+		} else {
+			inputMethodManager
+					.hideSoftInputFromWindow(view.getWindowToken(), 0);
 		}
-		else
-		{
-			inputMethodManager.hideSoftInputFromWindow(
-					view.getWindowToken(), 0);
-		}
-	}
+}
 
 	@Override
 	public void onPageScrolled(int arg0, float arg1, int arg2) {
@@ -411,6 +439,43 @@ OnPageChangeListener {
 
 	@Override
 	public void onPageSelected(int position) {
+
+	}
+
+	@Override
+	public void onClick(View v) {
+		if (v == nextButton) {
+			nextButton.setVisibility(View.GONE);
+			okButton.setVisibility(View.VISIBLE);
+			image.setVisibility(View.GONE);
+			image2.setVisibility(View.VISIBLE);
+		} else {
+			image.setVisibility(View.GONE);
+			image2.setVisibility(View.GONE);
+			setFullScreen(false);
+			nextButton.setVisibility(View.GONE);
+			okButton.setVisibility(View.GONE);
+
+			mViewPager.setVisibility(View.VISIBLE);
+
+		}
+
+	}
+
+	private void setFullScreen(boolean bFullScreen) {
+		if (bFullScreen) {
+			getActionBar().hide();
+			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			getWindow().clearFlags(
+					WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+		} else {
+			getWindow().addFlags(
+					WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+			getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			getActionBar().show();
+		}
+
+		getWindow().getDecorView().requestLayout();
 
 	}
 }

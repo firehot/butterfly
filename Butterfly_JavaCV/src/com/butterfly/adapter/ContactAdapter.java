@@ -69,7 +69,7 @@ public class ContactAdapter extends ArrayAdapter<ContactAdapter.Contact> {
 		}
 		ContactAdapter.Contact item = getItem(position);
 		holder.displayNameView.setText(item.displayName);
-		//holder.emailView.setText(item.email);
+		holder.emailView.setText(item.email);
 		if (item.photoUri != null) {
 			holder.photoView.setImageURI(Uri.parse(item.photoUri));
 		}
