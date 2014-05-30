@@ -214,10 +214,20 @@ public class Application extends MultiThreadedApplicationAdapter implements IWeb
 			}
 		}
 
+		String firstMail = getFirstEmail(broadcasterMail);
+		
 		if (result)
-			this.sendNotificationsOrMail(mailsToBeNotified, broadcasterMail,
+			this.sendNotificationsOrMail(mailsToBeNotified, firstMail,
 					url, streamName, deviceLanguage);
 		return result;
+	}
+
+	private String getFirstEmail(String broadcasterMail) {
+		String[] mails = broadcasterMail.split(",");
+		String firstMail = "";
+		if(mails.length > 0)
+			firstMail = mails[0];
+		return firstMail;
 	}
 
 	public boolean registerLocationForStream(String url, double longitude,
