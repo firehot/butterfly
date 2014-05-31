@@ -1,6 +1,7 @@
 package com.butterfly;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.json.JSONException;
 
@@ -39,8 +40,10 @@ import android.widget.Toast;
 
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.adapter.AppSectionsPagerAdapter;
+import com.butterfly.asynctasks.GetStreamListTask;
 import com.butterfly.debug.BugSense;
 import com.butterfly.fragment.StreamListFragment.Stream;
+import com.butterfly.listeners.IAsyncTaskListener;
 import com.butterfly.listeners.IStreamListUpdateListener;
 import com.butterfly.message.CloudMessaging;
 import com.butterfly.utils.Utils;
@@ -50,8 +53,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
 
-public class MainActivity extends FragmentActivity implements
-		OnPageChangeListener, OnClickListener {
+public class MainActivity extends FragmentActivity implements OnPageChangeListener, OnClickListener {
 
 	public static boolean mainActivityCompleted = false;
 	AppSectionsPagerAdapter mAppSectionsPagerAdapter;
@@ -71,6 +73,34 @@ public class MainActivity extends FragmentActivity implements
 	Button okButton;
 	ImageView image;
 	ImageView image2;
+	
+	private IAsyncTaskListener mAsyncTaskListener = new IAsyncTaskListener() {
+		
+		@Override
+		public void onProgressUpdate(Object... progress) {}
+		
+		@Override
+		public void onPreExecute() {
+			setProgressBarIndeterminateVisibility(true);
+		}
+		
+		@Override
+		public void onPostExecute(Object streams) {
+			streamList.clear();
+
+			if (streams != null) {
+				streamList.addAll((List<Stream>)streams);
+				updateStreamListeners();
+			} else {
+				Crouton.showText(MainActivity.this,
+						R.string.connectivityProblem, Style.ALERT);
+
+			}
+			setProgressBarIndeterminateVisibility(false);
+			MainActivity.mainActivityCompleted = true;
+			
+		}
+	};
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -140,7 +170,7 @@ public class MainActivity extends FragmentActivity implements
 					gcmMessenger.checkRegistrationId(registeredMailAddress);
 				}
 			}
-			getStreamListTask = new GetStreamListTask();
+			getStreamListTask = new GetStreamListTask(this.getTaskListener(), this);
 			getStreamListTask.execute(httpGatewayURL, "0","10");
 		}
 	}
@@ -291,7 +321,7 @@ public class MainActivity extends FragmentActivity implements
 					}
 					dialog.dismiss();
 					
-					getStreamListTask = new GetStreamListTask();
+					getStreamListTask = new GetStreamListTask(MainActivity.this.getTaskListener(), MainActivity.this);
 					getStreamListTask.execute(httpGatewayURL, "0","10");
 
 				}
@@ -341,56 +371,6 @@ public class MainActivity extends FragmentActivity implements
 		}
 
 		return true;
-	}
-
-	public class GetStreamListTask extends AsyncTask<String, Void, String> {
-
-		@Override
-		protected void onPreExecute() {
-			setProgressBarIndeterminateVisibility(true);
-			super.onPreExecute();
-		}
-
-		@Override
-		protected String doInBackground(String... params) {
-
-			String streams = Utils.getLiveStreams(MainActivity.this, params);
-
-			return streams;
-		}
-
-		@Override
-		protected void onPostExecute(String streams) {
-
-
-			streamList.clear();
-
-			if (streams != null) {
-
-				try {
-					streamList.addAll(Utils.parseStreams(streams,
-							getApplicationContext()));
-
-					updateStreamListeners();
-
-				} catch (JSONException e) {
-					e.printStackTrace();
-					Crouton.showText(MainActivity.this,
-							R.string.connectivityProblem, Style.ALERT);
-				}
-
-			} else {
-				Crouton.showText(MainActivity.this,
-						R.string.connectivityProblem, Style.ALERT);
-
-			}
-			setProgressBarIndeterminateVisibility(false);
-			super.onPostExecute(streams);
-
-			MainActivity.mainActivityCompleted = true;
-		}
-
-
 	}
 
 	@Override
@@ -477,5 +457,9 @@ public class MainActivity extends FragmentActivity implements
 
 		getWindow().getDecorView().requestLayout();
 
+	}
+
+	public IAsyncTaskListener getTaskListener() {
+		return mAsyncTaskListener;
 	}
 }
