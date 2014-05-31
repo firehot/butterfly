@@ -21,9 +21,9 @@ import android.widget.Toast;
 import com.butterfly.MainActivity;
 import com.butterfly.MediaPlayerActivity;
 import com.butterfly.R;
-import com.butterfly.MainActivity.GetStreamListTask;
 import com.butterfly.adapter.ButterfFlyEndlessAdapter;
 import com.butterfly.adapter.StreamListAdapter;
+import com.butterfly.asynctasks.GetStreamListTask;
 import com.butterfly.listeners.IStreamListUpdateListener;
 import com.butterfly.message.CloudMessaging;
 import com.butterfly.tasks.DeleteStreamTask;
@@ -116,7 +116,7 @@ OnClickListener,OnRefreshListener{
 		if (activity.getStreamListTask == null 
 				|| activity.getStreamListTask.getStatus() ==  AsyncTask.Status.FINISHED) 
 		{
-			activity.getStreamListTask = activity.new GetStreamListTask();
+			activity.getStreamListTask = new GetStreamListTask(activity.getTaskListener(), activity);
 			activity.getStreamListTask.execute(activity.httpGatewayURL,"0","10");
 		}
 		
