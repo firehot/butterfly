@@ -40,12 +40,12 @@ import android.widget.Toast;
 
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.adapter.AppSectionsPagerAdapter;
-import com.butterfly.asynctasks.GetStreamListTask;
 import com.butterfly.debug.BugSense;
 import com.butterfly.fragment.StreamListFragment.Stream;
 import com.butterfly.listeners.IAsyncTaskListener;
 import com.butterfly.listeners.IStreamListUpdateListener;
 import com.butterfly.message.CloudMessaging;
+import com.butterfly.tasks.GetStreamListTask;
 import com.butterfly.utils.Utils;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
