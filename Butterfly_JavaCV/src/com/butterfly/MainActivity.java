@@ -3,8 +3,6 @@ package com.butterfly;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.json.JSONException;
-
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -73,24 +71,33 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 	Button okButton;
 	ImageView image;
 	ImageView image2;
-	
+
 	private IAsyncTaskListener mAsyncTaskListener = new IAsyncTaskListener() {
-		
+
 		@Override
 		public void onProgressUpdate(Object... progress) {}
-		
+
 		@Override
 		public void onPreExecute() {
 			setProgressBarIndeterminateVisibility(true);
 		}
-		
+
 		@Override
 		public void onPostExecute(Object streams) {
 			streamList.clear();
 
 			if (streams != null) {
-				streamList.addAll((List<Stream>)streams);
-				updateStreamListeners();
+				List<Stream> localStreamList = (List<Stream>)streams;
+				if (localStreamList.size()>0) {
+					streamList.addAll(localStreamList);
+				}
+				else {
+					Toast.makeText(MainActivity.this,
+							MainActivity.this.getString(R.string.noLiveStream),
+							Toast.LENGTH_LONG).show();
+				}
+				updateStreamListeners(streamList);
+				
 			} else {
 				Crouton.showText(MainActivity.this,
 						R.string.connectivityProblem, Style.ALERT);
@@ -98,7 +105,7 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 			}
 			setProgressBarIndeterminateVisibility(false);
 			MainActivity.mainActivityCompleted = true;
-			
+
 		}
 	};
 
@@ -161,7 +168,7 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 			image2.setVisibility(View.GONE);
 
 			setFullScreen(false);
-			
+
 			// if the app is opened for the first time, check registation id is called
 			// in dialog positive button click.
 			if (gcmMessenger != null) {
@@ -225,7 +232,7 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 		streamUpdateListenerList.remove(listener);
 	}
 
-	private void updateStreamListeners() {
+	private void updateStreamListeners(ArrayList<Stream> streamList) {
 		for (IStreamListUpdateListener listener : streamUpdateListenerList) {
 			listener.streamListUpdated(streamList);
 		}
@@ -292,7 +299,7 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 		});
 		final AlertDialog dialog = termsDialog.show();
 		dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				SharedPreferences.Editor mInstallationEditor = applicationPrefs
@@ -303,7 +310,7 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 				int itemCount = mailAddressesLv.getCheckedItemCount();
 				if (itemCount > 0) {
 					SparseBooleanArray checkedItemIds = mailAddressesLv.getCheckedItemPositions();
-					
+
 					String mails = new String();
 					for (int i = 0; i < mailAddressesLv.getCount(); i++) {
 						if (checkedItemIds.get(i)) {
@@ -320,7 +327,7 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 						gcmMessenger.checkRegistrationId(mails);
 					}
 					dialog.dismiss();
-					
+
 					getStreamListTask = new GetStreamListTask(MainActivity.this.getTaskListener(), MainActivity.this);
 					getStreamListTask.execute(httpGatewayURL, "0","10");
 
@@ -407,9 +414,9 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 					InputMethodManager.SHOW_FORCED, 0);
 		} else {
 			inputMethodManager
-					.hideSoftInputFromWindow(view.getWindowToken(), 0);
+			.hideSoftInputFromWindow(view.getWindowToken(), 0);
 		}
-}
+	}
 
 	@Override
 	public void onPageScrolled(int arg0, float arg1, int arg2) {

@@ -21,6 +21,7 @@
     </com.butterfly.view.ViewPagerMapBevelScroll>
     <ImageView
         android:id="@+id/help1ImageView"
+        android:layout_gravity="center"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:src="@drawable/help1" >
@@ -29,6 +30,7 @@
 
     <ImageView
         android:id="@+id/help2ImageView"
+        android:layout_gravity="center"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:src="@drawable/help2" >

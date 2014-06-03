@@ -117,10 +117,6 @@ public class Utils {
 
 
 			}
-		} else {
-			Toast.makeText(context,
-					context.getString(R.string.noLiveStream),
-					Toast.LENGTH_LONG).show();
 		}
 
 		return streamList;
