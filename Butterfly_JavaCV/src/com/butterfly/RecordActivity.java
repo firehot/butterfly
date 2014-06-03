@@ -265,43 +265,29 @@ public class RecordActivity extends Activity implements OnClickListener,
 		Parameters parameters = cameraDevice.getParameters();
 		List<Size> supportedPreviewSizes = parameters
 				.getSupportedPreviewSizes();
-		int likelyWidth = 0, likelyHeight = 0;
 
-		likelyWidth = 176;
-		likelyHeight = 144;
+		Size size = findPreviewSize(supportedPreviewSizes);
 		
-		if (likelyWidth != 0 && likelyHeight != 0) {
-			Size size = findPreviewSize(supportedPreviewSizes, likelyWidth,
-					likelyHeight);
-			parameters.setPreviewSize(size.width, size.height);
-//			parameters.setWhiteBalance(Parameters.WHITE_BALANCE_AUTO);
-//			parameters.setSceneMode(Parameters.SCENE_MODE_AUTO);
-			
-			if (cameraView.isPreviewOn()) {
-				cameraDevice.stopPreview();
-				cameraDevice.setParameters(parameters);
-				cameraDevice.startPreview();
-			} else {
-				cameraDevice.setParameters(parameters);
-			}
-			result = true;
+		parameters.setPreviewSize(size.width, size.height);
+		
+		if (cameraView.isPreviewOn()) {
+			cameraDevice.stopPreview();
+			cameraDevice.setParameters(parameters);
+			cameraDevice.startPreview();
+		} else {
+			cameraDevice.setParameters(parameters);
 		}
+		result = true;
 		return result;
 	}
 
-	private Size findPreviewSize(List<Size> previewSizes, int width, int height) {
-		int diff = Integer.MAX_VALUE;
+	private Size findPreviewSize(List<Size> previewSizes) {
+
 		Size bestSize = previewSizes.get(0);
 
 		for (Size size : previewSizes) {
-			if (size.width <= width && size.height <= height) {
-				int width2 = (int) Math.pow(width - size.width, 2);
-				int height2 = (int) Math.pow(height - size.height, 2);
-				int sizeDiff = (int) Math.sqrt(width2 + height2);
-				if (sizeDiff < diff) {
-					diff = sizeDiff;
-					bestSize = size;
-				}
+			if (size.width <= bestSize.width && size.height <= bestSize.height) {
+				bestSize = size;
 			}
 		}
 
