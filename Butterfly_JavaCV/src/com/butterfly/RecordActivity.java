@@ -46,6 +46,7 @@ import com.butterfly.debug.BugSense;
 import com.butterfly.fragment.ContactsListFragment;
 import com.butterfly.message.GcmIntentService;
 import com.butterfly.recorder.FFmpegFrameRecorder;
+import com.butterfly.tasks.RegisterLocationForStreamTask;
 import com.butterfly.tasks.SendPreviewTask;
 import com.butterfly.utils.LocationProvider;
 import com.butterfly.utils.Utils;
@@ -220,9 +221,9 @@ public class RecordActivity extends Activity implements OnClickListener,
 			@Override
 			public void onLocationChanged(Location location) {
 
-				new RegisterLocationForStreamTask(httpGatewayURL,
-						RecordActivity.this.streamURL).execute(
-						location.getLongitude(), location.getLatitude(),
+				RegisterLocationForStreamTask registerLocationTask = new RegisterLocationForStreamTask(null, RecordActivity.this);
+				registerLocationTask.setParams(httpGatewayURL, RecordActivity.this.streamURL);
+				registerLocationTask.execute(location.getLongitude(), location.getLatitude(),
 						location.getAltitude());
 
 			}
@@ -628,44 +629,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 			super.onPostExecute(result);
 
 		}
-	}
-
-	public class RegisterLocationForStreamTask extends
-			AsyncTask<Double, Void, Boolean> {
-		String httpGateway;
-		private String streamURL;
-
-		public RegisterLocationForStreamTask(String httpGateway, String url) {
-			this.httpGateway = httpGateway;
-			this.streamURL = url;
-		}
-
-		@Override
-		protected Boolean doInBackground(Double... params) {
-			Boolean result = false;
-
-			AMFConnection amfConnection = new AMFConnection();
-			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
-			try {
-				System.out.println(params[0]);
-				System.out.println(params[1]);
-				System.out.println(params[2]);
-
-				amfConnection.connect(this.httpGateway);
-				result = (Boolean) amfConnection.call(
-						"registerLocationForStream", this.streamURL, params[0],
-						params[1], params[2]);
-
-			} catch (ClientStatusException e) {
-				e.printStackTrace();
-			} catch (ServerStatusException e) {
-
-				e.printStackTrace();
-			}
-			amfConnection.close();
-			return result;
-		}
-
 	}
 
 	public class StopRecordingTask extends

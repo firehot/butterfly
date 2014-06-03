@@ -18,19 +18,25 @@ public abstract class AbstractAsyncTask<Params, Progress, Result> extends AsyncT
 	
 	@Override
 	protected void onPreExecute() {
-		this.taskListener.onPreExecute();
+		if (this.taskListener != null) {
+			this.taskListener.onPreExecute();
+		}
 		super.onPreExecute();
 	}
 	
 	@Override
 	protected void onPostExecute(Result result) {
-		this.taskListener.onPostExecute(result);
+		if (this.taskListener != null) {
+			this.taskListener.onPostExecute(result);
+		}
 		super.onPostExecute(result);
 	}
 	
 	@Override
 	protected void onProgressUpdate(Progress... values) {
-		this.taskListener.onProgressUpdate(values);
+		if (this.taskListener != null) {
+			this.taskListener.onProgressUpdate(values);
+		}
 		super.onProgressUpdate(values);
 	}
 }

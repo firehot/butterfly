@@ -1,5 +1,7 @@
 package com.butterfly;
 
+import java.util.List;
+
 import flex.messaging.io.MessageIOConstants;
 import flex.messaging.io.amf.client.AMFConnection;
 import flex.messaging.io.amf.client.exceptions.ClientStatusException;
@@ -17,10 +19,17 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.debug.BugSense;
 import com.butterfly.fragment.StreamListFragment;
+import com.butterfly.fragment.StreamListFragment.Stream;
+import com.butterfly.listeners.IAsyncTaskListener;
+import com.butterfly.tasks.CheckStreamExistTask;
+
+import de.keyboardsurfer.android.widget.crouton.Crouton;
+import de.keyboardsurfer.android.widget.crouton.Style;
 
 public class MediaPlayerActivity extends Activity implements
 		io.vov.vitamio.MediaPlayer.OnCompletionListener {
@@ -41,6 +50,27 @@ public class MediaPlayerActivity extends Activity implements
 	private String rtmpUrl;
 
 	private String httpURL;
+	
+	private IAsyncTaskListener mAsyncTaskListener = new IAsyncTaskListener() {
+
+		@Override
+		public void onProgressUpdate(Object... progress) {}
+
+		@Override
+		public void onPreExecute() {}
+
+		@Override
+		public void onPostExecute(Object result) {
+			Boolean boolResult = (Boolean)result;
+			if (boolResult == false) {
+				//loadingView.setText(R.string.missed_the_stream);
+				videoView.stopPlayback();
+				enableMediaController();
+				videoView.setVideoPath(httpURL);
+				videoView.start();
+			}
+		}
+	};
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -73,7 +103,7 @@ public class MediaPlayerActivity extends Activity implements
 			boolean isLive = intent.getBooleanExtra(StreamListFragment.STREAM_IS_LIVE, true);
 			String videoURL; // = rtmpUrl + streamName; 
 			if (isLive == true) {
-				new CheckStreamExistTask().execute(httpGatewayUrl, streamName);
+				new CheckStreamExistTask(mAsyncTaskListener, this).execute(httpGatewayUrl, streamName);
 				videoURL = rtmpUrl;
 			}
 			else {
@@ -183,48 +213,6 @@ public class MediaPlayerActivity extends Activity implements
 		videoView.stopPlayback();
 		System.out.println("MediaPlayerActivity.onCompletion()");
 		this.finish();
-	}
-
-	public class CheckStreamExistTask extends AsyncTask<String, Void, Boolean> {
-
-		private String streamName;
-
-		@Override
-		protected Boolean doInBackground(String... params) {
-			Boolean result = false;
-			
-			streamName = params[1];
-
-			AMFConnection amfConnection = new AMFConnection();
-			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
-			try {
-				amfConnection.connect(params[0]);
-				result = (Boolean) amfConnection.call("isLiveStreamExist",
-						streamName);
-
-			} catch (ClientStatusException e) {
-				e.printStackTrace();
-			} catch (ServerStatusException e) {
-
-				e.printStackTrace();
-			}
-			amfConnection.close();
-
-			return result;
-		}
-
-		@Override
-		protected void onPostExecute(Boolean result) {
-			super.onPostExecute(result);
-			if (result == false) {
-				//loadingView.setText(R.string.missed_the_stream);
-				videoView.stopPlayback();
-				enableMediaController();
-				videoView.setVideoPath(httpURL);
-				videoView.start();
-			}
-
-		}
 	}
 
 }
