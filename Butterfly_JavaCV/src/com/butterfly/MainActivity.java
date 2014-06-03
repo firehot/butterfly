@@ -1,8 +1,7 @@
 package com.butterfly;
 
 import java.util.ArrayList;
-
-import org.json.JSONException;
+import java.util.List;
 
 import android.app.ActionBar;
 import android.app.Activity;
@@ -41,8 +40,10 @@ import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.adapter.AppSectionsPagerAdapter;
 import com.butterfly.debug.BugSense;
 import com.butterfly.fragment.StreamListFragment.Stream;
+import com.butterfly.listeners.IAsyncTaskListener;
 import com.butterfly.listeners.IStreamListUpdateListener;
 import com.butterfly.message.CloudMessaging;
+import com.butterfly.tasks.GetStreamListTask;
 import com.butterfly.utils.Utils;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -50,8 +51,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
 
-public class MainActivity extends FragmentActivity implements
-		OnPageChangeListener, OnClickListener {
+public class MainActivity extends FragmentActivity implements OnPageChangeListener, OnClickListener {
 
 	public static boolean mainActivityCompleted = false;
 	AppSectionsPagerAdapter mAppSectionsPagerAdapter;
@@ -71,6 +71,43 @@ public class MainActivity extends FragmentActivity implements
 	Button okButton;
 	ImageView image;
 	ImageView image2;
+
+	private IAsyncTaskListener mAsyncTaskListener = new IAsyncTaskListener() {
+
+		@Override
+		public void onProgressUpdate(Object... progress) {}
+
+		@Override
+		public void onPreExecute() {
+			setProgressBarIndeterminateVisibility(true);
+		}
+
+		@Override
+		public void onPostExecute(Object streams) {
+			streamList.clear();
+
+			if (streams != null) {
+				List<Stream> localStreamList = (List<Stream>)streams;
+				if (localStreamList.size()>0) {
+					streamList.addAll(localStreamList);
+				}
+				else {
+					Toast.makeText(MainActivity.this,
+							MainActivity.this.getString(R.string.noLiveStream),
+							Toast.LENGTH_LONG).show();
+				}
+				updateStreamListeners(streamList);
+				
+			} else {
+				Crouton.showText(MainActivity.this,
+						R.string.connectivityProblem, Style.ALERT);
+
+			}
+			setProgressBarIndeterminateVisibility(false);
+			MainActivity.mainActivityCompleted = true;
+
+		}
+	};
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -131,7 +168,7 @@ public class MainActivity extends FragmentActivity implements
 			image2.setVisibility(View.GONE);
 
 			setFullScreen(false);
-			
+
 			// if the app is opened for the first time, check registation id is called
 			// in dialog positive button click.
 			if (gcmMessenger != null) {
@@ -140,7 +177,7 @@ public class MainActivity extends FragmentActivity implements
 					gcmMessenger.checkRegistrationId(registeredMailAddress);
 				}
 			}
-			getStreamListTask = new GetStreamListTask();
+			getStreamListTask = new GetStreamListTask(this.getTaskListener(), this);
 			getStreamListTask.execute(httpGatewayURL, "0","10");
 		}
 	}
@@ -195,7 +232,7 @@ public class MainActivity extends FragmentActivity implements
 		streamUpdateListenerList.remove(listener);
 	}
 
-	private void updateStreamListeners() {
+	private void updateStreamListeners(ArrayList<Stream> streamList) {
 		for (IStreamListUpdateListener listener : streamUpdateListenerList) {
 			listener.streamListUpdated(streamList);
 		}
@@ -262,7 +299,7 @@ public class MainActivity extends FragmentActivity implements
 		});
 		final AlertDialog dialog = termsDialog.show();
 		dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				SharedPreferences.Editor mInstallationEditor = applicationPrefs
@@ -273,7 +310,7 @@ public class MainActivity extends FragmentActivity implements
 				int itemCount = mailAddressesLv.getCheckedItemCount();
 				if (itemCount > 0) {
 					SparseBooleanArray checkedItemIds = mailAddressesLv.getCheckedItemPositions();
-					
+
 					String mails = new String();
 					for (int i = 0; i < mailAddressesLv.getCount(); i++) {
 						if (checkedItemIds.get(i)) {
@@ -290,8 +327,8 @@ public class MainActivity extends FragmentActivity implements
 						gcmMessenger.checkRegistrationId(mails);
 					}
 					dialog.dismiss();
-					
-					getStreamListTask = new GetStreamListTask();
+
+					getStreamListTask = new GetStreamListTask(MainActivity.this.getTaskListener(), MainActivity.this);
 					getStreamListTask.execute(httpGatewayURL, "0","10");
 
 				}
@@ -343,56 +380,6 @@ public class MainActivity extends FragmentActivity implements
 		return true;
 	}
 
-	public class GetStreamListTask extends AsyncTask<String, Void, String> {
-
-		@Override
-		protected void onPreExecute() {
-			setProgressBarIndeterminateVisibility(true);
-			super.onPreExecute();
-		}
-
-		@Override
-		protected String doInBackground(String... params) {
-
-			String streams = Utils.getLiveStreams(MainActivity.this, params);
-
-			return streams;
-		}
-
-		@Override
-		protected void onPostExecute(String streams) {
-
-
-			streamList.clear();
-
-			if (streams != null) {
-
-				try {
-					streamList.addAll(Utils.parseStreams(streams,
-							getApplicationContext()));
-
-					updateStreamListeners();
-
-				} catch (JSONException e) {
-					e.printStackTrace();
-					Crouton.showText(MainActivity.this,
-							R.string.connectivityProblem, Style.ALERT);
-				}
-
-			} else {
-				Crouton.showText(MainActivity.this,
-						R.string.connectivityProblem, Style.ALERT);
-
-			}
-			setProgressBarIndeterminateVisibility(false);
-			super.onPostExecute(streams);
-
-			MainActivity.mainActivityCompleted = true;
-		}
-
-
-	}
-
 	@Override
 	public void onPageScrollStateChanged(int state) {
 
@@ -427,9 +414,9 @@ public class MainActivity extends FragmentActivity implements
 					InputMethodManager.SHOW_FORCED, 0);
 		} else {
 			inputMethodManager
-					.hideSoftInputFromWindow(view.getWindowToken(), 0);
+			.hideSoftInputFromWindow(view.getWindowToken(), 0);
 		}
-}
+	}
 
 	@Override
 	public void onPageScrolled(int arg0, float arg1, int arg2) {
@@ -477,5 +464,9 @@ public class MainActivity extends FragmentActivity implements
 
 		getWindow().getDecorView().requestLayout();
 
+	}
+
+	public IAsyncTaskListener getTaskListener() {
+		return mAsyncTaskListener;
 	}
 }
