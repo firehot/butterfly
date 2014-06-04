@@ -44,9 +44,11 @@ import android.widget.Toast;
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.debug.BugSense;
 import com.butterfly.fragment.ContactsListFragment;
+import com.butterfly.listeners.IAsyncTaskListener;
 import com.butterfly.message.GcmIntentService;
 import com.butterfly.recorder.FFmpegFrameRecorder;
 import com.butterfly.tasks.RegisterLocationForStreamTask;
+import com.butterfly.tasks.RegisterStreamTask;
 import com.butterfly.tasks.SendPreviewTask;
 import com.butterfly.utils.LocationProvider;
 import com.butterfly.utils.Utils;
@@ -101,6 +103,50 @@ public class RecordActivity extends Activity implements OnClickListener,
 	private Size previewSize;
 	private BytePointer bytePointer;
 	private boolean snapshotSent = false;
+	
+	private IAsyncTaskListener mRegisterStreamTaskListener = new IAsyncTaskListener() {
+		
+		@Override
+		public void onProgressUpdate(Object... progress) {}
+		
+		@Override
+		public void onPreExecute() {
+			if (mProgressDialog == null) {
+				mProgressDialog = ProgressDialog.show(RecordActivity.this,
+						null, getString(R.string.initializing), true);
+
+			} else {
+				mProgressDialog.setMessage(getString(R.string.initializing));
+			}
+			
+		}
+		
+		@Override
+		public void onPostExecute(Object object) {
+			Boolean result = (Boolean) object;
+			if(mProgressDialog != null)
+				mProgressDialog.dismiss();
+			if (result == true) {
+				Log.w(LOG_TAG, "Start Button Pushed");
+				streamNameEditText.setVisibility(View.GONE);
+				publicVideoCheckBox.setVisibility(View.GONE);
+				btnRecorderControl
+						.setBackgroundResource(R.drawable.bt_stop_record);
+				RecordActivity.this.getLocation();
+			} else {
+				Toast.makeText(getApplicationContext(),
+						getString(R.string.stream_registration_failed),
+						Toast.LENGTH_LONG).show();
+				streamNameEditText.setVisibility(View.VISIBLE);
+				publicVideoCheckBox.setVisibility(View.VISIBLE);
+			}
+
+			mProgressDialog = null;
+			btnRecorderControl.setClickable(true);
+			
+			
+		}
+	};
 
 	BroadcastReceiver viewerCountReceiver = new BroadcastReceiver() {
 
@@ -528,10 +574,32 @@ public class RecordActivity extends Activity implements OnClickListener,
 				
 				if (setCameraPreviewSize() == true) {
 
-					initRecorder();
-					new RegisterStreamTask().execute(httpGatewayURL, streamName,
-							streamURL,
-							Utils.getRegisteredMailList(RecordActivity.this));
+					new Thread() {
+						public void run() {
+							initRecorder();
+							boolean recordingStarted = startRecording();
+							if (recordingStarted) {
+								
+								runOnUiThread(new Runnable() {
+									
+									@Override
+									public void run() {
+										new RegisterStreamTask(mRegisterStreamTaskListener, RecordActivity.this).
+										execute(httpGatewayURL, streamName,
+												streamURL,mailsToBeNotified,
+												Utils.getRegisteredMailList(RecordActivity.this), String.valueOf(is_video_public));
+										
+									}
+								});
+							
+							}
+							else {
+								stopRecording();
+							}
+						};
+						
+					}.start();
+					
 				} 
 
 			} else {
@@ -554,85 +622,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 		}
 	}
 
-	public class RegisterStreamTask extends AsyncTask<String, Void, Boolean> {
-
-		String possibleMail;
-
-		@Override
-		protected void onPreExecute() {
-			super.onPreExecute();
-
-			if (mProgressDialog == null) {
-				mProgressDialog = ProgressDialog.show(RecordActivity.this,
-						null, getString(R.string.initializing), true);
-
-			} else {
-				mProgressDialog.setMessage(getString(R.string.initializing));
-			}
-
-		}
-
-		@Override
-		protected Boolean doInBackground(String... params) {
-			Boolean result = false;
-
-			boolean recordingStarted = startRecording();
-			if (recordingStarted == true) {
-				this.possibleMail = params[3];
-
-				AMFConnection amfConnection = new AMFConnection();
-				amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
-				try {
-					System.out.println(params[0]);
-
-					amfConnection.connect(params[0]);
-					result = (Boolean) amfConnection.call("registerLiveStream",
-							params[1], params[2], mailsToBeNotified,
-							possibleMail, is_video_public, Locale.getDefault()
-									.getISO3Language());
-
-				} catch (ClientStatusException e) {
-					e.printStackTrace();
-				} catch (ServerStatusException e) {
-
-					e.printStackTrace();
-				}
-				amfConnection.close();
-			} else {
-				stopRecording();
-			}
-
-			return result;
-		}
-
-		@Override
-		protected void onPostExecute(Boolean result) {
-			if(mProgressDialog != null)
-				mProgressDialog.dismiss();
-			if (result == true) {
-				Log.w(LOG_TAG, "Start Button Pushed");
-				streamNameEditText.setVisibility(View.GONE);
-				publicVideoCheckBox.setVisibility(View.GONE);
-				btnRecorderControl
-						.setBackgroundResource(R.drawable.bt_stop_record);
-			} else {
-				Toast.makeText(getApplicationContext(),
-						getString(R.string.stream_registration_failed),
-						Toast.LENGTH_LONG).show();
-				streamNameEditText.setVisibility(View.VISIBLE);
-				publicVideoCheckBox.setVisibility(View.VISIBLE);
-			}
-
-			mProgressDialog = null;
-			btnRecorderControl.setClickable(true);
-			RecordActivity.this.getLocation();
-			super.onPostExecute(result);
-
-		}
-	}
-
-	public class StopRecordingTask extends
-			AsyncTask<FFmpegFrameRecorder, Void, Void> {
+	public class StopRecordingTask extends	AsyncTask<FFmpegFrameRecorder, Void, Void> {
 
 		@Override
 		protected Void doInBackground(FFmpegFrameRecorder... params) {

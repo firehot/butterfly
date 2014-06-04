@@ -1,12 +1,5 @@
 package com.butterfly.message;
 
-import flex.messaging.io.MessageIOConstants;
-import flex.messaging.io.amf.client.AMFConnection;
-import flex.messaging.io.amf.client.exceptions.ClientStatusException;
-import flex.messaging.io.amf.client.exceptions.ServerStatusException;
-import io.vov.utils.Log;
-
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import android.app.Activity;
@@ -14,13 +7,12 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.provider.Settings;
-import android.provider.Settings.Secure;
 
-import com.butterfly.utils.Utils;
+import com.butterfly.listeners.IAsyncTaskListener;
+import com.butterfly.tasks.AbstractAsyncTask;
+import com.butterfly.tasks.IRegistrationStatus;
+import com.butterfly.tasks.RegisterUserTask;
+import com.butterfly.tasks.UpdateUserRegisterIdTask;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 public class CloudMessaging {
@@ -41,6 +33,21 @@ public class CloudMessaging {
 	private Activity mActivity;
 	private String backendServer;
 	private String commaSeparatedMails;
+	private AbstractAsyncTask<String, Void, String> asyncTask;
+	
+	IAsyncTaskListener mRegisterUserTaskListener = new IAsyncTaskListener() {
+		
+		@Override
+		public void onProgressUpdate(Object... progress) {}		
+		@Override
+		public void onPreExecute() {}		
+		@Override
+		public void onPostExecute(Object object) {
+			String regId = (String) object;
+			storeRegistrationId(context, regId, ((IRegistrationStatus)asyncTask).isRegistered());
+		}
+	};
+	
 
 	public CloudMessaging(Context context, Activity activity, String backendServer) {
 		this.context = context;
@@ -55,19 +62,17 @@ public class CloudMessaging {
 	public void checkRegistrationId(String mails) {
 		this.commaSeparatedMails = mails;
 		if (regid.isEmpty()) {
-			registerInBackground();
+			asyncTask = new RegisterUserTask(mRegisterUserTaskListener, this.mActivity);
+			asyncTask.execute(SENDER_ID, backendServer, commaSeparatedMails);
 		}
 		else if (isAppUpdated(this.context)) {
-			new UpdateRegIDTask().execute(regid);
+			asyncTask = new UpdateUserRegisterIdTask(mRegisterUserTaskListener, mActivity);
+			asyncTask.execute(SENDER_ID, backendServer, commaSeparatedMails, regid);
 		}
 		else if (isRegisrationCompleted() == false) {
-			new Thread() {
-				public void run() {
-					boolean result = sendRegistrationIdToBackend();
-		            
-					storeRegistrationCompleted(result);
-				};
-			}.start();
+			asyncTask = new RegisterUserTask(mRegisterUserTaskListener, mActivity);
+			((RegisterUserTask)asyncTask).setRegisterId(regid);
+			asyncTask.execute(SENDER_ID, backendServer, commaSeparatedMails);
 		}
 	}
 
@@ -129,146 +134,6 @@ public class CloudMessaging {
 	}
 
 	/**
-	 * Registers the application with GCM servers asynchronously.
-	 * <p>
-	 * Stores the registration ID and app versionCode in the application's
-	 * shared preferences.
-	 */
-	private void registerInBackground() {
-		new RegisterTask().execute(null,null);
-	}
-	
-	private boolean sendRegistrationIdToBackend() 
-	{
-		boolean result = false;
-		if(commaSeparatedMails != null && commaSeparatedMails.length()>0)
-		{
-			Log.e("butterfly", commaSeparatedMails);	
-			result = registerUser(backendServer, regid, commaSeparatedMails);
-		}
-		return result;
-	}
-	protected Boolean registerUser(String backendServer, String registerId, String mail) {
-		Boolean isRegistered = false;
-		AMFConnection amfConnection = new AMFConnection();
-		amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
-		try {
-			System.out.println(registerId);
-			amfConnection.connect(backendServer);
-			isRegistered = (Boolean) amfConnection
-					.call("registerUser",registerId, mail);
-
-		} catch (ClientStatusException e) {
-			e.printStackTrace();
-		} catch (ServerStatusException e) {
-			e.printStackTrace();
-		}
-		amfConnection.close();
-
-		return isRegistered;
-	}
-	
-	protected Boolean updateUser(String backendServer, String registerId, String mail,String oldRegID) {
-		Boolean result = false;
-		AMFConnection amfConnection = new AMFConnection();
-		amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
-		try {
-			System.out.println(registerId);
-			amfConnection.connect(backendServer);
-			result = (Boolean) amfConnection
-					.call("updateUser",registerId, mail,oldRegID);
-
-		} catch (ClientStatusException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ServerStatusException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		amfConnection.close();
-
-		return result;
-	}
-	
-
-	
-	private class RegisterTask extends AsyncTask<Void, Void, String> {
-	     protected String doInBackground(Void... params) {
-
-	            try {
-	                if (gcm == null) {
-	                    gcm = GoogleCloudMessaging.getInstance(context);
-	                }
-	                regid = gcm.register(SENDER_ID);
-
-
-	                // You should send the registration ID to your server over HTTP,
-	                // so it can use GCM/HTTP or CCS to send messages to your app.
-	                // The request to your server should be authenticated if your app
-	                // is using accounts.
-	                boolean result = sendRegistrationIdToBackend();
-	                
-	                // For this demo: we don't need to send it because the device
-	                // will send upstream messages to a server that echo back the
-	                // message using the 'from' address in the message.
-
-	                // Persist the regID - no need to register again.
-	                storeRegistrationId(context, regid, result);
-	            } catch (IOException ex) {
-	
-	                System.out.println("register hata:"+ex.getMessage());
-	            }
-	            return regid;
-	     }
-	 }
-	
-	private boolean updateRegistrationId(String oldRegID) 
-	{
-		boolean result = false;
-	
-		if(commaSeparatedMails != null && commaSeparatedMails.length()>0)
-		{
-			Log.e("butterfly", commaSeparatedMails);	
-			result = updateUser(backendServer, regid, commaSeparatedMails, oldRegID);
-		}
-		return result;
-	}
-	
-	private class UpdateRegIDTask extends AsyncTask<String, Void, String> {
-	     protected String doInBackground(String... params) {
-
-	            try {
-	                if (gcm == null) {
-	                    gcm = GoogleCloudMessaging.getInstance(context);
-	                }
-	                regid = gcm.register(SENDER_ID);
-
-
-	                // You should send the registration ID to your server over HTTP,
-	                // so it can use GCM/HTTP or CCS to send messages to your app.
-	                // The request to your server should be authenticated if your app
-	                // is using accounts.
-	                boolean completed = updateRegistrationId(params[0]);
-
-	                // For this demo: we don't need to send it because the device
-	                // will send upstream messages to a server that echo back the
-	                // message using the 'from' address in the message.
-
-	                // Persist the regID - no need to register again.
-	                storeRegistrationId(context, regid, completed);
-	            } catch (IOException ex) {
-	
-	                System.out.println("register hata:"+ex.getMessage());
-	            }
-	            return regid;
-	     }
-
-	     protected void onPostExecute(String regid) {
-	         
-	     }
-	 }
-
-	/**
 	 * Stores the registration ID and app versionCode in the application's
 	 * {@code SharedPreferences}.
 	 * 
@@ -285,19 +150,6 @@ public class CloudMessaging {
 		SharedPreferences.Editor editor = prefs.edit();
 		editor.putString(PROPERTY_REG_ID, regId);
 		editor.putInt(PROPERTY_APP_VERSION, appVersion);
-		editor.putBoolean(REGISTRATION_COMPLETED, registrationCompleted);
-		editor.commit();
-	}
-	
-	/**
-	 * Stores registation status in backend server
-	 * @param registrationCompleted
-	 */
-	private void storeRegistrationCompleted(boolean registrationCompleted) {
-		final SharedPreferences prefs = getGCMPreferences(context,
-				mActivity.getClass());
-
-		SharedPreferences.Editor editor = prefs.edit();
 		editor.putBoolean(REGISTRATION_COMPLETED, registrationCompleted);
 		editor.commit();
 	}
