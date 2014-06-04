@@ -96,13 +96,12 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 							MainActivity.this.getString(R.string.noLiveStream),
 							Toast.LENGTH_LONG).show();
 				}
-				updateStreamListeners(streamList);
-				
 			} else {
 				Crouton.showText(MainActivity.this,
 						R.string.connectivityProblem, Style.ALERT);
 
 			}
+			updateStreamListeners(streamList);
 			setProgressBarIndeterminateVisibility(false);
 			MainActivity.mainActivityCompleted = true;
 
