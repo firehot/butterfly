@@ -40,7 +40,7 @@ public class ButterfFlyEndlessAdapter extends EndlessAdapter {
 
 	@Override
 	protected void appendCachedData() {
-		Log.d("butterfly", "appendCachedData");
+		//Log.d("butterfly", "appendCachedData");
 		if (streamList != null)
 			streamListAdapter.addAll(streamList);
 	}
