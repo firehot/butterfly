@@ -58,7 +58,6 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 	ViewPager mViewPager;
 	ArrayList<Stream> streamList = new ArrayList<Stream>();
 	ArrayList<IStreamListUpdateListener> streamUpdateListenerList = new ArrayList<IStreamListUpdateListener>();
-	public String httpGatewayURL;
 
 	private static final String SHARED_PREFERENCE_FIRST_INSTALLATION = "first_opening";
 	public static final String APP_SHARED_PREFERENCES = "applicationDetails";
@@ -137,12 +136,11 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 		mViewPager = (ViewPager) findViewById(R.id.pager);
 		mViewPager.setAdapter(mAppSectionsPagerAdapter);
 		mViewPager.setOnPageChangeListener(this);
-		httpGatewayURL = getString(R.string.http_gateway_url);
 
 		// Check device for Play Services APK.
 		if (checkPlayServices(this)) {
 			gcmMessenger = new CloudMessaging(
-					this.getApplicationContext(), this, httpGatewayURL);
+					this.getApplicationContext(), this);
 		}
 
 
@@ -177,7 +175,7 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 				}
 			}
 			getStreamListTask = new GetStreamListTask(this.getTaskListener(), this);
-			getStreamListTask.execute(httpGatewayURL, "0","10");
+			getStreamListTask.execute("0","10");
 		}
 	}
 
@@ -328,7 +326,7 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 					dialog.dismiss();
 
 					getStreamListTask = new GetStreamListTask(MainActivity.this.getTaskListener(), MainActivity.this);
-					getStreamListTask.execute(httpGatewayURL, "0","10");
+					getStreamListTask.execute("0","10");
 
 				}
 				else {

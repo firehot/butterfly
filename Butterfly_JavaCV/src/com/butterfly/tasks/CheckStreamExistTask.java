@@ -23,18 +23,17 @@ public class CheckStreamExistTask extends AbstractAsyncTask<String, Void, Boolea
 	protected Boolean doInBackground(String... params) {
 		Boolean result = false;
 		
-		streamName = params[1];
+		streamName = params[0];
 
 		AMFConnection amfConnection = new AMFConnection();
 		amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
 		try {
-			amfConnection.connect(params[0]);
+			amfConnection.connect(HTTP_GATEWAY_URL);
 			result = (Boolean) amfConnection.call("isLiveStreamExist", streamName);
 
 		} catch (ClientStatusException e) {
 			e.printStackTrace();
 		} catch (ServerStatusException e) {
-
 			e.printStackTrace();
 		}
 		amfConnection.close();

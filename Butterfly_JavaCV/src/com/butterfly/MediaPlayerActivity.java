@@ -82,7 +82,6 @@ public class MediaPlayerActivity extends Activity implements
 			return;
 
 		rtmpUrl = getString(R.string.rtmp_url);
-		String httpGatewayUrl = getString(R.string.http_gateway_url);
 		httpURL = getString(R.string.http_url) + "streams/";
 
 		Intent intent = getIntent();
@@ -103,7 +102,7 @@ public class MediaPlayerActivity extends Activity implements
 			boolean isLive = intent.getBooleanExtra(StreamListFragment.STREAM_IS_LIVE, true);
 			String videoURL; // = rtmpUrl + streamName; 
 			if (isLive == true) {
-				new CheckStreamExistTask(mAsyncTaskListener, this).execute(httpGatewayUrl, streamName);
+				new CheckStreamExistTask(mAsyncTaskListener, this).execute(streamName);
 				videoURL = rtmpUrl;
 			}
 			else {

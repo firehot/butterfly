@@ -23,9 +23,8 @@ public class UpdateUserRegisterIdTask extends AbstractAsyncTask<String, Void, St
 
 	/*
 	 * params[0] SENDER_ID
-	 * params[1] server addr
-	 * params[2] mail addresses
-	 * params[3] old reg id
+	 * params[1] mail addresses
+	 * params[2] old reg id
 	 * @see android.os.AsyncTask#doInBackground(java.lang.Object[])
 	 */
 	@Override
@@ -41,8 +40,8 @@ public class UpdateUserRegisterIdTask extends AbstractAsyncTask<String, Void, St
 			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
 			
 				System.out.println(registerId);
-				amfConnection.connect(params[1]);
-				isRegistered = (Boolean) amfConnection.call("updateUser",registerId, params[2],params[3]);
+				amfConnection.connect(HTTP_GATEWAY_URL);
+				isRegistered = (Boolean) amfConnection.call("updateUser",registerId, params[1],params[2]);
 			
 		} catch (IOException e) {
 			e.printStackTrace();

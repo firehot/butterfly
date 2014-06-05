@@ -49,6 +49,7 @@ public class Utils {
 		return mails;
 	}
 
+	//TODO: remove this class and use the one in GetStreamListTask
 	public static String getLiveStreams(Activity activity,String... params)
 	{
 		String streams = null;
@@ -69,6 +70,7 @@ public class Utils {
 		return streams;
 	}
 
+	//TODO: remove this class and use the one in GetStreamListTask
 	public static List<Stream> parseStreams(String streams,Context context) throws JSONException 
 	{
 		List<StreamListFragment.Stream> streamList = new ArrayList<StreamListFragment.Stream>();

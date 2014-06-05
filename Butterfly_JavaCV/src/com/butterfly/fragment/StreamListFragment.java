@@ -23,6 +23,7 @@ import com.butterfly.MediaPlayerActivity;
 import com.butterfly.R;
 import com.butterfly.adapter.ButterfFlyEndlessAdapter;
 import com.butterfly.adapter.StreamListAdapter;
+import com.butterfly.listeners.IAsyncTaskListener;
 import com.butterfly.listeners.IStreamListUpdateListener;
 import com.butterfly.message.CloudMessaging;
 import com.butterfly.tasks.DeleteStreamTask;
@@ -36,6 +37,7 @@ OnClickListener,OnRefreshListener{
 	private ButterfFlyEndlessAdapter adapter;
 	public static CloudMessaging msg;
 	private SwipeRefreshLayout swipeLayout;
+	private String deletedStreamUrl;
 
 	public static class Stream {
 		public String name;
@@ -70,6 +72,30 @@ OnClickListener,OnRefreshListener{
 		}
 
 	}
+	
+	private IAsyncTaskListener mAsyncTaskListener = new IAsyncTaskListener() {
+		
+		@Override
+		public void onProgressUpdate(Object... progress) {	}
+		
+		@Override
+		public void onPreExecute() {}
+		
+		@Override
+		public void onPostExecute(Object object) {
+			Boolean result = (Boolean) object;
+			if(result)
+			{
+				StreamListFragment.this.removeStream(deletedStreamUrl);
+				Toast.makeText(StreamListFragment.this.getActivity(), "Stream deleted succefully.", Toast.LENGTH_LONG).show();
+			}
+			else
+			{
+				Toast.makeText(StreamListFragment.this.getActivity(), "Stream deletion failed :(", Toast.LENGTH_LONG).show();
+
+			}
+		}
+	};
 
 	private OnItemClickListener itemClickListener = new OnItemClickListener() {
 
@@ -117,7 +143,7 @@ OnClickListener,OnRefreshListener{
 				|| activity.getStreamListTask.getStatus() ==  AsyncTask.Status.FINISHED) 
 		{
 			activity.getStreamListTask = new GetStreamListTask(activity.getTaskListener(), activity);
-			activity.getStreamListTask.execute(activity.httpGatewayURL,"0","10");
+			activity.getStreamListTask.execute("0","10");
 		}
 		
 	}
@@ -174,12 +200,15 @@ OnClickListener,OnRefreshListener{
 	    // Setup menu item selection
 	    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
 	    	
-	        public boolean onMenuItemClick(MenuItem item) {
+	       
+
+			public boolean onMenuItemClick(MenuItem item) {
 	            switch (item.getItemId()) {
 	            case R.id.menu_stream_popup_delete: 
 	            	StreamListFragment fragment = StreamListFragment.this;
-	            	DeleteStreamTask deleteTask = new DeleteStreamTask(fragment);
-	            	deleteTask.execute(fragment.getActivity().getString(R.string.http_gateway_url),v.getTag().toString());
+	            	DeleteStreamTask deleteTask = new DeleteStreamTask(mAsyncTaskListener, getActivity());
+	            	deletedStreamUrl = v.getTag().toString();
+	            	deleteTask.execute( deletedStreamUrl);
 	             return true;
 //	            case R.id.menu_stream_popup_share:
 //	              Toast.makeText(StreamListFragment.this.getActivity(), "Share!", Toast.LENGTH_SHORT).show();

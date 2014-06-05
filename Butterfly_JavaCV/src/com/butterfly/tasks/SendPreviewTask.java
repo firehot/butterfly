@@ -2,6 +2,9 @@ package com.butterfly.tasks;
 
 import java.io.ByteArrayOutputStream;
 
+import com.butterfly.listeners.IAsyncTaskListener;
+
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
@@ -20,7 +23,7 @@ import flex.messaging.io.amf.client.exceptions.ServerStatusException;
  * @author murat
  * 
  */
-public class SendPreviewTask extends AsyncTask<Object, Void, Boolean> {
+public class SendPreviewTask extends AbstractAsyncTask<Object, Void, Boolean> {
 
 	/**
 	 * width of camera preview size
@@ -31,11 +34,12 @@ public class SendPreviewTask extends AsyncTask<Object, Void, Boolean> {
 	 */
 	private int height;
 
-	public SendPreviewTask() {
 
+	public SendPreviewTask(IAsyncTaskListener taskListener, Activity context) {
+		super(taskListener, context);
 	}
 
-	public SendPreviewTask(int width, int height) {
+	public void setSize(int width, int height) {
 
 		this.height = height;
 		this.width = width;
@@ -47,10 +51,10 @@ public class SendPreviewTask extends AsyncTask<Object, Void, Boolean> {
 		AMFConnection amfConnection = new AMFConnection();
 		amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
 		try {
-			amfConnection.connect((String) params[0]);
+			amfConnection.connect(HTTP_GATEWAY_URL);
 
-			byte[] imgData = (byte[]) params[1];
-			String streamUrl = (String) params[2];
+			byte[] imgData = (byte[]) params[0];
+			String streamUrl = (String) params[1];
 
 			ByteArrayOutputStream baos = getByteArrayOutputStreamFromYUV(
 					imgData, this.width, this.height);

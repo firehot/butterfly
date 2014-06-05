@@ -31,7 +31,6 @@ public class CloudMessaging {
 	public String regid;
 	private Context context;
 	private Activity mActivity;
-	private String backendServer;
 	private String commaSeparatedMails;
 	private AbstractAsyncTask<String, Void, String> asyncTask;
 	
@@ -49,30 +48,27 @@ public class CloudMessaging {
 	};
 	
 
-	public CloudMessaging(Context context, Activity activity, String backendServer) {
+	public CloudMessaging(Context context, Activity activity) {
 		this.context = context;
 		this.mActivity = activity;
 		gcm = GoogleCloudMessaging.getInstance(this.context);
 		regid = getRegistrationId(this.context);
-		this.backendServer = backendServer;
-
-		
 	}
 	
 	public void checkRegistrationId(String mails) {
 		this.commaSeparatedMails = mails;
 		if (regid.isEmpty()) {
 			asyncTask = new RegisterUserTask(mRegisterUserTaskListener, this.mActivity);
-			asyncTask.execute(SENDER_ID, backendServer, commaSeparatedMails);
+			asyncTask.execute(SENDER_ID, commaSeparatedMails);
 		}
 		else if (isAppUpdated(this.context)) {
 			asyncTask = new UpdateUserRegisterIdTask(mRegisterUserTaskListener, mActivity);
-			asyncTask.execute(SENDER_ID, backendServer, commaSeparatedMails, regid);
+			asyncTask.execute(SENDER_ID, commaSeparatedMails, regid);
 		}
 		else if (isRegisrationCompleted() == false) {
 			asyncTask = new RegisterUserTask(mRegisterUserTaskListener, mActivity);
 			((RegisterUserTask)asyncTask).setRegisterId(regid);
-			asyncTask.execute(SENDER_ID, backendServer, commaSeparatedMails);
+			asyncTask.execute(SENDER_ID, commaSeparatedMails);
 		}
 	}
 

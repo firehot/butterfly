@@ -21,12 +21,11 @@ public class RegisterStreamTask extends
 
 
 	/**
-	 * params[0] server addr
-	 * params[1] streamName
-	 * params[2] streamURL
-	 * params[3] mailsToBeNotified
-	 * params[4] mail addres
-	 * params[5] is_video_public
+	 * params[0] streamName
+	 * params[1] streamURL
+	 * params[2] mailsToBeNotified
+	 * params[3] mail addres
+	 * params[4] is_video_public
 	 */
 	@Override
 	protected Boolean doInBackground(String... params) {
@@ -36,11 +35,11 @@ public class RegisterStreamTask extends
 		try {
 			System.out.println(params[0]);
 
-			boolean isVideoPublic = Boolean.parseBoolean(params[5]);
-			amfConnection.connect(params[0]);
+			boolean isVideoPublic = Boolean.parseBoolean(params[4]);
+			amfConnection.connect(HTTP_GATEWAY_URL);
 			result = (Boolean) amfConnection.call("registerLiveStream",
-					params[1], params[2], params[3],
-					params[4], isVideoPublic, Locale.getDefault()
+					params[0], params[1], params[2],
+					params[3], isVideoPublic, Locale.getDefault()
 							.getISO3Language());
 
 		} catch (ClientStatusException e) {

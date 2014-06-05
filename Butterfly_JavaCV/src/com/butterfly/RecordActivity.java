@@ -93,7 +93,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 	// private IplImage yuvIplimage = null;
 
 	private Button btnRecorderControl;
-	private String httpGatewayURL;
 	private String streamURL;
 	private EditText streamNameEditText;
 	private CheckBox publicVideoCheckBox;
@@ -202,7 +201,6 @@ public class RecordActivity extends Activity implements OnClickListener,
 
 		setContentView(R.layout.activity_record);
 
-		httpGatewayURL = getString(R.string.http_gateway_url);
 		localBroadcastManager = LocalBroadcastManager
 				.getInstance(getApplicationContext());
 		locationProvider = new LocationProvider(this);
@@ -268,7 +266,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 			public void onLocationChanged(Location location) {
 
 				RegisterLocationForStreamTask registerLocationTask = new RegisterLocationForStreamTask(null, RecordActivity.this);
-				registerLocationTask.setParams(httpGatewayURL, RecordActivity.this.streamURL);
+				registerLocationTask.setParams(RecordActivity.this.streamURL);
 				registerLocationTask.execute(location.getLongitude(), location.getLatitude(),
 						location.getAltitude());
 
@@ -571,7 +569,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 									@Override
 									public void run() {
 										new RegisterStreamTask(mRegisterStreamTaskListener, RecordActivity.this).
-										execute(httpGatewayURL, streamName,
+										execute(streamName,
 												streamURL,mailsToBeNotified,
 												Utils.getRegisteredMailList(RecordActivity.this), String.valueOf(is_video_public));
 										
@@ -647,9 +645,9 @@ public class RecordActivity extends Activity implements OnClickListener,
 				// send a preview snapshot image to the red5 only for first time
 				snapshotSent = true;
 				Size size = arg1.getParameters().getPreviewSize();
-				SendPreviewTask task = new SendPreviewTask(size.width,
-						size.height);
-				task.execute(httpGatewayURL, data, streamURL);
+				SendPreviewTask task = new SendPreviewTask(null, RecordActivity.this);
+				task.setSize(size.width, size.height);
+				task.execute(data, streamURL);
 			}
 
 		}

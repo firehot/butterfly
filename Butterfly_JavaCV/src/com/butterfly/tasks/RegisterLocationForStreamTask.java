@@ -16,11 +16,9 @@ public class RegisterLocationForStreamTask extends AbstractAsyncTask<Double, Voi
 		super(taskListener, context);
 	}
 
-	String httpGateway;
 	private String streamURL;
 
-	public void setParams(String httpGateway, String url) {
-		this.httpGateway = httpGateway;
+	public void setParams(String url) {
 		this.streamURL = url;
 	}
 
@@ -31,7 +29,7 @@ public class RegisterLocationForStreamTask extends AbstractAsyncTask<Double, Voi
 		AMFConnection amfConnection = new AMFConnection();
 		amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
 		try {
-			amfConnection.connect(this.httpGateway);
+			amfConnection.connect(HTTP_GATEWAY_URL);
 			result = (Boolean) amfConnection.call(
 					"registerLocationForStream", this.streamURL, params[0],
 					params[1], params[2]);

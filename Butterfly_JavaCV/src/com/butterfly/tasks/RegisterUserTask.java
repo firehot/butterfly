@@ -27,8 +27,7 @@ public class RegisterUserTask extends AbstractAsyncTask<String, Void, String> im
 
 	/*
 	 * params[0] SENDER_ID
-	 * params[1] Server ADDR
-	 * params[2] Comma separated mail addresses
+	 * params[1] Comma separated mail addresses
 	 * @see android.os.AsyncTask#doInBackground(java.lang.Object[])
 	 */
 	@Override
@@ -44,8 +43,8 @@ public class RegisterUserTask extends AbstractAsyncTask<String, Void, String> im
 			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
 
 			System.out.println(registerId);
-			amfConnection.connect(params[1]);
-			isRegistered = (Boolean) amfConnection.call("registerUser",registerId, params[2]);
+			amfConnection.connect(HTTP_GATEWAY_URL);
+			isRegistered = (Boolean) amfConnection.call("registerUser",registerId, params[1]);
 
 
 		} catch (ClientStatusException e) {
