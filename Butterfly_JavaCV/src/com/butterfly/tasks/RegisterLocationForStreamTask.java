@@ -37,7 +37,8 @@ public class RegisterLocationForStreamTask extends AbstractAsyncTask<Double, Voi
 		} catch (ClientStatusException e) {
 			e.printStackTrace();
 		} catch (ServerStatusException e) {
-
+			e.printStackTrace();
+		}catch (Exception e) {
 			e.printStackTrace();
 		}
 		amfConnection.close();

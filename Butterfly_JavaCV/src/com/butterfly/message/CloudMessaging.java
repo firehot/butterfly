@@ -21,7 +21,7 @@ public class CloudMessaging {
 	public static final String PROPERTY_REG_ID = "registration_id";
 	private static final String PROPERTY_APP_VERSION = "appVersion";
 	public final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
-	private static final String REGISTRATION_COMPLETED = "REGISTRATION_COMPLETED";
+	public static final String REGISTRATION_COMPLETED = "REGISTRATION_COMPLETED";
 
 	public static String SENDER_ID = "451796524204";
 
@@ -110,12 +110,8 @@ public class CloudMessaging {
 	/**
 	 * @return Application's {@code SharedPreferences}.
 	 */
-	private SharedPreferences getGCMPreferences(Context context, Class className) {
-		// This sample app persists the registration ID in shared preferences,
-		// but
-		// how you store the regID in your app is up to you.
-		return context.getSharedPreferences(className.getSimpleName(),
-				Context.MODE_PRIVATE);
+	public SharedPreferences getGCMPreferences(Context context, Class className) {
+		return context.getSharedPreferences(className.getSimpleName(), Context.MODE_PRIVATE);
 	}
 
 	private static int getAppVersion(Context context) {
@@ -148,6 +144,10 @@ public class CloudMessaging {
 		editor.putInt(PROPERTY_APP_VERSION, appVersion);
 		editor.putBoolean(REGISTRATION_COMPLETED, registrationCompleted);
 		editor.commit();
+	}
+
+	public AbstractAsyncTask<String, Void, String> getAsyncTask() {
+		return asyncTask;
 	}
 
 }

@@ -35,6 +35,8 @@ public class CheckStreamExistTask extends AbstractAsyncTask<String, Void, Boolea
 			e.printStackTrace();
 		} catch (ServerStatusException e) {
 			e.printStackTrace();
+		}catch (Exception e) {
+			e.printStackTrace();
 		}
 		amfConnection.close();
 

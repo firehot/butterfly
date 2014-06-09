@@ -65,6 +65,7 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 	private int batteryLevel = 0;
 	public GetStreamListTask getStreamListTask;
 	private CloudMessaging gcmMessenger;
+	private AlertDialog termsOfUseDialog;
 	private SharedPreferences applicationPrefs;
 	Button nextButton;
 	Button okButton;
@@ -106,6 +107,7 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 
 		}
 	};
+	
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -146,10 +148,10 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 
 		applicationPrefs = getSharedPreferences(
 				APP_SHARED_PREFERENCES, MODE_PRIVATE);
-		Boolean firstInstallation = applicationPrefs.getBoolean(
+		Boolean firstInstallation = getApplicationPrefs().getBoolean(
 				SHARED_PREFERENCE_FIRST_INSTALLATION, false);
 		if (!firstInstallation) {
-			showTermsOfUse(applicationPrefs);
+			showTermsOfUse(getApplicationPrefs());
 			mViewPager.setVisibility(View.GONE);
 			nextButton.setVisibility(View.VISIBLE);
 			okButton.setVisibility(View.GONE);
@@ -168,10 +170,10 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 
 			// if the app is opened for the first time, check registation id is called
 			// in dialog positive button click.
-			if (gcmMessenger != null) {
-				String registeredMailAddress = applicationPrefs.getString(REGISTERED_MAIL_ADDRESS, null);
+			if (getGcmMessenger() != null) {
+				String registeredMailAddress = getApplicationPrefs().getString(REGISTERED_MAIL_ADDRESS, null);
 				if (registeredMailAddress != null && registeredMailAddress.length()>0) {
-					gcmMessenger.checkRegistrationId(registeredMailAddress);
+					getGcmMessenger().checkRegistrationId(registeredMailAddress);
 				}
 			}
 			getStreamListTask = new GetStreamListTask(this.getTaskListener(), this);
@@ -294,16 +296,12 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 				MainActivity.this.finish();
 			}
 		});
-		final AlertDialog dialog = termsDialog.show();
-		dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new OnClickListener() {
+		termsOfUseDialog = termsDialog.show();
+		termsOfUseDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
-				SharedPreferences.Editor mInstallationEditor = applicationPrefs
-						.edit();
-				mInstallationEditor.putBoolean(SHARED_PREFERENCE_FIRST_INSTALLATION, true);
-				mInstallationEditor.commit();
-
+				
 				int itemCount = mailAddressesLv.getCheckedItemCount();
 				if (itemCount > 0) {
 					SparseBooleanArray checkedItemIds = mailAddressesLv.getCheckedItemPositions();
@@ -320,10 +318,15 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 					Editor editor = applicationPrefs.edit();
 					editor.putString(REGISTERED_MAIL_ADDRESS, mails);
 					editor.commit();
-					if (gcmMessenger != null) {
-						gcmMessenger.checkRegistrationId(mails);
+					if (getGcmMessenger() != null) {
+						getGcmMessenger().checkRegistrationId(mails);
 					}
-					dialog.dismiss();
+					termsOfUseDialog.dismiss();
+					
+					SharedPreferences.Editor mInstallationEditor = applicationPrefs
+							.edit();
+					mInstallationEditor.putBoolean(SHARED_PREFERENCE_FIRST_INSTALLATION, true);
+					mInstallationEditor.commit();
 
 					getStreamListTask = new GetStreamListTask(MainActivity.this.getTaskListener(), MainActivity.this);
 					getStreamListTask.execute("0","10");
@@ -466,4 +469,17 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 	public IAsyncTaskListener getTaskListener() {
 		return mAsyncTaskListener;
 	}
+
+	public CloudMessaging getGcmMessenger() {
+		return gcmMessenger;
+	}
+	
+	public AlertDialog getTermsOfUseDialog() {
+		return termsOfUseDialog;
+	}
+
+	public SharedPreferences getApplicationPrefs() {
+		return applicationPrefs;
+	}
+
 }

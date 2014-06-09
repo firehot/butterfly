@@ -84,7 +84,7 @@ public interface IWebService {
 	 * @param data
 	 * @param streamURL
 	 */
-	public void savePreview(byte[] data, String streamURL);
+	public boolean savePreview(byte[] data, String streamURL);
 	
 	/**
 	 * checks that if the stream with specified url is still live

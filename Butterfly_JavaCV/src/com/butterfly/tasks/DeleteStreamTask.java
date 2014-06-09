@@ -38,7 +38,8 @@ public class DeleteStreamTask extends AbstractAsyncTask<String, Void, Boolean> {
 		} catch (ClientStatusException e) {
 			e.printStackTrace();
 		} catch (ServerStatusException e) {
-
+			e.printStackTrace();
+		}catch (Exception e) {
 			e.printStackTrace();
 		}
 		amfConnection.close();

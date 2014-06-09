@@ -15,10 +15,15 @@ import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 public class UpdateUserRegisterIdTask extends AbstractAsyncTask<String, Void, String> implements IRegistrationStatus{
 
 	private boolean isRegistered = false;
+	private String registerId;
 
 	public UpdateUserRegisterIdTask(IAsyncTaskListener taskListener,
 			Activity context) {
 		super(taskListener, context);
+	}
+	
+	public void setNewRegisterId(String registerId) {
+		this.registerId = registerId;
 	}
 
 	/*
@@ -31,23 +36,26 @@ public class UpdateUserRegisterIdTask extends AbstractAsyncTask<String, Void, St
 	protected String doInBackground(String... params) {
 		GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(context);
 		AMFConnection amfConnection = null;
-		String registerId = null;				
+						
 		try {
-			registerId = gcm.register(params[0]);
-			
+			if (registerId == null) {
+				registerId = gcm.register(params[0]);
+			}
 			isRegistered  = false;
 			amfConnection = new AMFConnection();
 			amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
 			
-				System.out.println(registerId);
-				amfConnection.connect(HTTP_GATEWAY_URL);
-				isRegistered = (Boolean) amfConnection.call("updateUser",registerId, params[1],params[2]);
+			System.out.println(registerId);
+			amfConnection.connect(HTTP_GATEWAY_URL);
+			isRegistered = (Boolean) amfConnection.call("updateUser",registerId, params[1],params[2]);
 			
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClientStatusException e) {
 			e.printStackTrace();
 		} catch (ServerStatusException e) {
+			e.printStackTrace();
+		}catch (Exception e) {
 			e.printStackTrace();
 		}
 		finally {

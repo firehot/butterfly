@@ -53,6 +53,8 @@ public class RegisterUserTask extends AbstractAsyncTask<String, Void, String> im
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}catch (Exception e) {
+			e.printStackTrace();
 		}
 		finally {
 			if (amfConnection != null) {

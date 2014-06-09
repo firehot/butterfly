@@ -45,7 +45,8 @@ public class RegisterStreamTask extends
 		} catch (ClientStatusException e) {
 			e.printStackTrace();
 		} catch (ServerStatusException e) {
-
+			e.printStackTrace();
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		amfConnection.close();

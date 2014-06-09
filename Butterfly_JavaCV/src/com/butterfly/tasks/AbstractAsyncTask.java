@@ -44,4 +44,8 @@ public abstract class AbstractAsyncTask<Params, Progress, Result> extends AsyncT
 		}
 		super.onProgressUpdate(values);
 	}
+	
+	public static void setHttpGatewayURL(String httpGatewayUrl) {
+		HTTP_GATEWAY_URL = httpGatewayUrl;
+	}
 }

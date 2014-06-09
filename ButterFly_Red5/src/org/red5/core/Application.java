@@ -610,15 +610,18 @@ public class Application extends MultiThreadedApplicationAdapter implements IWeb
 	 * @param data
 	 * @param streamURL
 	 */
-	public void savePreview(byte[] data, String streamURL) {
+	public boolean savePreview(byte[] data, String streamURL) {
+		boolean result = true;
 		try {
 			BufferedImage img = ImageIO.read(new ByteArrayInputStream(data));
 			File outputfile = new File("webapps/ButterFly_Red5/" + streamURL
 					+ ".png");
 			ImageIO.write(img, "png", outputfile);
 		} catch (IOException e) {
+			result = false;
 			e.printStackTrace();
 		}
+		return result;
 	}
 
 	public boolean isNotificationSent() {

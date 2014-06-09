@@ -48,6 +48,7 @@ public class SendPreviewTask extends AbstractAsyncTask<Object, Void, Boolean> {
 
 	@Override
 	protected Boolean doInBackground(Object... params) {
+		boolean result = false;
 		AMFConnection amfConnection = new AMFConnection();
 		amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
 		try {
@@ -59,17 +60,19 @@ public class SendPreviewTask extends AbstractAsyncTask<Object, Void, Boolean> {
 			ByteArrayOutputStream baos = getByteArrayOutputStreamFromYUV(
 					imgData, this.width, this.height);
 
-			amfConnection.call("savePreview", baos.toByteArray(), streamUrl);
+			result = (Boolean) amfConnection.call("savePreview", baos.toByteArray(), streamUrl);
 
 		} catch (ClientStatusException e) {
 			Log.e("butterfly", e.getMessage());
 			e.printStackTrace();
 		} catch (ServerStatusException e) {
 			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		amfConnection.close();
 
-		return true;
+		return result;
 	}
 
 	/**
