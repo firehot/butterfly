@@ -19,7 +19,6 @@ import com.butterfly.fragment.StreamListFragment.Stream;
 import com.butterfly.listeners.IStreamListUpdateListener;
 import com.butterfly.utils.LocationProvider;
 import com.butterfly.view.BTVMarker;
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -27,7 +26,6 @@ import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -36,7 +34,6 @@ public class VideoMapFragment extends Fragment implements IStreamListUpdateListe
 
 	private GoogleMap mMap;
 	private HashMap<String, BTVMarker> hashMap = new HashMap<String, BTVMarker>();
-	private SupportMapFragment fragment;
 	private MapView mpView;
 	private static View view;
 	LocationProvider locationProvider;
@@ -59,11 +56,8 @@ public class VideoMapFragment extends Fragment implements IStreamListUpdateListe
 		mpView = (MapView)view.findViewById(R.id.map);
 		mpView.onCreate(savedInstanceState);
 
-		try {
-		     MapsInitializer.initialize(this.getActivity());
-		 } catch (GooglePlayServicesNotAvailableException e) {
-		     e.printStackTrace();
-		 }
+		MapsInitializer.initialize(this.getActivity());
+		
 		return view;
 	}
 
