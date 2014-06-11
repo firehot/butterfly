@@ -32,6 +32,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 public class VideoMapFragment extends Fragment implements IStreamListUpdateListener,OnMarkerClickListener,OnInfoWindowClickListener  {
 
+	
 	private GoogleMap mMap;
 	private HashMap<String, BTVMarker> hashMap = new HashMap<String, BTVMarker>();
 	private MapView mpView;
