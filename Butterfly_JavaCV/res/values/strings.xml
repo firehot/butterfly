@@ -55,5 +55,5 @@
     <string name="list">List</string>
     <string name="group_broadcast">Group Broadcast</string>
     <string name="title_activity_contact_chooser">Choose Contacts</string>
-
+    <string name="in_compatible_arch">Sorry, we haven\'t supported your device\'s cpu arch yet.(ARM is supported) You could not broadcast :(</string>
 </resources>

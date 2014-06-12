@@ -7,11 +7,13 @@ import java.nio.ShortBuffer;
 import java.util.List;
 import java.util.Locale;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -26,6 +28,7 @@ import android.media.MediaRecorder;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -208,6 +211,47 @@ public class RecordActivity extends Activity implements OnClickListener,
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
 		initLayout();
+		
+		if (isArmCPU() == false) {
+			showIncompatibleArchInfo();
+		}
+	}
+	
+	private void showIncompatibleArchInfo() {
+		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+				RecordActivity.this);
+ 
+			// set dialog message
+			alertDialogBuilder
+				.setMessage(getString(R.string.in_compatible_arch))
+				.setCancelable(false)
+				.setPositiveButton(getString(R.string.ok),new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog,int id) {
+						// if this button is clicked, close
+						// current activity
+						RecordActivity.this.finish();
+					}
+				  });
+ 
+				// create alert dialog
+				AlertDialog alertDialog = alertDialogBuilder.create();
+ 
+				// show it
+				alertDialog.show();
+	}
+	
+	
+	private boolean isArmCPU()
+	{
+		boolean result = false;
+		String arch = System.getProperty("os.arch");    
+		String arc = arch.substring(0, 3).toUpperCase(Locale.ENGLISH);
+		String cpuAbi = Build.CPU_ABI.substring(0, 3).toUpperCase(Locale.ENGLISH);
+		String cpuAbi2 = Build.CPU_ABI2.substring(0, 3).toUpperCase(Locale.ENGLISH);
+		if (arc.equals("ARM") || "ARM".equals(cpuAbi) || "ARM".equals(cpuAbi2)) {
+			result = true;
+	    }
+	    return result;
 	}
 	
 	@Override
