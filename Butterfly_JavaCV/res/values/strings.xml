@@ -11,9 +11,9 @@
     <string name="title_activity_stream_list">StreamList</string>
     <string name="refresh">Refresh</string>
     <string name="broadcast_live">Broadcast Live</string>
-    <string name="http_gateway_url">http://54.194.98.151:5080/ButterFly_Red5/gateway</string>
-    <string name="rtmp_url">rtmp://54.194.98.151/ButterFly_Red5/</string>
-    <string name="http_url">http://54.194.98.151:5080/ButterFly_Red5/</string>
+    <string name="http_gateway_url">http://54.76.167.90:5080/ButterFly_Red5/gateway</string>
+    <string name="rtmp_url">rtmp://54.76.167.90/ButterFly_Red5/</string>
+    <string name="http_url">http://54.76.167.90:5080/ButterFly_Red5/</string>
     <string name="write_name_of_stream">Please write the name of the stream</string>
     <string name="connectivityProblem">Problem in connectivity</string>
     <string name="noLiveStream">No live streams right now</string>
