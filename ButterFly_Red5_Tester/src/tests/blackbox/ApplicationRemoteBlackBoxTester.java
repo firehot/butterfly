@@ -6,12 +6,12 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Locale;
 
 import javax.persistence.Query;
 
@@ -19,10 +19,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.red5.core.utils.JPAUtils;
-import org.red5.io.utils.IOUtils;
 
 import flex.messaging.io.MessageIOConstants;
 import flex.messaging.io.amf.client.AMFConnection;
@@ -38,18 +39,91 @@ public class ApplicationRemoteBlackBoxTester {
 
 	private static final String REG_ID2 = "21118723424242423109823jshfsjafhsksdsagagf8374sfdasfasfasf2";
 	private static final String REG_ID = "21118723109823jshfsjafhskf83742";
-	private String serverPureURL = "http://localhost:5080/ButterFly_Red5/";
-	
-	private String serverURL = serverPureURL + "gateway";
-	private AMFConnection amfConnection;
+	private static String suffix;
+	private static String serverPureURL = "http://localhost:5080/ButterFly_Red5/";
+
+	private static String serverURL = serverPureURL + "gateway";
+	private static AMFConnection amfConnection;
+
+
+	@BeforeClass
+	public static void beforeClass() {
+
+		try {
+			delete(new File("red5/webapps/ButterFly_Red5"));
+
+
+			String gradlePath = "gradle";  //"/home/faraway/softwares/gradle-1.12/bin/gradle";
+			String warCommand = gradlePath + " clean war uploadArchives";
+
+			Process process = Runtime.getRuntime().exec(warCommand, null, new File("../ButterFly_Red5/"));
+			System.out.println("building and deploying ButterFly_Red5...");
+			
+			process.waitFor();
+			
+			String path = "./red5.";
+			String osName = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
+
+			if (osName.equals("linux")) {
+				suffix = "sh"; 
+			}
+			else {
+				suffix = "bat";
+			}
+
+			path += suffix;
+
+			closeRed5(); // if it is running somehow.
+			Runtime.getRuntime().exec(path, null, new File("red5"));
+			int sleepTime = 30000;
+			System.out.println("Waiting " + sleepTime + "ms for letting red5 start." );
+			System.out.println("You can get exception if red5 is not started fully after this while. \n So arrange this time according to your red5 startup time in your machine");
+			Thread.sleep(sleepTime);
+		} catch (IOException e) {
+			fail("the reason of this exception may gradle not be in system-wide OS path");
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} 
+	}
+
+
+
+	@AfterClass
+	public static void afterClass() {
+		closeRed5();
+	}
+
+	public static void closeRed5() {
+		String path = "./red5-shutdown." + suffix;
+
+		try {
+			Process exec = Runtime.getRuntime().exec(path, null, new File("red5")); //new String[] {"cd red5; "+ path});
+			exec.waitFor();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
 
 	@Before
 	public void setUp() throws Exception {
 		prepareEnvironment();
+		connectToServer();
+	}
+
+	public static boolean connectToServer()  {
 		amfConnection = new AMFConnection();
 		amfConnection.setObjectEncoding(MessageIOConstants.AMF0);
-		amfConnection.connect(serverURL);
+		try {
+			amfConnection.connect(serverURL);
+		} catch (ClientStatusException e) {
+			e.printStackTrace();
+			return false;
+		}
 
+		return true;
 	}
 
 	private void prepareEnvironment() {
@@ -218,34 +292,34 @@ public class ApplicationRemoteBlackBoxTester {
 		Boolean resultBool;
 		try {
 			resultBool = (Boolean) amfConnection.call("registerUser", REG_ID, "ahmetmermerkaya@gmail.com");
-			
+
 			assertTrue(resultBool);
 
 			String streamURL = "string_urhgjhgkjhgl" + (int)(Math.random() *1000);
 			resultBool = (Boolean)amfConnection.call("registerLiveStream", "streamName", streamURL, "ahmetmermerkaya@gmail.com", "ahmetmermerkaya@gmail.com", true, "tur");
 			assertTrue(resultBool);
-			
-			
+
+
 			Process exec = Runtime.getRuntime().exec("ffmpeg -i src/resource/test.flv -acodec copy -vcodec copy -f flv rtmp://localhost/ButterFly_Red5/" + streamURL);
-	
+
 			Thread.sleep(2000);
-			
+
 			exec.destroy();
-			
+
 			String streams = (String)amfConnection.call("getLiveStreams", "ahmetmermerkaya@gmail.com");
 			JSONArray jsonArray = new JSONArray(streams);
-			
+
 			assertEquals(jsonArray.length(), 1);
-			
+
 			resultBool = (Boolean)amfConnection.call("deleteStream", streamURL);
 			assertTrue(resultBool);
-			
+
 			streams = (String)amfConnection.call("getLiveStreams", "ahmetmermerkaya@gmail.com");
 			jsonArray = new JSONArray(streams);
-			
+
 			assertEquals(jsonArray.length(), 0);
-			
-			
+
+
 		} catch (ClientStatusException e) {
 			fail(e.getMessage());
 			e.printStackTrace();
@@ -274,16 +348,16 @@ public class ApplicationRemoteBlackBoxTester {
 			String streamURL = "string_urhgjhgkjhgl" + Math.random() *100;
 			resultBool = (Boolean)amfConnection.call("registerLiveStream", "streamName", streamURL, "ahmetmermerkaya@gmail.com", "ahmetmermerkaya@gmail.com", true, "tur");
 			assertTrue(resultBool);
-			
+
 			RandomAccessFile f = new RandomAccessFile("src/resource/1.png", "r");
 			byte[] b = new byte[(int)f.length()];
 			f.read(b);
 			amfConnection.call("savePreview", b, streamURL);
-			
+
 			byte[] array = getByteArray(serverPureURL + streamURL + ".png");
-			
+
 			assertNotNull(array);
-			
+
 			//just checking it is enough length
 			assertTrue(array.length > 10000);
 
@@ -304,23 +378,23 @@ public class ApplicationRemoteBlackBoxTester {
 		Boolean resultBool;
 		try {
 			resultBool = (Boolean) amfConnection.call("registerUser", REG_ID, "ahmetmermerkaya@gmail.com");
-			
+
 			assertTrue(resultBool);
 
 			String streamURL = "string_urhgjhgkjhgl" + (int)(Math.random() *1000);
 			resultBool = (Boolean)amfConnection.call("registerLiveStream", "streamName", streamURL, "ahmetmermerkaya@gmail.com", "ahmetmermerkaya@gmail.com", true, "tur");
 			assertTrue(resultBool);
-			
-			
+
+
 			Process exec = Runtime.getRuntime().exec("ffmpeg -i src/resource/test.flv -acodec copy -vcodec copy -f flv rtmp://localhost/ButterFly_Red5/" + streamURL);
-	
+
 			Thread.sleep(2000);
-			
+
 			resultBool = (Boolean)amfConnection.call("isLiveStreamExist", streamURL);
 			assertTrue(resultBool);
-			
+
 			exec.destroy();
-			
+
 		} catch (ClientStatusException e) {
 			fail(e.getMessage());
 			e.printStackTrace();
@@ -359,5 +433,45 @@ public class ApplicationRemoteBlackBoxTester {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	public static void delete(File file)
+			throws IOException{
+
+		if(file.isDirectory()){
+
+			//directory is empty, then delete it
+			if(file.list().length==0){
+
+				file.delete();
+				System.out.println("Directory is deleted : " 
+						+ file.getAbsolutePath());
+
+			}else{
+
+				//list all the directory contents
+				String files[] = file.list();
+
+				for (String temp : files) {
+					//construct the file structure
+					File fileDelete = new File(file, temp);
+
+					//recursive delete
+					delete(fileDelete);
+				}
+
+				//check the directory again, if empty then delete it
+				if(file.list().length==0){
+					file.delete();
+					System.out.println("Directory is deleted : " 
+							+ file.getAbsolutePath());
+				}
+			}
+
+		}else{
+			//if file, then delete it
+			file.delete();
+			System.out.println("File is deleted : " + file.getAbsolutePath());
+		}
 	}
 }

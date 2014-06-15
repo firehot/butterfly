@@ -1,0 +1,39 @@
+apply plugin: 'war'
+webAppDirName = 'WebContent'
+buildDir = 'gradle_build'
+
+sourceSets {
+  main {
+     java {
+	srcDir 'src'
+     }
+     resources {
+        srcDir 'src'
+     }
+  }
+  
+}
+
+repositories {
+   flatDir { dirs "WebContent/WEB-INF/lib","libs"}
+}
+
+dependencies {
+  providedCompile fileTree(dir:'WebContent/WEB-INF/lib', include:'*.jar')
+  providedCompile fileTree(dir:'libs', include:'*.jar')
+}
+
+artifacts {
+  archives file("gradle_build/libs/ButterFly_Red5.war") 
+}
+
+
+uploadArchives {
+   repositories {
+       flatDir {
+	   dirs "../ButterFly_Red5_Tester/red5/webapps"
+        }
+   }
+}
+
+
