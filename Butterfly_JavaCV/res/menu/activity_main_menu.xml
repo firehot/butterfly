@@ -12,6 +12,12 @@
         android:showAsAction="ifRoom"
         android:icon="@drawable/ic_group"
         android:title="@string/group_broadcast"/>
+    
+        <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="100"
+        android:title="@string/action_settings"
+        android:showAsAction="never"/>
    
     
     

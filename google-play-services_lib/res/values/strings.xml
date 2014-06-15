@@ -4,7 +4,7 @@
     <!-- Title of confirmation dialog informing user that they need to install
         Google Play services (from Play Store) [CHAR LIMIT=40] -->
     <string name="common_google_play_services_install_title" msgid="7215213145546190223">Get Google Play services</string>
-
+<string name="location_client_powered_by_google">Powered by Google</string>
     <!-- (For phones) Message in confirmation dialog informing user that
         they need to install Google Play services (from Play Store) [CHAR LIMIT=NONE] -->
     <string name="common_google_play_services_install_text_phone" msgid="2122112764540849864">This app won\'t run without Google Play services, which are missing from your phone.</string>
