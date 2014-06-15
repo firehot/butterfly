@@ -6,6 +6,7 @@ import java.nio.Buffer;
 import java.nio.ShortBuffer;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -41,6 +42,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.androidsocialnetworks.lib.SocialNetwork;
 import com.bugsense.trace.BugSenseHandler;
 import com.butterfly.debug.BugSense;
 import com.butterfly.fragment.ContactsListFragment;
@@ -60,7 +62,7 @@ import flex.messaging.io.amf.client.AMFConnection;
 import flex.messaging.io.amf.client.exceptions.ClientStatusException;
 import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
-public class RecordActivity extends Activity implements OnClickListener,
+public class RecordActivity extends BaseSocialMediaActivity implements OnClickListener,
 		PreviewCallback {
 
 	private final static String CLASS_LABEL = "RecordActivity";
@@ -600,6 +602,7 @@ public class RecordActivity extends Activity implements OnClickListener,
 				publicVideoCheckBox.setVisibility(View.GONE);
 				btnRecorderControl
 						.setBackgroundResource(R.drawable.bt_stop_record);
+				shareonSocialMedia();
 			} else {
 				Toast.makeText(getApplicationContext(),
 						getString(R.string.stream_registration_failed),
@@ -613,6 +616,17 @@ public class RecordActivity extends Activity implements OnClickListener,
 			RecordActivity.this.getLocation();
 			super.onPostExecute(result);
 
+		}
+
+		private void shareonSocialMedia() {
+			String message = RecordActivity.this.getString(R.string.social_media_message);
+			message += streamURL;
+			if(mSocialNetworkManager.getTwitterSocialNetwork().isConnected())
+				mSocialNetworkManager.getTwitterSocialNetwork().requestPostMessage(
+						message,RecordActivity.this);
+			else if(mSocialNetworkManager.getFacebookSocialNetwork().isConnected())
+				mSocialNetworkManager.getFacebookSocialNetwork().requestPostMessage(
+						message,RecordActivity.this);
 		}
 	}
 
@@ -705,6 +719,16 @@ public class RecordActivity extends Activity implements OnClickListener,
 	
 	public String getStreamURL() {
 		return streamURL;
+	}
+	
+	@Override
+	public void onSocialNetworkManagerInitialized() {
+
+		for (SocialNetwork socialNetwork : mSocialNetworkManager
+				.getInitializedSocialNetworks()) {
+			socialNetwork.setOnLoginCompleteListener(this);
+		}
+
 	}
 
 }
