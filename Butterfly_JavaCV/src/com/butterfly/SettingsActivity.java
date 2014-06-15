@@ -20,13 +20,13 @@ public class SettingsActivity extends BaseSocialMediaActivity {
 	@Override
 	public void onError(int socialNetworkID, String requestID,
 			String errorMessage, Object data) {
-		Toast.makeText(this, "login error", Toast.LENGTH_LONG).show();
+		
 
 	}
 
 	@Override
 	public void onLoginSuccess(int socialNetworkID) {
-		Toast.makeText(this, "login successfull", Toast.LENGTH_LONG).show();
+		
 
 	}
 

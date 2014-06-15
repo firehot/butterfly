@@ -6,10 +6,7 @@ import java.nio.Buffer;
 import java.nio.ShortBuffer;
 import java.util.List;
 import java.util.Locale;
-import java.util.Random;
 
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -39,6 +36,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -102,6 +100,11 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 	private Size previewSize;
 	private BytePointer bytePointer;
 	private boolean snapshotSent = false;
+	
+	private LinearLayout twitLayout;
+	private LinearLayout faceLayout;
+	private CheckBox twitCheckbox;
+	private CheckBox faceCheckbox;
 
 	BroadcastReceiver viewerCountReceiver = new BroadcastReceiver() {
 
@@ -250,9 +253,6 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 		Parameters parameters = cameraDevice.getParameters();
 		List<Size> sizes = parameters.getSupportedPreviewSizes();
 		parameters.setPreviewSize(sizes.get(0).width, sizes.get(0).height);
-
-	//	parameters.setWhiteBalance(Parameters.WHITE_BALANCE_AUTO);
-	//	parameters.setSceneMode(Parameters.SCENE_MODE_AUTO);
 
 		cameraDevice.setParameters(parameters);
 		cameraView.setCamera(cameraDevice);
@@ -534,6 +534,7 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 					.setBackgroundResource(R.drawable.bt_start_record);
 			streamNameEditText.setVisibility(View.VISIBLE);
 			publicVideoCheckBox.setVisibility(View.VISIBLE);
+			setVisibilitySocialMedia(true);
 			stopRecording();
 			runAudioThread = false;
 			snapshotSent = false;
@@ -603,12 +604,14 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 				btnRecorderControl
 						.setBackgroundResource(R.drawable.bt_stop_record);
 				shareonSocialMedia();
+				setVisibilitySocialMedia(false);
 			} else {
 				Toast.makeText(getApplicationContext(),
 						getString(R.string.stream_registration_failed),
 						Toast.LENGTH_LONG).show();
 				streamNameEditText.setVisibility(View.VISIBLE);
 				publicVideoCheckBox.setVisibility(View.VISIBLE);
+				setVisibilitySocialMedia(true);
 			}
 
 			mProgressDialog = null;
@@ -621,10 +624,12 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 		private void shareonSocialMedia() {
 			String message = RecordActivity.this.getString(R.string.social_media_message);
 			message += streamURL;
-			if(mSocialNetworkManager.getTwitterSocialNetwork().isConnected())
+			if(mSocialNetworkManager.getTwitterSocialNetwork().isConnected() 
+					&& RecordActivity.this.twitCheckbox.isChecked())
 				mSocialNetworkManager.getTwitterSocialNetwork().requestPostMessage(
 						message,RecordActivity.this);
-			else if(mSocialNetworkManager.getFacebookSocialNetwork().isConnected())
+			else if(mSocialNetworkManager.getFacebookSocialNetwork().isConnected()
+					&& RecordActivity.this.faceCheckbox.isChecked())
 				mSocialNetworkManager.getFacebookSocialNetwork().requestPostMessage(
 						message,RecordActivity.this);
 		}
@@ -728,7 +733,29 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 				.getInitializedSocialNetworks()) {
 			socialNetwork.setOnLoginCompleteListener(this);
 		}
+		
+		this.twitLayout = (LinearLayout) this.findViewById(R.id.twitLayout);
+		this.twitCheckbox = (CheckBox) this.findViewById(R.id.checkBoxTwit);
+		this.faceLayout = (LinearLayout) this.findViewById(R.id.faceLayout);
+		this.faceCheckbox = (CheckBox) this.findViewById(R.id.checkBoxFace);
+		
+		setVisibilitySocialMedia(true);
 
 	}
 
+	private void setVisibilitySocialMedia(boolean visibility)
+	{
+		if(visibility)
+		{
+			if(mSocialNetworkManager.getTwitterSocialNetwork().isConnected())
+				this.twitLayout.setVisibility(View.VISIBLE);
+			else if(mSocialNetworkManager.getFacebookSocialNetwork().isConnected())
+				this.faceLayout.setVisibility(View.VISIBLE);
+		}
+		else
+		{
+			this.twitLayout.setVisibility(View.GONE);
+			this.faceLayout.setVisibility(View.GONE);
+		}
+	}
 }
