@@ -2,6 +2,7 @@ package org.red5.core.manager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -90,7 +91,10 @@ public class UserManager {
 
 			String[] mails = mail.split(",");
 			List<String> mailList = new ArrayList<String>(Arrays.asList(mails));
-
+			
+			removeEmptyMails(mailList);
+			mails = mailList.toArray(new String[mailList.size()]);
+			
 			query.setParameter("email", mailList);
 			List<GcmUserMails> results = query.getResultList();
 
@@ -129,12 +133,13 @@ public class UserManager {
 				JPAUtils.getEntityManager().persist(gcmUsers);
 
 
-				for (int i = 0; i < mails.length; i++) {
+				for (String userMail : mailList) {
 					GcmUserMails userMails = new  GcmUserMails();
-					userMails.setMail(mails[i]);
+					userMails.setMail(userMail);
 					addGcmUserMail(gcmUsers, userMails);
 					JPAUtils.getEntityManager().persist(userMails);
 				}
+
 				RegIds regid = new RegIds(register_id);
 				addRegID(gcmUsers, regid);
 
@@ -150,6 +155,14 @@ public class UserManager {
 			result = false;
 		}
 		return result;
+
+	}
+
+
+	public void removeEmptyMails(List<String> mailList) {
+		
+		mailList.removeAll(Collections.singleton(null));
+		mailList.removeAll(Collections.singleton(""));
 
 	}
 
