@@ -409,6 +409,47 @@ public class ApplicationRemoteBlackBoxTester {
 			e.printStackTrace();
 		}
 	}
+	
+	@Test
+	public void testSendHighResVideo() {
+		Boolean resultBool;
+		try {
+			resultBool = (Boolean) amfConnection.call("registerUser", REG_ID, "ahmetmermerkaya@gmail.com");
+
+			assertTrue(resultBool);
+
+			String streamURL = "mystream";
+			resultBool = (Boolean)amfConnection.call("registerLiveStream", "streamName", streamURL, "ahmetmermerkaya@gmail.com", "ahmetmermerkaya@gmail.com", true, "tur");
+			assertTrue(resultBool);
+
+
+			Process exec = Runtime.getRuntime().exec("ffmpeg -re -i src/resource/test_hr.flv -acodec copy -vcodec copy -f flv rtmp://localhost/ButterFly_Red5/" + streamURL);
+
+			Thread.sleep(1000);
+
+			resultBool = (Boolean)amfConnection.call("isLiveStreamExist", streamURL);
+			assertTrue(resultBool);
+			System.out.println("letting ffmpeg finish video");
+			exec.waitFor();
+			
+			
+
+			
+
+		} catch (ClientStatusException e) {
+			fail(e.getMessage());
+			e.printStackTrace();
+		} catch (ServerStatusException e) {
+			fail(e.getMessage());
+			e.printStackTrace();
+		} catch (IOException e) {
+			fail(e.getMessage());
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			fail(e.getMessage());
+			e.printStackTrace();
+		}
+	}
 
 
 	public byte[] getByteArray(String address){

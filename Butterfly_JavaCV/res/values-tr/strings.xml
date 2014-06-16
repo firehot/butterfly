@@ -47,5 +47,6 @@
     <string name="list">List</string>
     <string name="group_broadcast">Grup Yayını</string>
     <string name="in_compatible_arch">Cihazının işlemci mimarisini maalesef destekleyemiyoruz.(ARM işlemciler desteklenmektedir.) Bu yüzden canlı yayın yapamazsınız :(</string>
-    
+    <string name="twitter_enable">Twitter\'i etkinleştir</string>
+	<string name="enable_twitter_sharing">Yayına başlamadan izin verirseniz, uygulama yayına başladığınızda tweet atar</string>
 </resources>

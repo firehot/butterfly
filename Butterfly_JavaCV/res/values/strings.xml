@@ -57,5 +57,7 @@
     <string name="group_broadcast">Group Broadcast</string>
     <string name="title_activity_contact_chooser">Choose Contacts</string>
     <string name="in_compatible_arch">Sorry, we haven\'t supported your device\'s cpu arch yet.(ARM is supported) You could not broadcast :(</string>
-    <string name="social_media_message">I am live #iamlive http://www.butterflytv.net/player.html?videoId=</string>
+    <string name="social_media_message">#iamlive http://www.butterflytv.net/player.html?videoId=</string>
+	<string name="twitter_enable">Enable Twitter</string>
+	<string name="enable_twitter_sharing">You can let app tweet about your live stream before starting broadcast</string>
 </resources>

@@ -1,4 +1,8 @@
-package com.butterfly;
+package com.butterfly.fragment;
+
+import com.butterfly.R;
+import com.butterfly.SettingsActivity;
+import com.butterfly.R.xml;
 
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;

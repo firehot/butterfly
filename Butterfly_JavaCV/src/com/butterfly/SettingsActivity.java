@@ -3,6 +3,7 @@ package com.butterfly;
 import android.os.Bundle;
 
 import com.androidsocialnetworks.lib.SocialNetwork;
+import com.butterfly.fragment.SettingsFragment;
 
 public class SettingsActivity extends BaseSocialMediaActivity {
 

@@ -7,15 +7,17 @@
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="twitter_is_enabled"
-            android:summary="Enable Twitter Sharing"
-            android:title="Enable Twitter" >
+            android:summary="@string/enable_twitter_sharing"
+            android:title="@string/twitter_enable" >
         </CheckBoxPreference>
+<!--   
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="facebook_is_enabled"
             android:summary="Enable Facebook Sharing"
             android:title="Enable Facebook" >
         </CheckBoxPreference>
+ -->      
     </PreferenceCategory>
 
 </PreferenceScreen>
