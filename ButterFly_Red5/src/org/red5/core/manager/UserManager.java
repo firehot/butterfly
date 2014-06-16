@@ -93,7 +93,6 @@ public class UserManager {
 			List<String> mailList = new ArrayList<String>(Arrays.asList(mails));
 			
 			removeEmptyMails(mailList);
-			mails = mailList.toArray(new String[mailList.size()]);
 			
 			query.setParameter("email", mailList);
 			List<GcmUserMails> results = query.getResultList();

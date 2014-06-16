@@ -311,7 +311,7 @@ public class MainActivity extends FragmentActivity implements OnPageChangeListen
 					String mails = new String();
 					for (int i = 0; i < mailAddressesLv.getCount(); i++) {
 						if (checkedItemIds.get(i)) {
-							if (i>0) {
+							if (i>0 && mails.isEmpty() == false) {
 								mails += ",";
 							}
 							mails += mailAddressesLv.getAdapter().getItem(i);

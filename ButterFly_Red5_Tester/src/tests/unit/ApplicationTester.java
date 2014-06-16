@@ -1188,6 +1188,15 @@ public class ApplicationTester {
 		manager.removeEmptyMails(strList);
 		Assert.assertArrayEquals(new String[]{"str1","str2","str3"}, strList.toArray());
 		
+		
+		String mailString = ",deneme@deneme.com";
+		String[] mailArray = mailString.split(",");
+		List<String> mailList = new ArrayList<String>(Arrays.asList(mailArray));
+		manager.removeEmptyMails(mailList);
+
+		assertEquals(mailList.size(), 1);
+		assertEquals(mailList.get(0), "deneme@deneme.com");
+		
 	}
 
 }
