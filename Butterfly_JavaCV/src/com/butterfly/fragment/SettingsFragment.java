@@ -1,19 +1,18 @@
 package com.butterfly.fragment;
 
-import com.butterfly.R;
-import com.butterfly.SettingsActivity;
-import com.butterfly.R.xml;
-
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
 
+import com.butterfly.R;
+import com.butterfly.SettingsActivity;
+
 public class SettingsFragment extends PreferenceFragment {
 
-	private static final String TWITTER_IS_ENABLED = "twitter_is_enabled";
-	private static final String FACEBOOK_IS_ENABLED = "facebook_is_enabled";
+	public static final String TWITTER_IS_ENABLED = "twitter_is_enabled";
+	public static final String FACEBOOK_IS_ENABLED = "facebook_is_enabled";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -36,6 +35,7 @@ public class SettingsFragment extends PreferenceFragment {
 			CheckBoxPreference chkBoxPref = (CheckBoxPreference) preference;
 			if (chkBoxPref.isChecked() == true) {
 
+				chkBoxPref.setChecked(false);
 				loginTwitter(activity);
 				logoutFacebook(activity);
 
@@ -45,6 +45,7 @@ public class SettingsFragment extends PreferenceFragment {
 		} else if (preference.getKey().equals(FACEBOOK_IS_ENABLED)) {
 			CheckBoxPreference chkBoxPref = (CheckBoxPreference) preference;
 			if (chkBoxPref.isChecked() == true) {
+				chkBoxPref.setChecked(false);
 				loginFacebook(activity);
 				logoutTwitter(activity);
 			} else {
@@ -60,8 +61,6 @@ public class SettingsFragment extends PreferenceFragment {
 		{
 			activity.mSocialNetworkManager.getTwitterSocialNetwork()
 					.requestLogin();
-			CheckBoxPreference twitterCheck = (CheckBoxPreference) findPreference(TWITTER_IS_ENABLED);
-			twitterCheck.setChecked(true);
 		}
 	}
 
@@ -70,9 +69,9 @@ public class SettingsFragment extends PreferenceFragment {
 				.isConnected())
 		{
 			activity.mSocialNetworkManager.getTwitterSocialNetwork().logout();
-			CheckBoxPreference twitterCheck = (CheckBoxPreference) findPreference(TWITTER_IS_ENABLED);
-			twitterCheck.setChecked(false);
 		}
+		CheckBoxPreference twitterCheck = (CheckBoxPreference) findPreference(TWITTER_IS_ENABLED);
+		twitterCheck.setChecked(false);
 	}
 
 	private void loginFacebook(SettingsActivity activity) {
@@ -81,8 +80,6 @@ public class SettingsFragment extends PreferenceFragment {
 		{
 			activity.mSocialNetworkManager.getFacebookSocialNetwork()
 					.requestLogin();
-			CheckBoxPreference facebookCheck = (CheckBoxPreference) findPreference(FACEBOOK_IS_ENABLED);
-			facebookCheck.setChecked(true);
 		}
 	}
 
@@ -90,9 +87,10 @@ public class SettingsFragment extends PreferenceFragment {
 		if (activity.mSocialNetworkManager.getFacebookSocialNetwork()
 				.isConnected()) {
 			activity.mSocialNetworkManager.getFacebookSocialNetwork().logout();
-			CheckBoxPreference facebookCheck = (CheckBoxPreference) findPreference(FACEBOOK_IS_ENABLED);
-			facebookCheck.setChecked(false);
 		}
+		
+		CheckBoxPreference facebookCheck = (CheckBoxPreference) findPreference(FACEBOOK_IS_ENABLED);
+		facebookCheck.setChecked(false);
 	}
 
 }
