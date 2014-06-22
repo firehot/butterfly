@@ -13,6 +13,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -1182,13 +1183,13 @@ public class ApplicationTester {
 		strList.add("str2");
 		strList.add("");
 		strList.add("str3");
-		
-		
+
+
 		UserManager manager = new UserManager();
 		manager.removeEmptyMails(strList);
 		Assert.assertArrayEquals(new String[]{"str1","str2","str3"}, strList.toArray());
-		
-		
+
+
 		String mailString = ",deneme@deneme.com";
 		String[] mailArray = mailString.split(",");
 		List<String> mailList = new ArrayList<String>(Arrays.asList(mailArray));
@@ -1196,7 +1197,8 @@ public class ApplicationTester {
 
 		assertEquals(mailList.size(), 1);
 		assertEquals(mailList.get(0), "deneme@deneme.com");
-		
+
 	}
+
 
 }

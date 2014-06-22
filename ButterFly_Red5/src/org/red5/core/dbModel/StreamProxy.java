@@ -31,13 +31,6 @@ public class StreamProxy {
 		}
 		File file = new File(streamsFolder, streamUrl + ".flv");
 
-		if (file.exists() == false) {
-			try {
-				file.createNewFile();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
 		lastPacketReceivedTime = System.currentTimeMillis();
 		flvWriter = new FLVWriter(file, false);
 	}

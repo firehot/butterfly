@@ -1,6 +1,7 @@
 package tests.blackbox;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -39,8 +40,11 @@ public class ApplicationRemoteBlackBoxTester {
 
 	private static final String REG_ID2 = "21118723424242423109823jshfsjafhsksdsagagf8374sfdasfasfasf2";
 	private static final String REG_ID = "21118723109823jshfsjafhskf83742";
+	private static final String SERVER_ADDR = "localhost"; // "54.194.98.151";
 	private static String suffix;
-	private static String serverPureURL = "http://localhost:5080/ButterFly_Red5/";
+	private static String rtmpAddr = "rtmp://"+SERVER_ADDR+"/ButterFly_Red5/"; 
+	private static String serverPureURL = "http://"+SERVER_ADDR+":5080/ButterFly_Red5/";
+			
 
 	private static String serverURL = serverPureURL + "gateway";
 	private static AMFConnection amfConnection;
@@ -106,6 +110,7 @@ public class ApplicationRemoteBlackBoxTester {
 			e.printStackTrace();
 		}
 	}
+
 
 	@Before
 	public void setUp() throws Exception {
@@ -418,23 +423,41 @@ public class ApplicationRemoteBlackBoxTester {
 
 			assertTrue(resultBool);
 
-			String streamURL = "mystream";
-			resultBool = (Boolean)amfConnection.call("registerLiveStream", "streamName", streamURL, "ahmetmermerkaya@gmail.com", "ahmetmermerkaya@gmail.com", true, "tur");
+			String streamURL = "mystream"+ (int)(Math.random()*1000);
+			resultBool = (Boolean)amfConnection.call("registerLiveStream", "streamName", streamURL, "ahmetmermerkaya@gmail.com", "ahmetmermerkaya@gmail.com", false, "tur");
 			assertTrue(resultBool);
 
 
-			Process exec = Runtime.getRuntime().exec("ffmpeg -re -i src/resource/test_hr.flv -acodec copy -vcodec copy -f flv rtmp://localhost/ButterFly_Red5/" + streamURL);
+			final Process exec = Runtime.getRuntime().exec("ffmpeg -i src/resource/test_hr.flv -acodec copy -vcodec libx264 -s 1600x1200 -f flv " + rtmpAddr + streamURL);
 
 			Thread.sleep(1000);
+			
+			new Thread() {
+				public void run() {
+					InputStream inputStream = exec.getErrorStream();
+					byte[] data = new byte[1024];
+					int len = 0;
+					try {
+						while ((len = inputStream.read(data,0,data.length))>0)
+						{
+							System.out
+									.println(new String(data, 0, len));
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				};
+			}.start();
+		
 
 			resultBool = (Boolean)amfConnection.call("isLiveStreamExist", streamURL);
 			assertTrue(resultBool);
 			System.out.println("letting ffmpeg finish video");
 			exec.waitFor();
 			
-			
-
-			
+			Thread.sleep(3000);
+			assertFalse(new File("red5/webapps/ButterFly_Red5/streams/"+streamURL+".flv.ser").exists());
+			assertTrue(new File("red5/webapps/ButterFly_Red5/streams/"+streamURL+".flv").exists());
 
 		} catch (ClientStatusException e) {
 			fail(e.getMessage());
