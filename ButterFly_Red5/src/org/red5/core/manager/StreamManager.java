@@ -3,6 +3,7 @@ package org.red5.core.manager;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,14 +26,9 @@ public class StreamManager {
 	public List<Streams> getLiveStreams(Map<String, StreamProxy> registeredLiveStreams,
 			List<String> mailList, String start, String batchSize) {
 
-		java.util.Date date = new java.util.Date();
+		removeGhostStreams(registeredLiveStreams, System.currentTimeMillis(), start, batchSize);
 
-		List<Streams> streamList;
-		removeGhostStreams(registeredLiveStreams, date.getTime(), start, batchSize);
-
-		streamList = getAllStreamList(mailList, start, batchSize);
-
-		return streamList;
+		return getAllStreamList(mailList, start, batchSize);
 	}
 
 	public boolean isDeletable(Streams stream, List<String> mailList) 
@@ -65,7 +61,7 @@ public class StreamManager {
 					if (registeredLiveStreams.containsKey(stream.getStreamUrl())) {
 						streamProxy = registeredLiveStreams.get(stream.getStreamUrl());
 
-						if ((currentTime - streamProxy.lastPacketReceivedTime) > MAX_TIME_INTERVAL_BETWEEN_PACKETS) {
+						if ((currentTime - streamProxy.getLastPacketReceivedTime()) > MAX_TIME_INTERVAL_BETWEEN_PACKETS) {
 
 							removeStream(stream.getStreamUrl(),
 									registeredLiveStreams);

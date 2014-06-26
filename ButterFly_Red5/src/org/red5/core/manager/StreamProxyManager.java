@@ -18,11 +18,7 @@ public class StreamProxyManager implements IStreamListener{
 		String streamUrl = stream.getPublishedName();
 
 		if (proxyStreams.containsKey(streamUrl)) {
-			StreamProxy streamTemp = proxyStreams.get(streamUrl);
-			java.util.Date date = new java.util.Date();
-			streamTemp.lastPacketReceivedTime = date.getTime();
-
-			streamTemp.write(packet);
+			proxyStreams.get(streamUrl).write(packet);
 		}
 
 	}

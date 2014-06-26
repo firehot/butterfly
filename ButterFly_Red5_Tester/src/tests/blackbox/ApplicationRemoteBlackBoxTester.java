@@ -24,6 +24,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.red5.core.manager.StreamManager;
 import org.red5.core.utils.JPAUtils;
 
 import flex.messaging.io.MessageIOConstants;
@@ -213,8 +214,6 @@ public class ApplicationRemoteBlackBoxTester {
 
 			assertEquals(1, jsOnArray.length());
 
-
-
 		} catch (ClientStatusException e) {
 			fail(e.getMessage());
 			e.printStackTrace();
@@ -223,6 +222,58 @@ public class ApplicationRemoteBlackBoxTester {
 			e.printStackTrace();
 		} catch (JSONException e) {
 			fail(e.getMessage());
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testRemoveGhostStreamWorks() {
+		Boolean resultBool;
+		try {
+			resultBool = (Boolean) amfConnection.call("registerUser", REG_ID, "ahmetmermerkaya@gmail.com");
+
+			assertTrue(resultBool);
+
+			String streamURL = "string_urhgjhgkjhgl" + (int)(Math.random() *1000);
+			resultBool = (Boolean)amfConnection.call("registerLiveStream", "streamName", streamURL, "ahmetmermerkaya@gmail.com", "ahmetmermerkaya@gmail.com", true, "tur");
+			assertTrue(resultBool);
+
+			String result = (String) amfConnection.call("getLiveStreams", null);
+			assertNotNull(result);
+			JSONArray jsOnArray = new JSONArray(result);
+
+			assertEquals(1, jsOnArray.length());
+			JSONObject jsonObject = (JSONObject) jsOnArray.get(0);
+			assertTrue(jsonObject.has("isLive"));
+			assertTrue(jsonObject.getBoolean("isLive"));
+
+		
+			Thread.sleep(StreamManager.MAX_TIME_INTERVAL_BETWEEN_PACKETS + 2000);
+			
+			result = (String) amfConnection.call("getLiveStreams", null);
+			assertNotNull(result);
+			jsOnArray = new JSONArray(result);
+
+			assertEquals(1, jsOnArray.length());
+			jsonObject = (JSONObject) jsOnArray.get(0);
+			assertTrue(jsonObject.has("isLive"));
+			assertFalse(jsonObject.getBoolean("isLive"));
+
+			resultBool = (Boolean)amfConnection.call("isLiveStreamExist", streamURL);
+			assertFalse(resultBool);
+
+		
+		} catch (ClientStatusException e) {
+			fail(e.getMessage());
+			e.printStackTrace();
+		} catch (ServerStatusException e) {
+			fail(e.getMessage());
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			fail(e.getMessage());
+			e.printStackTrace();
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
