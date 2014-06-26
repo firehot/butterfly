@@ -60,4 +60,5 @@
     <string name="social_media_message">#iamlive http://www.butterflytv.net/player.html?videoId=</string>
 	<string name="twitter_enable">Enable Twitter</string>
 	<string name="enable_twitter_sharing">You can let app tweet about your live stream before starting broadcast</string>
+	<string name="video_quality">Video Quality</string>
 </resources>

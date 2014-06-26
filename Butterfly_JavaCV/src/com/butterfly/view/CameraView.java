@@ -24,19 +24,6 @@ public class CameraView extends ViewGroup implements SurfaceHolder.Callback {
 	List<Size> mSupportedPreviewSizes;
 	SurfaceView mSurfaceView;
 
-//	public CameraView(Context context, Camera camera) {
-//		super(context);
-//		Log.w("camera", "camera view");
-//		mSurfaceView = new SurfaceView(context);
-//		addView(mSurfaceView);
-//		mCamera = camera;
-//		mHolder = mSurfaceView.getHolder();
-//		mHolder.addCallback(CameraView.this);
-//		mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-//		mCamera.setPreviewCallback(CameraView.this);
-//		this.previewListener = (OnPreviewListener) context;
-//	}
-
 	public CameraView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 
@@ -63,13 +50,6 @@ public class CameraView extends ViewGroup implements SurfaceHolder.Callback {
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
 			int height) {
 		stopPreview();
-	//	Camera.Parameters camParams = mCamera.getParameters();
-		// camParams.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
-//		camParams.setPreviewSize(mSupportedPreviewSizes.get(0).width,
-//				mSupportedPreviewSizes.get(0).height);
-//		requestLayout();
-	//	mCamera.setParameters(camParams);
-
 		startPreview();
 	}
 

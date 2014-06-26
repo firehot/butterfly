@@ -4,11 +4,12 @@ import static com.googlecode.javacv.cpp.avcodec.AV_CODEC_ID_H264;
 
 import java.nio.Buffer;
 import java.nio.ShortBuffer;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
+import android.app.ActionBar.LayoutParams;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -42,6 +43,9 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -63,10 +67,6 @@ import com.googlecode.javacpp.BytePointer;
 
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
-import flex.messaging.io.MessageIOConstants;
-import flex.messaging.io.amf.client.AMFConnection;
-import flex.messaging.io.amf.client.exceptions.ClientStatusException;
-import flex.messaging.io.amf.client.exceptions.ServerStatusException;
 
 public class RecordActivity extends BaseSocialMediaActivity implements OnClickListener,
 		PreviewCallback {
@@ -104,7 +104,7 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 
 	private static ProgressDialog mProgressDialog;
 	private String mailsToBeNotified = null;
-	private Size previewSize;
+//	private Size previewSize;
 	private BytePointer bytePointer;
 	private boolean snapshotSent = false;
 	
@@ -120,13 +120,7 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 		
 		@Override
 		public void onPreExecute() {
-			if (mProgressDialog == null) {
-				mProgressDialog = ProgressDialog.show(RecordActivity.this,
-						null, getString(R.string.initializing), true);
-
-			} else {
-				mProgressDialog.setMessage(getString(R.string.initializing));
-			}
+			
 			
 		}
 		
@@ -139,6 +133,7 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 				Log.w(LOG_TAG, "Start Button Pushed");
 				streamNameEditText.setVisibility(View.GONE);
 				publicVideoCheckBox.setVisibility(View.GONE);
+				resolutionsRadioGroup.setVisibility(View.GONE);
 				btnRecorderControl
 						.setBackgroundResource(R.drawable.bt_stop_record);
 				RecordActivity.this.getLocation();
@@ -150,6 +145,7 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 						Toast.LENGTH_LONG).show();
 				streamNameEditText.setVisibility(View.VISIBLE);
 				publicVideoCheckBox.setVisibility(View.VISIBLE);
+				resolutionsRadioGroup.setVisibility(View.VISIBLE);
 				setVisibilitySocialMedia(true);
 			}
 
@@ -183,6 +179,8 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 	private String streamName;
 	private boolean is_video_public;
 	private LocationProvider locationProvider;
+	private List<Size> previewSizeList;
+	private RadioGroup resolutionsRadioGroup;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -218,9 +216,6 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 		localBroadcastManager = LocalBroadcastManager
 				.getInstance(getApplicationContext());
 		locationProvider = new LocationProvider(this);
-
-		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-
 		initLayout();
 		
 		if (isArmCPU() == false) {
@@ -346,51 +341,71 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 		cameraView = (CameraView) findViewById(R.id.cam);
 		cameraDevice = Camera.open(0);
 		Parameters parameters = cameraDevice.getParameters();
-		List<Size> sizes = parameters.getSupportedPreviewSizes();
-		parameters.setPreviewSize(sizes.get(0).width, sizes.get(0).height);
+		previewSizeList = parameters.getSupportedPreviewSizes();
+		Collections.sort(previewSizeList, new Comparator<Size>() {
+
+			@Override
+			public int compare(Size lhs, Size rhs) {
+				if (lhs.width == rhs.width) {
+					return lhs.height == rhs.height ? 0 : (lhs.height > rhs.height ? 1 : -1);
+				}
+				else if (lhs.width > rhs.width) {
+					return 1;
+				}
+				return -1;
+			}
+		});
+		parameters.setPreviewSize(previewSizeList.get(0).width,  previewSizeList.get(0).height);
+
+		
 
 		cameraDevice.setParameters(parameters);
 		cameraView.setCamera(cameraDevice);
+		
+		resolutionsRadioGroup = (RadioGroup) findViewById(R.id.resolutions_radio_group);
+	
+		int len = 3;
+		if (previewSizeList.size() < 3) {
+			len = previewSizeList.size();
+		}
+				
+		LayoutParams lyp = new LayoutParams(RadioGroup.LayoutParams.WRAP_CONTENT,
+				RadioGroup.LayoutParams.WRAP_CONTENT);
+
+		for (int i = 0; i < len; i++) {
+			RadioButton radioButton = new RadioButton(this);
+			radioButton.setLayoutParams(lyp);
+			Size size = previewSizeList.get(len-1-i);
+			radioButton.setText(size.width + "x" + size.height);
+			radioButton.setId(len-1-i);
+			
+			if (parameters.getPreviewSize().width == size.width && parameters.getPreviewSize().height == size.height) {
+				radioButton.setChecked(true);
+			}
+			
+			resolutionsRadioGroup.addView(radioButton);
+		}
+		resolutionsRadioGroup.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			
+			@Override
+			public void onCheckedChanged(RadioGroup group, int checkedId) {
+				Parameters parameters = cameraDevice.getParameters();
+				parameters.setPreviewSize(previewSizeList.get(checkedId).width, previewSizeList.get(checkedId).width);
+				if (cameraView.isPreviewOn()) {
+					cameraDevice.stopPreview();
+					cameraDevice.setParameters(parameters);
+					cameraDevice.startPreview();
+				} else {
+					cameraDevice.setParameters(parameters);
+				}
+			}
+		});
+		 
 
 		Log.i(LOG_TAG, "cameara preview start: OK");
 	}
 
-	public boolean setCameraPreviewSize() {
-		boolean result = false;
-		if(cameraDevice == null)
-			return result;
-		Parameters parameters = cameraDevice.getParameters();
-		List<Size> supportedPreviewSizes = parameters
-				.getSupportedPreviewSizes();
 
-		Size size = findPreviewSize(supportedPreviewSizes);
-		
-		parameters.setPreviewSize(size.width, size.height);
-		
-		if (cameraView.isPreviewOn()) {
-			cameraDevice.stopPreview();
-			cameraDevice.setParameters(parameters);
-			cameraDevice.startPreview();
-		} else {
-			cameraDevice.setParameters(parameters);
-		}
-		result = true;
-		return result;
-	}
-
-	private Size findPreviewSize(List<Size> previewSizes) {
-
-		Size bestSize = previewSizes.get(0);
-
-		for (Size size : previewSizes) {
-			if (size.width <= bestSize.width && size.height <= bestSize.height) {
-				bestSize = size;
-			}
-		}
-
-		return bestSize;
-
-	}
 
 	// ---------------------------------------
 	// initialize ffmpeg_recorder
@@ -433,10 +448,9 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 
 	public boolean startRecording() {
 
-		if (cameraDevice != null && cameraDevice.getParameters() != null)
-			previewSize = cameraDevice.getParameters().getPreviewSize();
-		else
+		if (cameraDevice == null || cameraDevice.getParameters() == null) {
 			return false;
+		}
 
 		recording = false;
 		IntentFilter intentFilter = new IntentFilter(
@@ -608,9 +622,15 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 				imm.hideSoftInputFromWindow(
 						streamNameEditText.getWindowToken(), 0);
 				
-				if (setCameraPreviewSize() == true) {
+				if (mProgressDialog == null) {
+					mProgressDialog = ProgressDialog.show(RecordActivity.this,
+							null, getString(R.string.initializing), true);
 
-					new Thread() {
+				} else {
+					mProgressDialog.setMessage(getString(R.string.initializing));
+				}
+				
+				new Thread() {
 						public void run() {
 							initRecorder();
 							boolean recordingStarted = startRecording();
@@ -630,13 +650,23 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 							
 							}
 							else {
+								runOnUiThread(new Runnable() {
+									
+									@Override
+									public void run() {
+										if(mProgressDialog != null && 
+												mProgressDialog.isShowing()==true) {
+											mProgressDialog.dismiss();
+										}
+									}
+								});
 								stopRecording();
 							}
 						};
 						
 					}.start();
 					
-				} 
+				 
 
 			} else {
 				
@@ -651,6 +681,7 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 					.setBackgroundResource(R.drawable.bt_start_record);
 			streamNameEditText.setVisibility(View.VISIBLE);
 			publicVideoCheckBox.setVisibility(View.VISIBLE);
+			resolutionsRadioGroup.setVisibility(View.VISIBLE);
 			setVisibilitySocialMedia(true);
 			stopRecording();
 			runAudioThread = false;
@@ -687,8 +718,9 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 				if (t > recorder.getTimestamp()) {
 					recorder.setTimestamp(t);
 				}
-				recorder.record(bytePointer, previewSize.width,
-						previewSize.height);
+				Size size = cameraDevice.getParameters().getPreviewSize();
+				recorder.record(bytePointer, size.width,
+						size.height);
 			} catch (FFmpegFrameRecorder.Exception e) {
 
 				e.printStackTrace();
