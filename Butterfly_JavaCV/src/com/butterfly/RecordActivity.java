@@ -31,6 +31,9 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Process;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -42,6 +45,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -181,6 +185,7 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 	private LocationProvider locationProvider;
 	private List<Size> previewSizeList;
 	private RadioGroup resolutionsRadioGroup;
+	private Handler cameraHandler;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -216,6 +221,11 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 		localBroadcastManager = LocalBroadcastManager
 				.getInstance(getApplicationContext());
 		locationProvider = new LocationProvider(this);
+		HandlerThread handlerThread = new HandlerThread("cameraHandler", Process.THREAD_PRIORITY_URGENT_AUDIO);
+		handlerThread.start();
+		cameraHandler = new Handler(handlerThread.getLooper());
+		
+
 		initLayout();
 		
 		if (isArmCPU() == false) {
@@ -265,6 +275,19 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 		super.onResume();
 		Bundle extras = getIntent().getExtras();
 		
+		cameraHandler.post(new Runnable() {
+			@Override
+			public void run() {
+				cameraDevice = Camera.open(0);
+				runOnUiThread(new Runnable() {
+					public void run() {
+						prepareCameraAndPreviewSizesRadioGroup();
+					}
+				});
+				
+			}
+		});
+		
 		publicVideoCheckBox.setChecked(true);
 		if (extras != null
 				&& extras.containsKey(ContactsListFragment.MAILS_TO_BE_NOTIFIED)) {
@@ -279,14 +302,14 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 	protected void onPause() {
 		super.onPause();
 		stopRecording();
-		finish();
 
 		if (cameraView != null) {
-			cameraView.stopPreview();
+			cameraDevice.stopPreview();
 			cameraDevice.setPreviewCallback(null);
 			cameraDevice.release();
 			cameraDevice = null;
 		}
+		finish();
 	}
 
 	@Override
@@ -337,9 +360,14 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 		viewerCountView = (TextView) findViewById(R.id.viewerCountView);
 
 		viewerCountView.setVisibility(View.INVISIBLE);
+		
+	}
 
-		cameraView = (CameraView) findViewById(R.id.cam);
-		cameraDevice = Camera.open(0);
+	private void prepareCameraAndPreviewSizesRadioGroup() {
+		cameraView = new CameraView(this, cameraDevice); 
+		FrameLayout	frameLayout	=(FrameLayout)findViewById(R.id.camera_preview);
+		frameLayout.addView(cameraView);
+		
 		Parameters parameters = cameraDevice.getParameters();
 		previewSizeList = parameters.getSupportedPreviewSizes();
 		Collections.sort(previewSizeList, new Comparator<Size>() {
@@ -357,10 +385,7 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 		});
 		parameters.setPreviewSize(previewSizeList.get(0).width,  previewSizeList.get(0).height);
 
-		
-
 		cameraDevice.setParameters(parameters);
-		cameraView.setCamera(cameraDevice);
 		
 		resolutionsRadioGroup = (RadioGroup) findViewById(R.id.resolutions_radio_group);
 	
@@ -376,33 +401,29 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 			RadioButton radioButton = new RadioButton(this);
 			radioButton.setLayoutParams(lyp);
 			Size size = previewSizeList.get(len-1-i);
-			radioButton.setText(size.width + "x" + size.height);
+			radioButton.setText(size.height + "p");
 			radioButton.setId(len-1-i);
 			
 			if (parameters.getPreviewSize().width == size.width && parameters.getPreviewSize().height == size.height) {
 				radioButton.setChecked(true);
 			}
-			
 			resolutionsRadioGroup.addView(radioButton);
 		}
+		
+		resolutionsRadioGroup.setVisibility(View.VISIBLE);
+		
 		resolutionsRadioGroup.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 			
 			@Override
 			public void onCheckedChanged(RadioGroup group, int checkedId) {
 				Parameters parameters = cameraDevice.getParameters();
 				parameters.setPreviewSize(previewSizeList.get(checkedId).width, previewSizeList.get(checkedId).height);
-				if (cameraView.isPreviewOn()) {
-					cameraDevice.stopPreview();
-					cameraDevice.setParameters(parameters);
-					cameraDevice.startPreview();
-				} else {
-					cameraDevice.setParameters(parameters);
-				}
+				cameraDevice.stopPreview();
+				cameraDevice.setParameters(parameters);
+				cameraDevice.startPreview();
+				
 			}
 		});
-		 
-
-		Log.i(LOG_TAG, "cameara preview start: OK");
 	}
 
 
