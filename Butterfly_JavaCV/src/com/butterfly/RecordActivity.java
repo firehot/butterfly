@@ -390,7 +390,7 @@ public class RecordActivity extends BaseSocialMediaActivity implements OnClickLi
 			@Override
 			public void onCheckedChanged(RadioGroup group, int checkedId) {
 				Parameters parameters = cameraDevice.getParameters();
-				parameters.setPreviewSize(previewSizeList.get(checkedId).width, previewSizeList.get(checkedId).width);
+				parameters.setPreviewSize(previewSizeList.get(checkedId).width, previewSizeList.get(checkedId).height);
 				if (cameraView.isPreviewOn()) {
 					cameraDevice.stopPreview();
 					cameraDevice.setParameters(parameters);
