@@ -352,7 +352,7 @@ public class ApplicationRemoteBlackBoxTester {
 			assertTrue(resultBool);
 
 			String streamURL = "string_urhgjhgkjhgl" + (int)(Math.random() *1000);
-			resultBool = (Boolean)amfConnection.call("registerLiveStream", "streamName", streamURL, "ahmetmermerkaya@gmail.com", "ahmetmermerkaya@gmail.com", true, "tur");
+			resultBool = (Boolean)amfConnection.call("registerLiveStream", "streamNkmkmkmame", streamURL, "ahmetmermerkaya@gmail.com", "ahmetmermerkaya@gmail.com", true, "tur");
 			assertTrue(resultBool);
 
 

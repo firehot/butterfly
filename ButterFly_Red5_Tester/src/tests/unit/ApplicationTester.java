@@ -1,9 +1,6 @@
 package tests.unit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -851,6 +848,32 @@ public class ApplicationTester {
 	}
 
 	@Test
+	public void testStreamIsPublicAndShared() 
+	{
+		try {
+			butterflyApp.registerUser("22", "mail@mail.com");
+			butterflyApp.registerUser("23", "mail1@mail.com");
+			butterflyApp.registerUser("24", "mail2@mail.com,mail3@mail.com");
+
+			boolean registerLiveStream = butterflyApp.registerLiveStream(
+					"publishedName1", "publishUrl1",
+					"mail1@mail.com,mail2@mail.com", "mail@mail.com", true, null);
+
+			String liveStreams = butterflyApp.getLiveStreams("mail1@mail.com", "0", "10");
+			JSONArray jsonArray;
+
+			jsonArray = new JSONArray(liveStreams);
+			int length = jsonArray.length();
+			assertEquals(1, length);
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+
+	}
+
+	@Test
 	public void testStreamPrivacy() {
 
 		butterflyApp.registerUser("22", "mail@mail.com");
@@ -911,6 +934,144 @@ public class ApplicationTester {
 		allStreamList = butterflyApp.streamManager.getAllStreamList(mailList,
 				"0", "10");
 		assertEquals(3, allStreamList.size());
+
+	}
+
+	@Test
+	public void testIsBroadcasterMailAdded() {
+		try {
+			butterflyApp.registerUser("22", "mail@mail.com");
+			butterflyApp.registerUser("23", "mail1@mail.com");
+			butterflyApp.registerUser("24", "mail2@mail.com,mail3@mail.com");
+
+			boolean registerLiveStream = butterflyApp.registerLiveStream(
+					"publishedName", "publishUrl",
+					null, "mail@mail.com", true, null);
+
+			assertEquals(registerLiveStream, true);
+
+			String liveStreams = butterflyApp.getLiveStreams(null, "0", "10");
+			JSONArray jsonArray = new JSONArray(liveStreams);
+			int length = jsonArray.length();
+			assertEquals(1, length);
+
+			JSONObject jsonObject = (JSONObject) jsonArray.get(0);
+			// It should be false because null is given as parameter to giveLiveStreams
+			assertFalse(jsonObject.has("broadcasterMail"));
+
+
+
+			liveStreams = butterflyApp.getLiveStreams("mail@mail.com", "0", "10");
+			jsonArray = new JSONArray(liveStreams);
+			length = jsonArray.length();
+			assertEquals(1, length);
+
+			jsonObject = (JSONObject) jsonArray.get(0);
+			// It should be false because it is own stream
+			assertTrue(jsonObject.has("broadcasterMail"));
+
+
+
+			liveStreams = butterflyApp.getLiveStreams("mail1@mail.com", "0", "10");
+			jsonArray = new JSONArray(liveStreams);
+			length = jsonArray.length();
+			assertEquals(1, length);
+
+			jsonObject = (JSONObject) jsonArray.get(0);
+			// It should be false because this stream is not shared with mail1@mail.com
+			assertFalse(jsonObject.has("broadcasterMail"));
+
+
+			try {
+				Thread.sleep(1100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			registerLiveStream = butterflyApp.registerLiveStream(
+					"publishedName1", "publishUrl1",
+					"mail1@mail.com,mail2@mail.com", "mail@mail.com", true, null);
+
+	
+			liveStreams = butterflyApp.getLiveStreams("mail1@mail.com", "0", "10");
+			jsonArray = new JSONArray(liveStreams);
+			length = jsonArray.length();
+			assertEquals(2, length);
+
+			jsonObject = (JSONObject) jsonArray.get(0);
+			// It should be true because this stream is shared with mail1@mail.com
+			assertTrue(jsonObject.has("broadcasterMail"));
+			assertEquals(jsonObject.get("broadcasterMail"),"mail@mail.com");
+
+
+
+			liveStreams = butterflyApp.getLiveStreams("mail2@mail.com", "0", "10");
+			jsonArray = new JSONArray(liveStreams);
+			length = jsonArray.length();
+			assertEquals(2, length);
+
+			jsonObject = (JSONObject) jsonArray.get(0);
+			// It should be true because this stream is shared with mail2@mail.com
+			assertTrue(jsonObject.has("broadcasterMail"));
+			assertEquals(jsonObject.get("broadcasterMail"),"mail@mail.com");
+
+			liveStreams = butterflyApp.getLiveStreams("mail3@mail.com", "0", "10");
+			jsonArray = new JSONArray(liveStreams);
+			length = jsonArray.length();
+			assertEquals(2, length);
+
+			jsonObject = (JSONObject) jsonArray.get(0);
+			// It should be true because this stream is shared with mail3@mail.com through 
+			// mail2@mail.com
+
+			assertTrue(jsonObject.has("broadcasterMail"));
+			assertEquals(jsonObject.get("broadcasterMail"),"mail@mail.com");
+
+			liveStreams = butterflyApp.getLiveStreams("mail2@mail.com,mail3@mail.com", "0", "10");
+			jsonArray = new JSONArray(liveStreams);
+			length = jsonArray.length();
+			assertEquals(2, length);
+
+			jsonObject = (JSONObject) jsonArray.get(0);
+			// It should be true because this stream is not shared with mail2@mail.com
+			assertTrue(jsonObject.has("broadcasterMail"));
+			assertEquals(jsonObject.get("broadcasterMail"),"mail@mail.com");
+
+
+			try {
+				Thread.sleep(1100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			registerLiveStream = butterflyApp.registerLiveStream(
+					"publishedName12", "publishUrl12",
+					"mail1@mail.com", "mail2@mail.com,mail3@mail.com", true, null);
+
+			liveStreams = butterflyApp.getLiveStreams("mail@mail.com", "0", "10");
+			jsonArray = new JSONArray(liveStreams);
+			length = jsonArray.length();
+			assertEquals(3, length);
+
+			jsonObject = (JSONObject) jsonArray.get(0);
+			// It should be true because this stream is not shared with mail@mail.com
+			assertFalse(jsonObject.has("broadcasterMail"));
+
+			liveStreams = butterflyApp.getLiveStreams("mail1@mail.com", "0", "10");
+			jsonArray = new JSONArray(liveStreams);
+			length = jsonArray.length();
+			assertEquals(3, length);
+
+			jsonObject = (JSONObject) jsonArray.get(0);
+			// It should be true because this stream is not shared with mail1@mail.com
+			assertTrue(jsonObject.has("broadcasterMail"));
+			String mails = (String)jsonObject.get("broadcasterMail");
+			assertTrue(mails.contains("mail2@mail.com"));
+			assertTrue(mails.contains("mail3@mail.com"));
+
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+
+
 
 	}
 

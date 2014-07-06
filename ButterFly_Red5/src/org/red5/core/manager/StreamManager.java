@@ -221,6 +221,15 @@ public class StreamManager {
 
 		return resultStream;
 	}
+	
+	public List<StreamViewers> getStreamViewers(Streams stream) {
+		Query query = JPAUtils.getEntityManager().
+			createQuery(" SELECT viewer FROM StreamViewers viewer "
+					+ " WHERE viewer.streams.id = :streamId ");
+		query.setParameter("streamId", stream.getId());
+		
+		return query.getResultList();
+	}
 
 	/**
 	 * Function to get public and private streams from database.
@@ -242,7 +251,7 @@ public class StreamManager {
 				query = JPAUtils
 						.getEntityManager()
 						.createQuery(
-								"SELECT str FROM Streams AS str "
+								"SELECT distinct str FROM Streams AS str "
 										+ "LEFT JOIN str.streamViewerses AS viewer "
 										+ "WHERE ( (str.isPublic = :isPublic) "
 										+ " OR (viewer.gcmUsers.id IN "

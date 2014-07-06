@@ -46,12 +46,14 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import org.apache.mina.proxy.utils.StringUtilities;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.red5.core.dbModel.GcmUserMails;
 import org.red5.core.dbModel.GcmUsers;
 import org.red5.core.dbModel.RegIds;
 import org.red5.core.dbModel.StreamProxy;
+import org.red5.core.dbModel.StreamViewers;
 import org.red5.core.dbModel.Streams;
 import org.red5.core.manager.StreamManager;
 import org.red5.core.manager.StreamProxyManager;
@@ -66,6 +68,8 @@ import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.api.stream.IPlayItem;
 import org.red5.server.api.stream.ISubscriberStream;
 import org.slf4j.Logger;
+
+import antlr.StringUtils;
 
 import com.google.android.gcm.server.Constants;
 import com.google.android.gcm.server.Message;
@@ -100,7 +104,7 @@ public class Application extends MultiThreadedApplicationAdapter implements IWeb
 		userManager = new UserManager();
 		streamManager = new StreamManager();
 		streamProxyManager = new StreamProxyManager();
-		
+
 		scheduleStreamDeleterTimer(1 * MILLIS_IN_HOUR, 24 * MILLIS_IN_HOUR);
 
 		log.info("app started");
@@ -119,12 +123,12 @@ public class Application extends MultiThreadedApplicationAdapter implements IWeb
 		streamDeleterTimer = new java.util.Timer();
 		streamDeleterTimer.schedule(streamDeleteTask, 0, runPeriod);
 	}
-	
+
 	public void removeTimeUpStreams(String key) {
 		Streams stream = streamManager.getStream(key);
 		if (stream != null)
 			streamManager.deleteStream(stream);
-		
+
 		streamProxyManager.removeProxyStream(key);
 	}
 	@Override
@@ -167,13 +171,21 @@ public class Application extends MultiThreadedApplicationAdapter implements IWeb
 			jsonObject = new JSONObject();
 			jsonObject.put("url", stream.getStreamUrl());
 			jsonObject.put("name", stream.getStreamName());
-			jsonObject.put("viewerCount",
-					this.getViewerCount(stream.getStreamUrl()));
+			jsonObject.put("viewerCount", this.getViewerCount(stream.getStreamUrl()));
 			jsonObject.put("latitude", stream.getLatitude());
 			jsonObject.put("longitude", stream.getLongitude());
 			jsonObject.put("altitude", stream.getAltitude());
 			jsonObject.put("isLive", stream.getIsLive());
 			jsonObject.put("isPublic", stream.getIsPublic());
+
+			boolean isMailAdded = isBroadcasterMailAdded(mailList, stream);
+
+			if (isMailAdded == true) {
+				StringBuilder sb = getMailCommaSeparated(stream.getGcmUsers().getGcmUserMailses());
+				jsonObject.put("broadcasterMail", sb.toString());
+			}
+
+
 			jsonObject.put("isDeletable",
 					streamManager.isDeletable(stream, mailList));
 			jsonObject.put("registerTime", stream.getRegisterTime().getTime());
@@ -181,6 +193,71 @@ public class Application extends MultiThreadedApplicationAdapter implements IWeb
 		}
 
 		return jsonArray.toString();
+	}
+
+	private StringBuilder getMailCommaSeparated(Set<GcmUserMails> userMailSet) {
+		Iterator<GcmUserMails> it = userMailSet.iterator();
+		StringBuilder sb = new StringBuilder();
+		while (it.hasNext()) {
+			GcmUserMails gcmUserMail = (GcmUserMails) it.next();
+			if (sb.length() > 0) sb.append(',');
+			sb.append(gcmUserMail.getMail());
+
+		}
+		return sb;
+	}
+
+	/**
+	 * Determines if the broadcaster mail will be added to stream list
+	 * @param mailList
+	 * mail list of a user who fetches the stream
+	 * @param stream
+	 * if the user who has the maillist in this functions, can see the broadcaster mail of this stream 
+	 * @return
+	 * true if broadcaster shared stream with that user or if the user and the broadcaster are the same
+	 * false otherwise
+	 */
+	private boolean isBroadcasterMailAdded(List<String> mailList, Streams stream) {
+		boolean addBroadcasterMail = false;
+		
+		if (mailList != null) {
+			
+			List<StreamViewers> streamViewers = streamManager.getStreamViewers(stream);
+			for (StreamViewers viewer : streamViewers) {
+				addBroadcasterMail = isMailExistInSet(mailList, viewer.getGcmUsers().getGcmUserMailses());
+				if (addBroadcasterMail == true) {
+					break;
+				}
+			}
+
+			if (addBroadcasterMail == false) {
+				addBroadcasterMail = isMailExistInSet(mailList, stream.getGcmUsers().getGcmUserMailses());
+			}
+		}
+		return addBroadcasterMail;
+
+	}
+
+
+
+	private boolean isMailExistInSet(List<String> mailList, Set<GcmUserMails> gcmUserMailSet) {
+		boolean exist = false;
+		if (mailList != null && gcmUserMailSet != null) 
+		{
+			for (int i = 0; i < mailList.size(); i++) {
+				for (GcmUserMails userMail : gcmUserMailSet) {
+					if (userMail.getMail().equals(mailList.get(i))) {
+						exist = true;
+						break;
+					}
+				}
+
+				if (exist == true) {
+					break;
+				}
+			}
+		}
+		return exist;
 	}
 
 	public boolean isLiveStreamExist(String url) {
@@ -199,12 +276,12 @@ public class Application extends MultiThreadedApplicationAdapter implements IWeb
 		GcmUsers user = this.userManager.getGcmUserByEmails(broadcasterMail);
 		boolean result = false;
 		if (registeredStreams.containsKey(url) == false) {
-			
+
 			Streams stream = new Streams(user, Calendar.getInstance().getTime(),
 					streamName, url);
 			stream.setIsPublic(isPublic);
 			stream.setIsLive(true);
-			
+
 			StreamProxy proxy = streamManager.registerLiveStream(
 					url, mailsToBeNotified, stream);
 			if(proxy != null)
@@ -215,7 +292,7 @@ public class Application extends MultiThreadedApplicationAdapter implements IWeb
 		}
 
 		String firstMail = getFirstEmail(broadcasterMail);
-		
+
 		if (result)
 			this.sendNotificationsOrMail(mailsToBeNotified, firstMail,
 					url, streamName, deviceLanguage);
@@ -373,11 +450,11 @@ public class Application extends MultiThreadedApplicationAdapter implements IWeb
 				System.out.println("Done1");
 				Session session = Session.getInstance(props,
 						new javax.mail.Authenticator() {
-							protected PasswordAuthentication getPasswordAuthentication() {
-								return new PasswordAuthentication(username,
-										password);
-							}
-						});
+					protected PasswordAuthentication getPasswordAuthentication() {
+						return new PasswordAuthentication(username,
+								password);
+					}
+				});
 
 				try {
 					javax.mail.Message message = new MimeMessage(session);
@@ -425,19 +502,19 @@ public class Application extends MultiThreadedApplicationAdapter implements IWeb
 				// string, but could certainly be a JSON object.
 				Message message = new Message.Builder()
 
-						// If multiple messages are sent using the same
-						// .collapseKey()
-						// the android target device, if it was offline during
-						// earlier
-						// message
-						// transmissions, will only receive the latest message
-						// for that
-						// key when
-						// it goes back on-line.
-						.collapseKey("1").timeToLive(30).delayWhileIdle(true)
-						.addData("URL", streamURL)
-						.addData("broadcaster", broadcasterMail)
-						.addData("name", streamName).build();
+				// If multiple messages are sent using the same
+				// .collapseKey()
+				// the android target device, if it was offline during
+				// earlier
+				// message
+				// transmissions, will only receive the latest message
+				// for that
+				// key when
+				// it goes back on-line.
+				.collapseKey("1").timeToLive(30).delayWhileIdle(true)
+				.addData("URL", streamURL)
+				.addData("broadcaster", broadcasterMail)
+				.addData("name", streamName).build();
 
 				ArrayList<String> failedNotificationMails = new ArrayList<String>();
 
@@ -499,7 +576,7 @@ public class Application extends MultiThreadedApplicationAdapter implements IWeb
 										if (!failedNotificationMails
 												.contains(userMail.getMail()))
 											failedNotificationMails
-													.add(userMail.getMail());
+											.add(userMail.getMail());
 									}
 									deleteRegId(oldRegID);
 								}
@@ -543,7 +620,7 @@ public class Application extends MultiThreadedApplicationAdapter implements IWeb
 
 		String name = item.getName();
 		Map<String, StreamProxy> registeredStreams = streamProxyManager.getLiveStreamProxies();
-		
+
 		if (registeredStreams.containsKey(name)) {
 			StreamProxy streamProxy = registeredStreams.get(name);
 			streamProxy.addViewer(subscriberStream.getName());
@@ -596,7 +673,7 @@ public class Application extends MultiThreadedApplicationAdapter implements IWeb
 
 				notifyUserAboutViewerCount(
 						getViewerCount(stream.getStreamUrl()), stream
-								.getGcmUsers().getRegIdses());
+						.getGcmUsers().getRegIdses());
 				break;
 			}
 
